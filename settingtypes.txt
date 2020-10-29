@@ -1,0 +1,17 @@
+#    Dragon Roost Spawn Rate. (This setting only applies when Simple Spawning is off)
+roost_spawn_rate (Dragon Roost Spawn Rate) float 64
+
+#    Dragon Cavern Spawn Rate. Recommended to be at least 4x the Dragon Roost Spawn Rate. (This setting only applies when Simple Spawning is off)
+cavern_spawn_rate (Dragon Cavern Spawn Rate) float 256
+
+#    If true, Dragons will spawn similarly to any other mob, rather than in Caverns and Roosts.
+simple_spawning (Simple Spawning) bool false
+
+#    Dragon Spawn Rate. Higher number = less Dragons. (This setting only applies when Simple Spawning is on)
+dragon_spawn_rate (Dragon Spawn Rate) float 550
+
+#    If true, Dragon breath will scorch/freeze nodes and Dragons will attempt to break blocks when stuck.
+terrain_destruction (Terrain Destruction) bool true
+
+
+
