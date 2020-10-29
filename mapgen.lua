@@ -370,15 +370,11 @@ minetest.register_on_generated(function(minp, maxp, blockseed)
         }
 
         if can_spawn_ice_cavern(pos) then
-            minetest.chat_send_all("Ice Cavern at " ..
-                                       minetest.pos_to_string(pos))
             create_cavern(pos, ice_cavern_data.outer_id,
                           ice_cavern_data.loot_id, ice_cavern_data.ore_table,
                           "draconis:ice_dragon")
         end
         if can_spawn_fire_cavern(pos) then
-            minetest.chat_send_all("Fire Cavern at " ..
-                                       minetest.pos_to_string(pos))
             create_cavern(pos, fire_cavern_data.outer_id,
                           fire_cavern_data.loot_id, fire_cavern_data.ore_table,
                           "draconis:fire_dragon")
@@ -410,16 +406,12 @@ minetest.register_on_generated(function(minp, maxp, blockseed)
         if pos.y < 0 then return end
 
         if can_spawn_ice_roost(pos) then
-            minetest.chat_send_all("Ice Roost at " ..
-                                       minetest.pos_to_string(pos))
             create_roost(pos, ice_roost_data.loot_id, ice_roost_data.soil_id,
                          ice_roost_data.stone_id, ice_roost_data.tree_id,
                          ice_roost_data.leaves_id, ice_roost_data.flora_id,
                          "draconis:ice_dragon")
         end
         if can_spawn_fire_roost(pos) then
-            minetest.chat_send_all("Fire Roost at " ..
-                                       minetest.pos_to_string(pos))
             create_roost(pos, fire_roost_data.loot_id, fire_roost_data.soil_id,
                          fire_roost_data.stone_id, fire_roost_data.tree_id,
                          fire_roost_data.leaves_id, fire_roost_data.flora_id,
