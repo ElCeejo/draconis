@@ -69,29 +69,44 @@ local function ice_dragon_logic(self)
         return
     end
 
-    local prty = mobkit.get_queue_priority(self)
-    local player = mobkit.get_nearby_player(self)
-
-    if self.cavern_spawn then
-        draconis.hq_sleep(self, 20)
+    local get_sounds = function(self)
+        local age = self.age
+        if age < 25 then
+            self.sounds = self.child_sounds
+            return
+        end
+        if age < 50 then
+            self.sounds = self.juvi_sounds
+            return
+        end
+        self.sounds = self.adult_sounds
         return
     end
 
-    if prty < 20 then
-        if self.driver then
-            draconis.hq_mount_logic(self, 20)
-            return
-        end
-    end
+    local prty = mobkit.get_queue_priority(self)
+    local player = mobkit.get_nearby_player(self)
 
     if mobkit.timer(self, 1) then
 
+        get_sounds(self)
         draconis.ice_vitals(self)
-        draconis.random_sound(self, self.random_sound_chance)
+        mob_core.random_sound(self, 4 * self.growth_stage)
 
-        if self.order == "stand" then
+        if self.order == "stand"
+        and not self.driver then
             mobkit.animate(self, "stand")
             return
+        end
+
+        if prty < 20 then
+            if self.cavern_spawn then
+                draconis.hq_sleep(self, 20)
+                return
+            end
+            if self.driver then
+                draconis.hq_mount_logic(self, 20)
+                return
+            end
         end
 
         if prty < 16 and self.isinliquid then
@@ -242,59 +257,117 @@ minetest.register_entity("draconis:ice_dragon", {
     mount_speed_sprint = 26,
     -- Sound
     child_sounds = {
-        random_1 = {
-            name = "draconis_child_random_1",
-            gain = 0.5,
-            distance = 16
+        random = {
+            {
+                name = "draconis_child_random_1",
+                gain = 1,
+                distance = 16
+            },
+            {
+                name = "draconis_child_random_2",
+                gain = 1,
+                distance = 16
+            },
+            {
+                name = "draconis_child_random_3",
+                gain = 1,
+                distance = 16
+            }
         },
-        random_1 = {
-            name = "draconis_child_random_2",
-            gain = 0.5,
-            distance = 16
-        },
-        random_1 = {
-            name = "draconis_child_random_3",
-            gain = 0.5,
-            distance = 16
+        hurt = {
+            {
+                name = "draconis_child_random_1",
+                gain = 1,
+                distance = 16
+            },
+            {
+                name = "draconis_child_random_2",
+                gain = 1,
+                distance = 16
+            },
+            {
+                name = "draconis_child_random_3",
+                gain = 1,
+                distance = 16
+            }
         },
         flap = ""
     },
     juvi_sounds = {
-        random_1 = {
-            name = "draconis_ice_dragon_juvi_1",
-            gain = 1,
-            distance = 24
+        random = {
+            {
+                name = "draconis_ice_dragon_juvi_1",
+                gain = 1,
+                distance = 24
+            },
+            {
+                name = "draconis_ice_dragon_juvi_2",
+                gain = 1,
+                distance = 24
+            },
+            {
+                name = "draconis_ice_dragon_juvi_3",
+                gain = 1,
+                distance = 24
+            }
         },
-        random_1 = {
-            name = "draconis_ice_dragon_juvi_2",
-            gain = 1,
-            distance = 24
-        },
-        random_1 = {
-            name = "draconis_ice_dragon_juvi_3",
-            gain = 1,
-            distance = 24
+        hurt = {
+            {
+                name = "draconis_ice_dragon_juvi_1",
+                gain = 1,
+                distance = 16
+            },
+            {
+                name = "draconis_ice_dragon_juvi_2",
+                gain = 1,
+                distance = 16
+            },
+            {
+                name = "draconis_ice_dragon_juvi_3",
+                gain = 1,
+                distance = 16
+            }
         },
         flap = "draconis_flap"
     },
     adult_sounds = {
-        random_1 = {
-            name = "draconis_ice_dragon_adult_1",
-            gain = 1,
-            distance = 32
+        random = {
+            {
+                name = "draconis_ice_dragon_adult_1",
+                gain = 1,
+                distance = 32
+            },
+            {
+                name = "draconis_ice_dragon_adult_2",
+                gain = 1,
+                distance = 32
+            },
+            {
+                name = "draconis_ice_dragon_adult_3",
+                gain = 1,
+                distance = 32
+            }
         },
-        random_1 = {
-            name = "draconis_ice_dragon_adult_2",
-            gain = 1,
-            distance = 32
-        },
-        random_1 = {
-            name = "draconis_ice_dragon_adult_3",
-            gain = 1,
-            distance = 32
+        hurt = {
+            {
+                name = "draconis_ice_dragon_adult_1",
+                gain = 1,
+                distance = 24
+            },
+            {
+                name = "draconis_ice_dragon_adult_2",
+                gain = 1,
+                distance = 24
+            },
+            {
+                name = "draconis_ice_dragon_adult_3",
+                gain = 1,
+                distance = 24
+            }
         },
         flap = "draconis_flap"
     },
+    sounds = {},
     -- Basic
     physical = true,
     collide_with_objects = true,
