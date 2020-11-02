@@ -485,6 +485,13 @@ function draconis.fire_breath(self, goal, range)
         end
         fuel_forge(path[i].pos, "draconis:draconic_steel_forge_fire")
         draconis.scorch_nodes(path[i].pos)
+        if minetest.get_modpath("tnt")
+        and self.age >= 100
+        and terrain_destruction then
+            if random(1, #path * 32) == 1 then
+                tnt.boom(path[i].pos, {radius = 2})
+            end
+        end
     end
 end
 
@@ -560,6 +567,13 @@ function draconis.ice_breath(self, goal, range)
         end
         fuel_forge(path[i].pos, "draconis:draconic_steel_forge_ice")
         draconis.freeze_nodes(path[i].pos)
+        if minetest.get_modpath("tnt")
+        and self.age >= 100
+        and terrain_destruction then
+            if random(1, #path * 32) == 1 then
+                tnt.boom(path[i].pos, {radius = 2})
+            end
+        end
     end
 end
 
@@ -907,7 +921,7 @@ function draconis.increase_age(self)
 end
 
 function draconis.growth(self)
-    self._growth_timer = self._growth_timer - self.dtime
+    self._growth_timer = self._growth_timer - 1
     if self._growth_timer <= 0 then
         draconis.increase_age(self)
         self._growth_timer = 4500
@@ -933,10 +947,7 @@ function draconis.growth(self)
     mobkit.remember(self, "_growth_timer", self._growth_timer)
 end
 
-local cooldown_timer = 1
-
 function draconis.breath_cooldown(self)
-    cooldown_timer = cooldown_timer - self.dtime
     if self.age < 200 then
         self.breath_meter_max = mobkit.remember(self, "breath_meter_max",
                                                 self.age)
@@ -950,11 +961,8 @@ function draconis.breath_cooldown(self)
     and self.breath_meter > self.breath_meter_max/4 then
         self.breath_meter_bottomed = mobkit.remember(self, "breath_meter_bottomed", false)
     end
-    if cooldown_timer <= 0 then
-        if self.breath_meter < self.breath_meter_max then
-            self.breath_meter = self.breath_meter + 1
-        end
-        cooldown_timer = 1
+    if self.breath_meter < self.breath_meter_max then
+        self.breath_meter = self.breath_meter + 1
     end
     mobkit.remember(self, "breath_meter", self.breath_meter)
 end
@@ -982,19 +990,20 @@ function draconis.on_step(self, dtime, moveresult)
         if self.name:find("ice") then
             self.eyes = set_eyes(self, "draconis:ice_eyes")
         elseif self.name:find("fire") then
+            minetest.chat_send_all("text")
             self.eyes = set_eyes(self, "draconis:fire_eyes")
         end
     end
     draconis.is_stuck(self) -- Find if stuck
-    draconis.growth(self) -- Gradual Growth
-    draconis.breath_cooldown(self) -- Increase Breath Meter if empty
     draconis.hunger(self) -- Hunger
     if mobkit.timer(self, 1) then
+        draconis.growth(self) -- Gradual Growth
+        draconis.breath_cooldown(self) -- Increase Breath Meter if empty
         if draconis.get_time() == "night" and self.sleep_timer > 0 then
             self.sleep_timer = self.sleep_timer - 1
         end
+        mobkit.remember(self, "sleep_timer", self.sleep_timer)
     end
-    mobkit.remember(self, "sleep_timer", self.sleep_timer)
     if self.isonground or self.isinliquid then
         self.max_speed = 6
     else
@@ -1002,9 +1011,6 @@ function draconis.on_step(self, dtime, moveresult)
     end
     if self.stuck_timer > 1.5 then draconis.break_free(self) end
     draconis.flap_sound(self)
-    if self.age < 25 then self.sounds = self.child_sounds end
-    if self.age > 25 and self.age < 50 then self.sounds = self.juvi_sounds end
-    if self.age < 50 then self.sounds = self.adult_sounds end
 end
 
 -------------------
