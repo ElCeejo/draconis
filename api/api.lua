@@ -129,9 +129,32 @@ local function set_eyes(self, ent)
     return eyes
 end
 
+--------------------
+-- Misc Functions --
+--------------------
+
+function draconis.random_sound(self, chance) -- Random Sound
+	if not chance then chance = 150 end
+	if math.random(1, chance) == 1 then
+        mob_core.make_sound(self, "random")
+        self.bone_anim["roar"] = {init = true}
+	end
+end
+
 -----------------
 -- On Activate --
 -----------------
+
+local function set_skeleton(self)
+    if self.bones then
+        for i = 1, #self.bones do
+            local name = self.bones[i].name
+            local pos = self.bones[i].position
+            local rot = self.bones[i].rotation
+            self.object:set_bone_position(name, pos, rot)
+        end
+    end
+end
 
 function draconis.set_drops(self)
     local name = self.name:split(":")[2]
@@ -216,6 +239,7 @@ end
 
 function draconis.on_activate(self, staticdata, dtime_s)
     mob_core.on_activate(self, staticdata, dtime_s)
+    set_skeleton(self)
     self.dragon_id = mobkit.recall(self, "dragon_id") or 1
     if self.dragon_id == 1 then
         self.dragon_id =
@@ -438,6 +462,14 @@ function draconis.fire_breath(self, goal, range)
     pos = vector.add(pos, vector.multiply(minetest.yaw_to_dir(yaw),
                                           10 * self.growth_scale))
     local dir = vector.direction(pos, goal)
+    if self.bone_anim["neck"] then
+        local pitch = abs(pos.y - goal.y)
+        if dir.y > 0 then
+            self.bone_anim["neck"].pitch = pitch
+        else
+            self.bone_anim["neck"].pitch = -pitch
+        end
+    end
     local dest = vector.add(pos, vector.multiply(dir, range))
     local length = ray_distance(pos, dest)
     dest = vector.add(pos, vector.multiply(dir, length))
@@ -502,6 +534,14 @@ function draconis.ice_breath(self, goal, range)
     pos = vector.add(pos, vector.multiply(minetest.yaw_to_dir(yaw),
                                           10 * self.growth_scale))
     local dir = vector.direction(pos, goal)
+    if self.bone_anim["neck"] then
+        local pitch = abs(pos.y - goal.y)
+        if dir.y > 0 then
+            self.bone_anim["neck"].pitch = pitch
+        else
+            self.bone_anim["neck"].pitch = -pitch
+        end
+    end
     local dest = vector.add(pos, vector.multiply(dir, range))
     local length = ray_distance(pos, dest)
     dest = vector.add(pos, vector.multiply(dir, length))
@@ -899,17 +939,6 @@ function draconis.ice_vitals(self)
 	end
 end
 
-function draconis.flap_sound(self)
-    if not self._anim then return end
-    if self._anim:match("fly") then
-        self.flap_sound_timer = self.flap_sound_timer - self.dtime
-    end
-    if self.flap_sound_timer <= 0  then
-        mobkit.make_sound(self, 'flap')
-        self.flap_sound_timer = 1.5
-    end
-end
-
 function draconis.increase_age(self)
     self.age = mobkit.remember(self, "age", self.age + 1)
     if self.age < 100 then
@@ -980,6 +1009,13 @@ end
 function draconis.on_step(self, dtime, moveresult)
     mob_core.on_step(self, dtime, moveresult)
     if not mobkit.is_alive(self) then return end
+    draconis.movement_anim(self)
+    draconis.idle_anim(self)
+    self.last_check = self.last_check + 1 or 0
+    if self.last_check >= 5 then
+        self.last_dir = minetest.yaw_to_dir(self.object:get_yaw())
+        self.last_check = 0
+    end
     local pos = self.object:get_pos()
     if self.owner
     and pos then
@@ -1010,7 +1046,6 @@ function draconis.on_step(self, dtime, moveresult)
         self.max_speed = 12
     end
     if self.stuck_timer > 1.5 then draconis.break_free(self) end
-    draconis.flap_sound(self)
 end
 
 -------------------
@@ -1184,3 +1219,116 @@ for _, color in pairs(draconis.ice_colors) do
         inventory_image = "draconis_ice_dragon_egg_" .. color .. ".png"
     })
 end
+
+local anim_mob = {}
+local last_bone = {}
+
+function draconis.set_bone_rot(self, clicker)
+	local item = clicker:get_wielded_item()
+    if item:get_name() == "default:stick" then
+        
+        local name = clicker:get_player_name()
+
+        anim_mob[name] = self
+        
+        local bone = last_bone[name] or "Wing.R.1"
+
+        local _, pos = self.object:get_bone_position(bone)
+
+        local x = pos.x
+        local y = pos.y
+        local z = pos.z
+
+		minetest.show_formspec(name, "draconis_base_rot", "size[8,6]"
+			.. "field[0.5,1;7.5,0;bone;"
+            .. minetest.formspec_escape("Enter name:") .. ";" .. bone .. "]"
+            .. "field[0.5,2;7.5,0;bone_x;"
+            .. minetest.formspec_escape("X:") .. ";" .. x .. "]"
+            .. "field[0.5,3;7.5,0;bone_y;"
+            .. minetest.formspec_escape("Y:") .. ";" .. y .. "]"
+            .. "field[0.5,4;7.5,0;bone_z;"
+            .. minetest.formspec_escape("Z:") .. ";" .. z .. "]"
+			.. "button_exit[2.5,5;3,1;set;"
+			.. minetest.formspec_escape("Set") .. "]")
+    end
+end
+
+minetest.register_on_player_receive_fields(function(player, formname, fields)
+
+	if formname == "draconis_base_rot"
+	and fields.bone then
+
+		local name = player:get_player_name()
+
+		if not anim_mob[name]
+		or not anim_mob[name].object then
+			return
+        end
+
+        local pos_x = tonumber(fields.bone_x) or 0
+        local pos_y = tonumber(fields.bone_y) or 0
+        local pos_z = tonumber(fields.bone_z) or 0
+
+        local b_pos, b_rot = anim_mob[name].object:get_bone_position(fields.bone)
+
+		anim_mob[name].object:set_bone_position(fields.bone, b_pos, {x = pos_x, y = pos_y, z = pos_z})
+
+        last_bone[name] = fields.bone
+		anim_mob[name] = nil
+	end
+end)
+
+function draconis.set_bone_pos(self, clicker)
+	local item = clicker:get_wielded_item()
+    if item:get_name() == "default:tree" then
+        
+        local name = clicker:get_player_name()
+
+        anim_mob[name] = self
+        
+        local bone = last_bone[name] or "Wing.R.1"
+
+        local pos = self.object:get_bone_position(bone)
+
+        local x = pos.x
+        local y = pos.y
+        local z = pos.z
+
+		minetest.show_formspec(name, "draconis_base_pos", "size[8,6]"
+			.. "field[0.5,1;7.5,0;bone;"
+            .. minetest.formspec_escape("Enter name:") .. ";" .. bone .. "]"
+            .. "field[0.5,2;7.5,0;bone_x;"
+            .. minetest.formspec_escape("X:") .. ";" .. x .. "]"
+            .. "field[0.5,3;7.5,0;bone_y;"
+            .. minetest.formspec_escape("Y:") .. ";" .. y .. "]"
+            .. "field[0.5,4;7.5,0;bone_z;"
+            .. minetest.formspec_escape("Z:") .. ";" .. z .. "]"
+			.. "button_exit[2.5,5;3,1;set;"
+			.. minetest.formspec_escape("Set") .. "]")
+	end
+end
+
+minetest.register_on_player_receive_fields(function(player, formname, fields)
+
+	if formname == "draconis_base_pos"
+	and fields.bone then
+
+		local name = player:get_player_name()
+
+		if not anim_mob[name]
+		or not anim_mob[name].object then
+			return
+        end
+
+        local pos_x = tonumber(fields.bone_x) or 0
+        local pos_y = tonumber(fields.bone_y) or 0
+        local pos_z = tonumber(fields.bone_z) or 0
+
+        local b_pos, b_rot = anim_mob[name].object:get_bone_position(fields.bone)
+
+		anim_mob[name].object:set_bone_position(fields.bone, {x = pos_x, y = pos_y, z = pos_z}, b_rot)
+
+        last_bone[name] = fields.bone
+		anim_mob[name] = nil
+	end
+end)
