@@ -90,7 +90,7 @@ local function fire_dragon_logic(self)
 
         get_sounds(self)
         draconis.fire_vitals(self)
-        mob_core.random_sound(self, 4 * self.growth_stage)
+        draconis.random_sound(self, 4 * self.growth_stage)
 
         if self.order == "stand"
         and not self.driver then
@@ -254,6 +254,154 @@ minetest.register_entity("draconis:fire_dragon", {
     -- Mount
     mount_speed = 18,
     mount_speed_sprint = 26,
+    -- Bones
+    last_check = 0,
+    bone_anim = {},
+    bones = {
+        -- Torso
+        {
+            name = "Torso.1",
+            position = {x = 0, y = 0.85, z = -1.4},
+            rotation = {x = -90, y = 180, z = 0}
+        },
+        {
+            name = "Torso.2",
+            position = {x = 0, y = 0.9, z = 0},
+            rotation = {x = 0, y = 0, z = 0}
+        },
+        -- Tail
+        {
+            name = "Tail.1",
+            position = {x = 0, y = 0, z = 0},
+            rotation = {x = -20, y = 0, z = 180}
+        },
+        {
+            name = "Tail.2",
+            position = {x = 0, y = 0.8, z = 0},
+            rotation = {x = 5, y = 0, z = 0}
+        },
+        {
+            name = "Tail.3",
+            position = {x = 0, y = 1, z = 0},
+            rotation = {x = 5, y = 0, z = 0}
+        },
+        {
+            name = "Tail.4",
+            position = {x = 0, y = 1.15, z = 0},
+            rotation = {x = 5, y = 0, z = 0}
+        },
+        -- Neck
+        {
+            name = "Neck.1",
+            position = {x = 0, y = 0.95, z = 0},
+            rotation = {x = 10, y = 0, z = 0}
+        },
+        {
+            name = "Neck.2",
+            position = {x = 0, y = 0.45, z = 0},
+            rotation = {x = -5, y = 0, z = 0}
+        },
+        {
+            name = "Neck.3",
+            position = {x = 0, y = 0.55, z = 0},
+            rotation = {x = -10, y = 0, z = 0}
+        },
+        -- Head
+        {
+            name = "Head",
+            position = {x = 0, y = 0.5, z = 0},
+            rotation = {x = -30, y = 0, z = 0}
+        },
+        {
+            name = "Jaw",
+            position = {x = 0, y = 0.37, z = -0.22},
+            rotation = {x = 0, y = 0, z = 0}
+        },
+        -- Right Leg
+        {
+            name = "Upper.Leg.R",
+            position = {x = -0.35, y = 0.2, z = -0.35},
+            rotation = {x = -90, y = 0, z = 0}
+        },
+        {
+            name = "Lower.Leg.R",
+            position = {x = 0, y = 0.5, z = -0.2},
+            rotation = {x = 5, y = 0, z = 0}
+        },
+        {
+            name = "Foot.R",
+            position = {x = 0, y = 0.67, z = 0},
+            rotation = {x = 85, y = 0, z = 0}
+        },
+        -- Left Leg
+        {
+            name = "Upper.Leg.L",
+            position = {x = 0.35, y = 0.2, z = -0.35},
+            rotation = {x = -90, y = 0, z = 0}
+        },
+        {
+            name = "Lower.Leg.L",
+            position = {x = 0, y = 0.5, z = -0.2},
+            rotation = {x = 5, y = 0, z = 0}
+        },
+        {
+            name = "Foot.L",
+            position = {x = 0, y = 0.67, z = 0},
+            rotation = {x = 85, y = 0, z = 0}
+        },
+        -- Right Wing
+        {
+            name = "Wing.R.1",
+            position = {x = -0.3, y = 0.75, z = -0.2},
+            rotation = {x = 150, y = -130, z = -30}
+        },
+        {
+            name = "Wing.R.2",
+            position = {x = 0, y = 1.5, z = 0},
+            rotation = {x = -80, y = 0, z = 0}
+        },
+        {
+            name = "Wing.R.F1",
+            position = {x = 0, y = 1.4, z = 0},
+            rotation = {x = 40, y = 20, z = -50}
+        },
+        {
+            name = "Wing.R.F2",
+            position = {x = 0, y = 1.4, z = 0},
+            rotation = {x = 60, y = 20, z = -50}
+        },
+        {
+            name = "Wing.R.F3",
+            position = {x = 0, y = 1.4, z = 0},
+            rotation = {x = 80, y = 20, z = -50}
+        },
+        -- Left Wing
+        {
+            name = "Wing.L.1",
+            position = {x = 0.3, y = 0.75, z = -0.2},
+            rotation = {x = -150, y = -50, z = 30}
+        },
+        {
+            name = "Wing.L.2",
+            position = {x = 0, y = 1.5, z = 0},
+            rotation = {x = 80, y = 0, z = 0}
+        },
+        {
+            name = "Wing.L.F1",
+            position = {x = 0, y = 1.4, z = 0},
+            rotation = {x = -40, y = -20, z = -50}
+        },
+        {
+            name = "Wing.L.F2",
+            position = {x = 0, y = 1.4, z = 0},
+            rotation = {x = -60, y = -20, z = -50}
+        },
+        {
+            name = "Wing.L.F3",
+            position = {x = 0, y = 1.4, z = 0},
+            rotation = {x = -80, y = -20, z = -50}
+        }
+    },
     -- Sound
     child_sounds = {
         random = {
@@ -409,6 +557,8 @@ minetest.register_entity("draconis:fire_dragon", {
             draconis.increase_age(self)
         end
         mob_core.nametag(self, clicker)
+        draconis.set_bone_rot(self, clicker)
+        draconis.set_bone_pos(self, clicker)
     end,
     on_punch = function(self, puncher, _, tool_capabilities, dir)
         if self.driver and puncher == self.driver then return end
