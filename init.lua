@@ -147,6 +147,7 @@ draconis.ice_roost_spawns = storage.ice_roosts
 draconis.fire_roost_spawns = storage.fire_roosts
 
 dofile(path.."/api/api.lua")
+dofile(path.."/api/animations.lua")
 dofile(path.."/api/hq_lq.lua")
 dofile(path.."/api/mount.lua")
 dofile(path.."/api/pathfinding.lua")
