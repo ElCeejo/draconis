@@ -396,6 +396,7 @@ function draconis.hq_aerial_attack_target(self, prty, target)
         if dist > 16 then
             if not self.breath_meter_bottomed then
                 self.isonground = false
+                self.object:set_velocity({x=0,y=0,z=0})
                 draconis.lq_breath_attack(self, target, 14, self.view_range, "fly_idle_fire")
             else
                 if not mobkit.is_queue_empty_low(self) then
