@@ -86,6 +86,10 @@ end
 
 function draconis.register_spawn(def, interval, chance)
 	local spawn_timer = 0
+	if type(chance) ~= "number"
+	or chance < 1 then
+		chance = 1
+	end
 	minetest.register_globalstep(function(dtime)
 		spawn_timer = spawn_timer + dtime
 		if spawn_timer > interval then
