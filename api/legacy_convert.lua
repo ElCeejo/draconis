@@ -18,7 +18,7 @@ local old_ice_ents = {
 local old_fire_ents = {
     "draconis:fire_dragon",
     "draconis:fire_wyvern",
-    "draconis:hatched_fire_draconis",
+    "draconis:hatched_fire_dragon",
     "draconis:hatched_fire_wyvern" 
 }
 
