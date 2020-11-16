@@ -51,7 +51,7 @@ end
 function draconis.forceload(pos)
     local fl = draconis.calc_forceload(pos)
     for i = 1, #fl do
-        if minetest.forceload_block(fl[i], true) then
+        if minetest.forceload_block(fl[i]) then
             minetest.log("action", "[Draconis 1.0] Forceloaded 4x4x4 area around "..minetest.pos_to_string(pos))
         end
     end
