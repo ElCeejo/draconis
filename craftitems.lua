@@ -234,6 +234,9 @@ minetest.register_craftitem("draconis:summoning_gem", {
 					return
 				end
 			end
+			minetest.chat_send_player(name, "Could not be teleported. Last seen at: "
+														..minetest.pos_to_string(pos)..
+														"\n Try again a couple more times.")
 		end
 	end,
 	on_place = function(itemstack, player, pointed_thing)
@@ -269,6 +272,9 @@ minetest.register_craftitem("draconis:summoning_gem", {
 					return
 				end
 			end
+			minetest.chat_send_player(name, "Could not be teleported. Last seen at: "
+														..minetest.pos_to_string(pos)..
+														"\n Try again a couple more times.")
 		end
 	end
 })
