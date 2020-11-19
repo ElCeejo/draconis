@@ -990,7 +990,6 @@ function draconis.on_step(self, dtime, moveresult)
         if self.name:find("ice") then
             self.eyes = set_eyes(self, "draconis:ice_eyes")
         elseif self.name:find("fire") then
-            minetest.chat_send_all("text")
             self.eyes = set_eyes(self, "draconis:fire_eyes")
         end
     end
