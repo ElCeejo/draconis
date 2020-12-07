@@ -361,8 +361,6 @@ end
 -- Dragon Breath --
 -------------------
 
-local breath_timer
-
 local function breath_sound(self)
     if not self.breath_timer then self.breath_timer = 2 end
     self.breath_timer = self.breath_timer - self.dtime
@@ -924,7 +922,7 @@ function draconis.growth(self)
     self._growth_timer = self._growth_timer - 1
     if self._growth_timer <= 0 then
         draconis.increase_age(self)
-        self._growth_timer = 4500
+        self._growth_timer = 1200
     end
     if self.age <= 25 then
         self.growth_stage = 1
