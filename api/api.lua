@@ -137,7 +137,6 @@ function draconis.set_drops(self)
     local name = self.name:split(":")[2]
     if self.cavern_spawn == true then
         self.drops_level = mobkit.remember(self, "drops_level", 5)
-        return
     end
     if self.drops_level ~= self.growth_stage and self.drops_level ~= 5 then
         self.drops_level = mobkit.remember(self, "drops_level",
@@ -229,7 +228,7 @@ function draconis.on_activate(self, staticdata, dtime_s)
     self.flight_timer = mobkit.recall(self, "flight_timer") or 1
     self.age = mobkit.recall(self, "age") or 100
     self.growth_scale = mobkit.recall(self, "growth_scale") or 1
-    self._growth_timer = mobkit.recall(self, "_growth_timer") or 4500
+    self._growth_timer = mobkit.recall(self, "_growth_timer") or 1200
     self.drops_level = mobkit.recall(self, "drops_level") or 0
     self.breath_meter = mobkit.recall(self, "breath_meter") or 100
     self.breath_meter_max = mobkit.recall(self, "breath_meter_max") or 100
@@ -968,7 +967,7 @@ end
 function draconis.hunger(self)
     if not self.tamed then self.hunger = self.max_hunger return end
     if self.hunger > self.max_hunger then self.hunger = self.max_hunger end
-    if mobkit.timer(self, 240) then self.hunger = self.hunger - 1 end
+    if mobkit.timer(self, 900) then self.hunger = self.hunger - 1 end
     if mobkit.timer(self, 3) then
         if self.hunger < self.max_hunger / 3 then mobkit.hurt(self, 1) end
     end
