@@ -96,6 +96,24 @@ for _, ice_color in pairs(draconis.ice_colors) do
     })
 end
 
+minetest.register_craft({
+	output = "draconis:draconic_steel_forge_ice",
+	recipe = {
+		{"draconis:frozen_stone", "draconis:frozen_stone", "draconis:frozen_stone"},
+		{"draconis:frozen_stone", "default:furnace", "draconis:frozen_stone"},
+		{"draconis:frozen_stone", "draconis:frozen_stone", "draconis:frozen_stone"},
+	}
+})
+
+minetest.register_craft({
+	output = "draconis:draconic_steel_forge_fire",
+	recipe = {
+		{"draconis:scorched_stone", "draconis:scorched_stone", "draconis:scorched_stone"},
+		{"draconis:scorched_stone", "default:furnace", "draconis:scorched_stone"},
+		{"draconis:scorched_stone", "draconis:scorched_stone", "draconis:scorched_stone"},
+	}
+})
+
 ---------------------------
 -- Quick Craft Functions --
 ---------------------------
