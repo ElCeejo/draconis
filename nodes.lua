@@ -238,7 +238,7 @@ minetest.register_node("draconis:lectern", {
 	description = "Lectern",
 	tiles = {"draconis_lectern.png",},
 	paramtype2 = "facedir",
-	groups = {cracky = 2, tubedevice = 1, tubedevice_receiver = 1},
+	groups = {choppy = 2, oddly_breakable_by_hand = 2, flammable = 2, tubedevice = 1, tubedevice_receiver = 1},
 	legacy_facedir_simple = true,
 	is_ground_content = false,
 	sounds = default.node_sound_wood_defaults(),
