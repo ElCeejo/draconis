@@ -667,7 +667,7 @@ function draconis.formspec(self, clicker)
             "label[4,3.8;", "Health:" .. health, "]",
             "label[4,4.1;", "Age:" .. self.age, "]",
             "label[4,4.4;", "Hunger:" .. hunger, "]",
-            "label[4,4.7;", "Owner:" .. self.owner or "", "]",
+            "label[4,4.7;", "Owner:" .. (self.owner or ""), "]",
             "button[4,6.3;3,0.8;btn_flight;Flight Allowed: " .. tostring(self.fly_allowed), "]",
             "button[4,7.3;3,0.8;btn_stance;Stance: " .. draconis.string_format(self.stance), "]",
             "button[4,8.3;3,0.8;btn_order;Order: " .. draconis.string_format(self.order), "]"
