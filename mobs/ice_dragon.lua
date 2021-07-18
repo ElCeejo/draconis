@@ -438,12 +438,17 @@ minetest.register_entity("draconis:ice_dragon", {
 mob_core.register_spawn_egg("draconis:ice_dragon", "a3bcd1cc", "527fa3d9")
 
 if minetest.settings:get_bool("simple_spawning") then
-    local spawn_rate = minetest.settings:get("dragon_spawn_rate")
-    draconis.register_spawn({
+    local spawn_rate = tonumber(minetest.settings:get("dragon_spawn_rate")) or 512
+    mob_core.register_spawn({
         name = "draconis:ice_dragon",
-        biomes = draconis.cold_biomes,
         nodes = draconis.cold_biome_nodes,
-        min_height = 1,
-        max_height = 310
-    }, 16, spawn_rate)
+        min_light = 0,
+        max_light = 15,
+        min_height = 80,
+        max_height = 31000,
+        group = 0,
+        optional = {
+            biomes = draconis.cold_biomes,
+        }
+    }, spawn_rate, 60)
 end
