@@ -439,12 +439,17 @@ minetest.register_entity("draconis:fire_dragon", {
 mob_core.register_spawn_egg("draconis:fire_dragon", "74271acc", "250b06d9")
 
 if minetest.settings:get_bool("simple_spawning") then
-    local spawn_rate = minetest.settings:get("dragon_spawn_rate")
-    draconis.register_spawn({
+    local spawn_rate = tonumber(minetest.settings:get("dragon_spawn_rate")) or 512
+    mob_core.register_spawn({
         name = "draconis:fire_dragon",
-        biomes = draconis.warm_biomes,
         nodes = draconis.warm_biome_nodes,
+        min_light = 0,
+        max_light = 15,
         min_height = 1,
-        max_height = 310
-    }, 16, spawn_rate)
+        max_height = 31000,
+        group = 0,
+        optional = {
+            biomes = draconis.warm_biomes,
+        }
+    }, spawn_rate, 60)
 end
