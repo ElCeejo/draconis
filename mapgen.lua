@@ -3,90 +3,72 @@
 -------------
 -- Ver 1.0 --
 
-local ice_cavern_data = {
-    outer_id = minetest.get_content_id("draconis:frozen_stone"),
-    loot_id = minetest.get_content_id("default:steelblock"),
-    ore_table = {
-        minetest.get_content_id("default:stone_with_diamond"),
-        minetest.get_content_id("default:stone_with_tin"),
-        minetest.get_content_id("default:stone_with_iron")
-    }
+-----------------
+-- Content IDs --
+-----------------
+
+local function get_content_id(name)
+    if not minetest.registered_nodes[name] then
+        return nil
+    else
+        return minetest.get_content_id(name)
+    end
+end
+
+-- Fire --
+
+local fire_ores = {
+    get_content_id("default:stone_with_diamond"),
+    get_content_id("default:stone_with_gold"),
+    get_content_id("default:stone_with_iron")
 }
 
-local fire_cavern_data = {
-    outer_id = minetest.get_content_id("draconis:scorched_stone"),
-    loot_id = minetest.get_content_id("default:goldblock"),
-    ore_table = {
-        minetest.get_content_id("default:stone_with_diamond"),
+local fire_loot = get_content_id("default:goldblock")
+
+-- Ice --
+
+local ice_ores = {
+    get_content_id("default:stone_with_diamond"),
+    get_content_id("default:stone_with_tin"),
+    get_content_id("default:stone_with_iron")
+}
+
+local ice_loot = minetest.get_content_id("default:steelblock")
+
+-- Mod Compatibility --
+
+if minetest.get_modpath("underch") then
+    fire_ores = {
+        minetest.get_content_id("underch:emerald_ore"),
         minetest.get_content_id("default:stone_with_gold"),
         minetest.get_content_id("default:stone_with_iron")
     }
-}
-
-local ice_roost_data = {
-    soil_id = minetest.get_content_id("draconis:frozen_soil"),
-    stone_id = minetest.get_content_id("draconis:frozen_stone"),
-    tree_id = minetest.get_content_id("draconis:frozen_tree"),
-    leaves_id = minetest.get_content_id("air"),
-    flora_id = minetest.get_content_id("air"),
-    loot_id = minetest.get_content_id("default:steelblock")
-}
-
-local fire_roost_data = {
-    soil_id = minetest.get_content_id("draconis:scorched_soil"),
-    stone_id = minetest.get_content_id("draconis:scorched_stone"),
-    tree_id = minetest.get_content_id("draconis:scorched_tree"),
-    leaves_id = minetest.get_content_id("air"),
-    flora_id = minetest.get_content_id("air"),
-    loot_id = minetest.get_content_id("default:goldblock")
-}
-
-if minetest.get_modpath("underch") then
-    ice_cavern_data.loot_id = minetest.get_content_id("underch:saphire_block")
-    fire_cavern_data.loot_id = minetest.get_content_id("underch:emerald_block")
-    table.insert(ice_cavern_data.ore_table, minetest.get_content_id("underch:saphire_ore"))
-    table.insert(fire_cavern_data.ore_table, minetest.get_content_id("underch:emerald_ore"))
-    ice_roost_data.loot_id = minetest.get_content_id("underch:saphire_block")
-    fire_roost_data.loot_id = minetest.get_content_id("underch:emerald_block")
+    ice_ores = {
+        minetest.get_content_id("underch:saphire_ore"),
+        minetest.get_content_id("default:stone_with_tin"),
+        minetest.get_content_id("default:stone_with_iron")
+    }
 end
 
 if minetest.get_modpath("moreores") then
-    ice_cavern_data.loot_id = minetest.get_content_id("moreores:silver_block")
-    ice_roost_data.loot_id = minetest.get_content_id("moreores:silver_block")
+    ice_loot = minetest.get_content_id("moreores:silver_block")
 end
 
-local roost_spawn_rate = minetest.settings:get("roost_spawn_rate") or 64
+--------------
+-- Settings --
+--------------
 
-local cavern_spawn_rate = minetest.settings:get("cavern_spawn_rate") or 256
+local nest_spawn_rate = minetest.settings:get("nest_spawn_rate") or 64
+
+local roost_spawn_rate = minetest.settings:get("roost_spawn_rate") or 32
+
+local cavern_spawn_rate = minetest.settings:get("cavern_spawn_rate") or 64
+
+------------
+-- Locals --
+------------
 
 local random = math.random
-
-local walkable_ids = {}
-
-minetest.register_on_mods_loaded(function()
-    for name in pairs(minetest.registered_nodes) do
-        if name ~= "air" and name ~= "ignore" then
-            if minetest.registered_nodes[name].walkable then
-                local c_name = minetest.get_content_id(name)
-                table.insert(walkable_ids, c_name)
-            end
-        end
-    end
-end)
-
-local lava_ids = {}
-
-minetest.register_on_mods_loaded(function()
-    for name in pairs(minetest.registered_nodes) do
-        if name ~= "air" and name ~= "ignore" then
-            if minetest.registered_nodes[name].groups.lava
-            and minetest.registered_nodes[name].groups.lava >= 1 then
-                local c_name = minetest.get_content_id(name)
-                table.insert(lava_ids, c_name)
-            end
-        end
-    end
-end)
 
 local function is_surface_node(pos)
     local dirs = {
@@ -104,98 +86,325 @@ local function is_surface_node(pos)
     return false
 end
 
-local function find_clear_pos(pos)
-    local pos1 = vector.new(pos.x - 8, pos.y - 8, pos.z - 8)
-    local pos2 = vector.new(pos.x + 8, pos.y + 8, pos.z + 8)
-    local clear = pos
-    for x = pos1.x, pos2.x do
-        for y = pos1.y, pos2.y do
-            for z = pos1.z, pos2.z do
-                local npos = vector.new(x, y, z)
-                local node = minetest.get_node(npos)
-                if node.name == "air" then
-                    clear = npos
-                    break
-                end
-            end
-        end
-    end
-    return clear
+local function G(name, group)
+    if minetest.get_item_group(name, group) > 0 then return true end
+    return false
 end
 
--- Ice Cavern Spawn --
+local function dist_2d(pos1, pos2)
+    local a = vector.new(pos1.x, 0, pos1.z)
+    local b = vector.new(pos2.x, 0, pos2.z)
+    return vector.distance(a, b)
+end
 
-minetest.register_globalstep(function()
-    for _, plyr in ipairs(minetest.get_connected_players()) do
-        local func = function(name)
-            local player = minetest.get_player_by_name(name)
-            if player then
-                local pos = player:get_pos()
-                if #draconis.ice_cavern_spawns >= 1 then
-                    for i = 1, #draconis.ice_cavern_spawns do
-                        if draconis.ice_cavern_spawns[i] and
-                            minetest.get_node(draconis.ice_cavern_spawns[i])
-                                .name == "air" and
-                            vector.distance(pos, draconis.ice_cavern_spawns[i]) <
-                            32 then
-                            if draconis.spawn_dragon(
-                                draconis.ice_cavern_spawns[i],
-                                "draconis:ice_dragon", true, 200) then
-                                table.remove(draconis.ice_cavern_spawns, i)
-                            end
+-------------------
+-- Nest Spawning --
+-------------------
+
+if minetest.settings:get_bool("nest_spawning") then
+
+local np_nest = {
+    offset = 0,
+    scale = 1,
+    spread = {x = 16, y = 3, z = 16},
+    seed = 5900033,
+    octaves = 2,
+    persist = 0.5
+}
+
+local nest_radius = 8
+
+local nest_noise_amp = 0.12
+
+local function get_terrain_flatness(pos)
+    local pos1 = vector.new(pos.x - 16, pos.y, pos.z - 16)
+    local pos2 = vector.new(pos.x + 16, pos.y, pos.z + 16)
+    local ground = minetest.find_nodes_in_area(pos1, pos2, mob_core.walkable_nodes)
+    return #ground
+end
+
+local function create_ice_nest(pos, minp, maxp)
+    local y0 = minp.y
+    local y1 = maxp.y
+
+    local x0 = minp.x
+    local x1 = maxp.x
+    local z0 = minp.z
+    local z1 = maxp.z
+    local ccenx = math.floor((x0 + x1) / 2)
+    local cceny = math.floor((y0 + y1) / 2)
+    local ccenz = math.floor((z0 + z1) / 2)
+
+    local vm, emin, emax = minetest.get_mapgen_object("voxelmanip")
+    local area = VoxelArea:new{MinEdge = emin, MaxEdge = emax}
+    local data = vm:get_data()
+
+    local c_air = minetest.get_content_id("air")
+    local c_tree = minetest.get_content_id("draconis:frozen_tree")
+    local c_soil = minetest.get_content_id("draconis:frozen_soil")
+    local c_stone = minetest.get_content_id("draconis:frozen_stone")
+    local c_loot = ice_loot
+
+    local sidelen = x1 - x0 + 1
+    local chulens = {x = sidelen, y = sidelen, z = sidelen}
+    local minposxyz = {x = x0, y = y0, z = z0}
+
+    local force_loaded = {}
+
+    local nvals_nest =
+        minetest.get_perlin_map(np_nest, chulens):get3dMap_flat(minposxyz)
+
+    local nixyz = 1
+    for z = z0, z1 do
+        for y = y0, y1 do
+            local vi = area:index(x0, y, z)
+            for x = x0, x1 do
+                minetest.forceload_block({x=x, y=y, z=z}, false)
+                table.insert(force_loaded, {x=x, y=y, z=z})
+                local n_nest = nvals_nest[nixyz]
+                local nodrad = ((x - ccenx) ^ 2 + (y - cceny) ^ 0.75 + (z - ccenz) ^ 2) ^ 0.5
+                local blob = ((nest_radius + ((y - cceny) * 0.5)) - nodrad) / nest_radius + n_nest * nest_noise_amp
+                if blob >= 0 then
+                    data[vi] = c_air
+                    local bi = area:index(x, y - 1, z) -- Below current index
+                    if data[bi] ~= c_air and data[vi] == c_air then
+                        if random(32) == 1 then
+                            data[vi] = c_loot
                         end
                     end
-                end
-                if #draconis.fire_cavern_spawns >= 1 then
-                    for i = 1, #draconis.fire_cavern_spawns do
-                        if draconis.fire_cavern_spawns[i] and
-                            minetest.get_node(draconis.fire_cavern_spawns[i])
-                                .name == "air" and
-                            vector.distance(pos, draconis.fire_cavern_spawns[i]) <
-                            32 then
-                            if draconis.spawn_dragon(
-                                draconis.fire_cavern_spawns[i],
-                                "draconis:fire_dragon", true, 200) then
-                                table.remove(draconis.fire_cavern_spawns, i)
-                            end
-                        end
+                elseif blob >= -0.1 then
+                    local c_name = minetest.get_name_from_content_id(data[vi])
+                    if G(c_name, "soil") then
+                        data[vi] = c_soil
+                    end
+                    if G(c_name, "stone") then
+                        data[vi] = c_stone
+                    end
+                    if G(c_name, "tree") and data[vi] ~= c_tree then
+                        data[vi] = c_air
+                    end
+                    if G(c_name, "leaves") then
+                        data[vi] = c_air
+                    end
+                    if G(c_name, "flora") then
+                        data[vi] = c_air
                     end
                 end
-                if #draconis.ice_roost_spawns >= 1 then
-                    for i = 1, #draconis.ice_roost_spawns do
-                        if draconis.ice_roost_spawns[i] and
-                            minetest.get_node(draconis.ice_roost_spawns[i]).name ~=
-                            "ignore" and
-                            vector.distance(pos, draconis.ice_roost_spawns[i]) <
-                            32 then
-                            if draconis.spawn_dragon(
-                                draconis.ice_roost_spawns[i],
-                                "draconis:ice_dragon", false, random(30, 75)) then
-                                table.remove(draconis.ice_roost_spawns, i)
-                            end
-                        end
-                    end
-                end
-                if #draconis.fire_roost_spawns >= 1 then
-                    for i = 1, #draconis.fire_roost_spawns do
-                        if draconis.fire_roost_spawns[i] and
-                            minetest.get_node(draconis.fire_roost_spawns[i])
-                                .name ~= "ignore" and
-                            vector.distance(pos, draconis.fire_roost_spawns[i]) <
-                            32 then
-                            if draconis.spawn_dragon(
-                                draconis.fire_roost_spawns[i],
-                                "draconis:fire_dragon", false, random(30, 75)) then
-                                table.remove(draconis.fire_roost_spawns, i)
-                            end
-                        end
-                    end
-                end
+                nixyz = nixyz + 1
+                vi = vi + 1
             end
         end
-        minetest.after(0, func, plyr:get_player_name())
+    end
+    local s_pos = pos
+    while minetest.registered_nodes[minetest.get_node(pos).name].walkable do
+        s_pos.y = s_pos.y + 1
+    end
+    s_pos.y = s_pos.y + 3
+
+    local dragon
+
+    minetest.after(4, function()
+        dragon = draconis.spawn_dragon(s_pos, "draconis:ice_dragon", true, random(30, 75))
+        minetest.add_entity(pos, "draconis:ice_dragon_egg_" .. draconis.ice_colors[math.random(5)] .. "_ent")
+        minetest.after(1, function()
+            if not dragon then
+                dragon = draconis.spawn_dragon(s_pos, "draconis:ice_dragon", true, random(30, 75))
+            end
+            minetest.after(1, function()
+                if not dragon then
+                    dragon = draconis.spawn_dragon(s_pos, "draconis:ice_dragon", true, random(30, 75))
+                end
+            end)
+        end)
+    end)
+
+    minetest.after(7, function()
+        for i = 1, #force_loaded do
+            minetest.forceload_free_block(force_loaded[i])
+        end
+    end)
+
+    vm:set_data(data)
+    vm:set_lighting({day = 0, night = 0})
+    vm:calc_lighting()
+    vm:write_to_map(data)
+end
+
+local function create_fire_nest(pos, minp, maxp)
+    local y0 = minp.y
+    local y1 = maxp.y
+
+    local x0 = minp.x
+    local x1 = maxp.x
+    local z0 = minp.z
+    local z1 = maxp.z
+    local ccenx = math.floor((x0 + x1) / 2)
+    local cceny = math.floor((y0 + y1) / 2)
+    local ccenz = math.floor((z0 + z1) / 2)
+
+    local vm, emin, emax = minetest.get_mapgen_object("voxelmanip")
+    local area = VoxelArea:new{MinEdge = emin, MaxEdge = emax}
+    local data = vm:get_data()
+
+    local c_air = minetest.get_content_id("air")
+    local c_tree = minetest.get_content_id("draconis:scorched_tree")
+    local c_soil = minetest.get_content_id("draconis:scorched_soil")
+    local c_stone = minetest.get_content_id("draconis:scorched_stone")
+    local c_loot = fire_loot
+
+    local sidelen = x1 - x0 + 1
+    local chulens = {x = sidelen, y = sidelen, z = sidelen}
+    local minposxyz = {x = x0, y = y0, z = z0}
+
+    local force_loaded = {}
+
+    local nvals_nest =
+        minetest.get_perlin_map(np_nest, chulens):get3dMap_flat(minposxyz)
+
+    local nixyz = 1
+    for z = z0, z1 do
+        for y = y0, y1 do
+            local vi = area:index(x0, y, z)
+            for x = x0, x1 do
+                minetest.forceload_block({x=x, y=y, z=z}, false)
+                table.insert(force_loaded, {x=x, y=y, z=z})
+                local n_nest = nvals_nest[nixyz]
+                local nodrad = ((x - ccenx) ^ 2 + (y - cceny) ^ 0.75 + (z - ccenz) ^ 2) ^ 0.5
+                local blob = ((nest_radius + ((y - cceny) * 0.5)) - nodrad) / nest_radius + n_nest * nest_noise_amp
+                if blob >= 0 then
+                    data[vi] = c_air
+                    local bi = area:index(x, y - 1, z) -- Below current index
+                    if data[bi] ~= c_air and data[vi] == c_air then
+                        if random(32) == 1 then
+                            data[vi] = c_loot
+                        end
+                    end
+                elseif blob >= -0.1 then
+                    local c_name = minetest.get_name_from_content_id(data[vi])
+                    if G(c_name, "soil") then
+                        data[vi] = c_soil
+                    end
+                    if G(c_name, "stone") then
+                        data[vi] = c_stone
+                    end
+                    if G(c_name, "tree") and data[vi] ~= c_tree then
+                        data[vi] = c_air
+                    end
+                    if G(c_name, "leaves") then
+                        data[vi] = c_air
+                    end
+                    if G(c_name, "flora") then
+                        data[vi] = c_air
+                    end
+                end
+                nixyz = nixyz + 1
+                vi = vi + 1
+            end
+        end
+    end
+    local s_pos = pos
+    while minetest.registered_nodes[minetest.get_node(pos).name].walkable do
+        s_pos.y = s_pos.y + 1
+    end
+    s_pos.y = s_pos.y + 3
+
+    local dragon
+
+    minetest.after(4, function()
+        dragon = draconis.spawn_dragon(s_pos, "draconis:fire_dragon", false, random(30, 75))
+        minetest.add_entity(pos, "draconis:fire_dragon_egg_" .. draconis.fire_colors[math.random(5)] .. "_ent")
+        minetest.after(1, function()
+            if not dragon then
+                dragon = draconis.spawn_dragon(s_pos, "draconis:fire_dragon", true, random(30, 75))
+            end
+            minetest.after(1, function()
+                if not dragon then
+                    dragon = draconis.spawn_dragon(s_pos, "draconis:fire_dragon", true, random(30, 75))
+                end
+            end)
+        end)
+    end)
+
+    minetest.after(7, function()
+        for i = 1, #force_loaded do
+            minetest.forceload_free_block(force_loaded[i])
+        end
+    end)
+
+    vm:set_data(data)
+    vm:set_lighting({day = 0, night = 0})
+    vm:calc_lighting()
+    vm:write_to_map(data)
+end
+
+minetest.register_on_generated(function(minp, maxp)
+
+    if maxp.y > 1 and random(nest_spawn_rate) < 2 then
+
+        local heightmap = minetest.get_mapgen_object("heightmap")
+        if not heightmap then return end
+
+        local pos = {
+            x = minp.x + math.floor((maxp.x - minp.x) / 2),
+            y = minp.y,
+            z = minp.z + math.floor((maxp.z - minp.z) / 2)
+        }
+
+        local hm_i = (pos.x - minp.x + 1) + (((pos.z - minp.z)) * 80)
+        pos.y = heightmap[hm_i]
+
+        if pos.y > 80
+        and is_surface_node(pos)
+        and get_terrain_flatness(pos) >= 48 then
+            if minetest.registered_biomes[draconis.get_biome_name(pos)].heat_point <= 33 then
+                create_ice_nest(pos, minp, maxp)
+            else
+                create_fire_nest(pos, minp, maxp)
+            end
+            minetest.chat_send_all(minetest.pos_to_string(pos))
+        end
     end
 end)
+
+end
+
+---------------------------
+-- Ice and Fire Spawning --
+---------------------------
+
+if minetest.settings:get_bool("i_f_spawning") then
+
+----------------------
+-- Noise Parameters --
+----------------------
+
+local np_roost = {
+    offset = 0,
+    scale = 1,
+    spread = {x = 32, y = 16, z = 32},
+    seed = 5900033,
+    octaves = 2,
+    persist = 0.5
+}
+
+local roost_radius = 16
+
+local roost_noise_amp = 0.33
+
+local np_cavern = {
+    offset = 0,
+    scale = 1,
+    spread = {x = 32, y = 32, z = 32},
+    seed = 5900033,
+    octaves = 2,
+    persist = 0.5
+}
+
+local cavern_radius = 32
+
+local outer_thresh = -0.2
+
+local cavern_noise_amp = 0.12
 
 ------------
 -- Roosts --
@@ -215,72 +424,235 @@ local function can_spawn_fire_roost(pos)
     return false
 end
 
-local function G(name, group)
-    if minetest.get_item_group(name, group) > 0 then return true end
-    return false
-end
+local function create_fire_roost(pos, minp, maxp)
+    local y0 = minp.y
+    local y1 = maxp.y
 
-local function can_place_loot(pos)
-    pos.y = pos.y - 1
-    local name = minetest.get_node(pos).name
-    if minetest.registered_nodes[name].walkable then return true end
-    return false
-end
+    local x0 = minp.x
+    local x1 = maxp.x
+    local z0 = minp.z
+    local z1 = maxp.z
+    local ccenx = math.floor((x0 + x1) / 2)
+    local cceny = math.floor((y0 + y1) / 2)
+    local ccenz = math.floor((z0 + z1) / 2)
 
-local function create_roost(pos, loot_id, soil_id, stone_id, tree_id, leaves_id,
-                            flora_id, name)
-    local pos1 = {x = pos.x - 18, y = pos.y - 9, z = pos.z - 18}
-    local pos2 = {x = pos.x + 18, y = pos.y + 9, z = pos.z + 18}
-    -- LVM
-    local vm = minetest.get_voxel_manip()
-    local emin, emax = vm:read_from_map(pos1, pos2)
-    local a = VoxelArea:new{MinEdge = emin, MaxEdge = emax}
+    local vm, emin, emax = minetest.get_mapgen_object("voxelmanip")
+    local area = VoxelArea:new{MinEdge = emin, MaxEdge = emax}
     local data = vm:get_data()
-    for z = pos1.z, pos2.z do
-        for y = pos1.y, pos2.y do
-            for x = pos1.x, pos2.x do
-                local vi = a:index(x, y, z)
-                local dist = vector.distance(pos, a:position(vi))
-                if dist < 16 then
+
+    local c_air = minetest.get_content_id("air")
+    local c_tree = minetest.get_content_id("draconis:scorched_tree")
+    local c_soil = minetest.get_content_id("draconis:scorched_soil")
+    local c_stone = minetest.get_content_id("draconis:scorched_stone")
+    local c_loot = fire_loot
+
+    local sidelen = x1 - x0 + 1
+    local chulens = {x = sidelen, y = sidelen, z = sidelen}
+    local minposxyz = {x = x0, y = y0, z = z0}
+
+    local force_loaded = {}
+
+    local nvals_roost =
+        minetest.get_perlin_map(np_roost, chulens):get3dMap_flat(minposxyz)
+
+    local nixyz = 1
+    for z = z0, z1 do
+        for y = y0, y1 do
+            local vi = area:index(x0, y, z)
+            for x = x0, x1 do
+                minetest.forceload_block({x=x, y=y, z=z}, false)
+                table.insert(force_loaded, {x=x, y=y, z=z})
+                local n_roost = nvals_roost[nixyz]
+                local nodrad =
+                    ((x - ccenx) ^ 2 + (y - cceny) ^ 2 + (z - ccenz) ^ 2) ^ 0.5
+                local blob = (roost_radius - nodrad) / roost_radius + n_roost *
+                                 roost_noise_amp
+                if blob >= -0.2 then
                     local c_name = minetest.get_name_from_content_id(data[vi])
                     if G(c_name, "soil") then
-                        data[vi] = soil_id
+                        data[vi] = c_soil
                     end
                     if G(c_name, "stone") then
-                        data[vi] = stone_id
+                        data[vi] = c_stone
                     end
-                    if G(c_name, "tree") then
-                        data[vi] = tree_id
+                    if G(c_name, "tree") and data[vi] ~= c_tree then
+                        data[vi] = c_air
                     end
                     if G(c_name, "leaves") then
-                        data[vi] = leaves_id
+                        data[vi] = c_air
                     end
                     if G(c_name, "flora") then
-                        data[vi] = flora_id
+                        data[vi] = c_air
                     end
-                    if can_place_loot(a:position(vi)) then
-                        if random(1, 32) == 1 then
-                            data[vi] = loot_id
+                    local bi = area:index(x, y - 1, z) -- Below current index
+                    if data[bi] ~= c_air and data[vi] == c_air then
+                        if random(32) == 1 then
+                            data[vi] = c_loot
+                        elseif random(64) == 1 then
+                            local len = random(3, 6)
+                            for i = -1, len do
+                                local vi_pos = area:position(vi)
+                                if dist_2d(pos, vi_pos) > 12 then
+                                    local si =
+                                        area:index(vi_pos.x, vi_pos.y + i,
+                                                   vi_pos.z)
+                                    data[si] = c_tree
+                                end
+                            end
                         end
                     end
                 end
+                nixyz = nixyz + 1
+                vi = vi + 1
             end
         end
     end
-    if name == "draconis:ice_dragon" then
-        table.insert(draconis.ice_roost_spawns, find_clear_pos(pos))
-    elseif name == "draconis:fire_dragon" then
-        table.insert(draconis.fire_roost_spawns, find_clear_pos(pos))
+    local s_pos = pos
+    while minetest.registered_nodes[minetest.get_node(pos).name].walkable do
+        s_pos.y = s_pos.y + 1
     end
+    s_pos.y = s_pos.y + 3
+    local dragon
+    minetest.after(4, function()
+        dragon = draconis.spawn_dragon(s_pos, "draconis:fire_dragon", false, random(30, 75))
+        minetest.after(1, function()
+            if not dragon then
+                dragon = draconis.spawn_dragon(s_pos, "draconis:fire_dragon", false, random(30, 75))
+            end
+            minetest.after(1, function()
+                if not dragon then
+                    dragon = draconis.spawn_dragon(s_pos, "draconis:fire_dragon", false, random(30, 75))
+                end
+            end)
+        end)
+    end)
+    minetest.after(7, function()
+        for i = 1, #force_loaded do
+            minetest.forceload_free_block(force_loaded[i])
+        end
+    end)
     vm:set_data(data)
-    vm:write_to_map(true)
+    vm:set_lighting({day = 0, night = 0})
+    vm:calc_lighting()
+    vm:write_to_map(data)
+end
+
+local function create_ice_roost(pos, minp, maxp)
+    local y0 = minp.y
+    local y1 = maxp.y
+
+    local x0 = minp.x
+    local x1 = maxp.x
+    local z0 = minp.z
+    local z1 = maxp.z
+    local ccenx = math.floor((x0 + x1) / 2)
+    local cceny = math.floor((y0 + y1) / 2)
+    local ccenz = math.floor((z0 + z1) / 2)
+
+    local vm, emin, emax = minetest.get_mapgen_object("voxelmanip")
+    local area = VoxelArea:new{MinEdge = emin, MaxEdge = emax}
+    local data = vm:get_data()
+
+    local c_air = minetest.get_content_id("air")
+    local c_tree = minetest.get_content_id("draconis:frozen_tree")
+    local c_soil = minetest.get_content_id("draconis:frozen_soil")
+    local c_stone = minetest.get_content_id("draconis:frozen_stone")
+    local c_loot = ice_loot
+
+    local sidelen = x1 - x0 + 1
+    local chulens = {x = sidelen, y = sidelen, z = sidelen}
+    local minposxyz = {x = x0, y = y0, z = z0}
+
+    local force_loaded = {}
+
+    local nvals_roost =
+        minetest.get_perlin_map(np_roost, chulens):get3dMap_flat(minposxyz)
+
+    local nixyz = 1
+    for z = z0, z1 do
+        for y = y0, y1 do
+            local vi = area:index(x0, y, z)
+            for x = x0, x1 do
+                minetest.forceload_block({x=x, y=y, z=z}, false)
+                table.insert(force_loaded, {x=x, y=y, z=z})
+                local n_roost = nvals_roost[nixyz]
+                local nodrad =
+                    ((x - ccenx) ^ 2 + (y - cceny) ^ 2 + (z - ccenz) ^ 2) ^ 0.5
+                local blob = (roost_radius - nodrad) / roost_radius + n_roost *
+                                 roost_noise_amp
+                if blob >= -0.2 then
+                    local c_name = minetest.get_name_from_content_id(data[vi])
+                    if G(c_name, "soil") then
+                        data[vi] = c_soil
+                    end
+                    if G(c_name, "stone") then
+                        data[vi] = c_stone
+                    end
+                    if G(c_name, "tree") and data[vi] ~= c_tree then
+                        data[vi] = c_air
+                    end
+                    if G(c_name, "leaves") then
+                        data[vi] = c_air
+                    end
+                    if G(c_name, "flora") then
+                        data[vi] = c_air
+                    end
+                    local bi = area:index(x, y - 1, z) -- Below current index
+                    if data[bi] ~= c_air and data[vi] == c_air then
+                        if random(32) == 1 then
+                            data[vi] = c_loot
+                        elseif random(64) == 1 then
+                            local len = random(3, 6)
+                            for i = -1, len do
+                                local vi_pos = area:position(vi)
+                                if dist_2d(pos, vi_pos) > 12 then
+                                    local si =
+                                        area:index(vi_pos.x, vi_pos.y + i,
+                                                   vi_pos.z)
+                                    data[si] = c_tree
+                                end
+                            end
+                        end
+                    end
+                end
+                nixyz = nixyz + 1
+                vi = vi + 1
+            end
+        end
+    end
+    local s_pos = pos
+    while minetest.registered_nodes[minetest.get_node(pos).name].walkable do
+        s_pos.y = s_pos.y + 1
+    end
+    s_pos.y = s_pos.y + 3
+    local dragon
+    minetest.after(4, function()
+        dragon = draconis.spawn_dragon(s_pos, "draconis:ice_dragon", false, random(30, 75))
+        minetest.after(1, function()
+            if not dragon then
+                dragon = draconis.spawn_dragon(s_pos, "draconis:ice_dragon", false, random(30, 75))
+            end
+            minetest.after(1, function()
+                if not dragon then
+                    dragon = draconis.spawn_dragon(s_pos, "draconis:ice_dragon", false, random(30, 75))
+                end
+            end)
+        end)
+    end)
+    minetest.after(7, function()
+        for i = 1, #force_loaded do
+            minetest.forceload_free_block(force_loaded[i])
+        end
+    end)
+    vm:set_data(data)
+    vm:set_lighting({day = 0, night = 0})
+    vm:calc_lighting()
+    vm:write_to_map(data)
 end
 
 -------------
 -- Caverns --
 -------------
-
-local air = minetest.get_content_id("air")
 
 local function can_spawn_ice_cavern(pos)
     if draconis.find_value_in_table(draconis.cold_biomes,
@@ -298,55 +670,215 @@ local function can_spawn_fire_cavern(pos)
     return false
 end
 
-local data = {}
+local function create_fire_cavern(pos, minp, maxp)
+    local y0 = minp.y
+    local y1 = maxp.y
 
-local function create_cavern(pos, outer_id, loot_id, ore_table, name)
-    local pos1 = {x = pos.x - 34, y = pos.y - 9, z = pos.z - 34}
-    local pos2 = {x = pos.x + 34, y = pos.y + 34, z = pos.z + 34}
-    local vm = minetest.get_mapgen_object("voxelmanip")
-    local emin, emax = vm:read_from_map(pos1, pos2)
-    local a = VoxelArea:new{MinEdge = emin, MaxEdge = emax}
-    vm:get_data(data)
-    for i = 1, #walkable_ids do
-        for z = pos1.z, pos2.z do
-            for y = pos1.y, pos2.y do
-                for x = pos1.x, pos2.x do
-                    local vi = a:index(x, y, z)
-                    if data[vi] == walkable_ids[i] then
-                        local dist = vector.distance(pos, a:position(vi))
-                        if dist < 28 then
-                            data[vi] = air
-                            if a:position(vi).y == pos1.y + 1 then
-                                if random(1, 32) == 1 then
-                                    data[vi] = loot_id
-                                end
-                            end
+    local x0 = minp.x
+    local x1 = maxp.x
+    local z0 = minp.z
+    local z1 = maxp.z
+    local ccenx = math.floor((x0 + x1) / 2)
+    local cceny = math.floor((y0 + y1) / 2)
+    local ccenz = math.floor((z0 + z1) / 2)
+
+    local vm, emin, emax = minetest.get_mapgen_object("voxelmanip")
+    local area = VoxelArea:new{MinEdge = emin, MaxEdge = emax}
+    local data = vm:get_data()
+
+    local c_air = minetest.get_content_id("air")
+    local c_stone = minetest.get_content_id("draconis:scorched_stone")
+    local c_ore = fire_ores
+    local c_loot = fire_loot
+
+    local sidelen = x1 - x0 + 1
+    local chulens = {x = sidelen, y = sidelen, z = sidelen}
+    local minposxyz = {x = x0, y = y0, z = z0}
+
+    local force_loaded = {}
+
+    local nvals_cavern =
+        minetest.get_perlin_map(np_cavern, chulens):get3dMap_flat(minposxyz)
+
+    local nixyz = 1
+    for z = z0, z1 do
+        for y = y0, y1 do
+            local vi = area:index(x0, y, z)
+            for x = x0, x1 do
+                minetest.forceload_block({x=x, y=y, z=z}, false)
+                table.insert(force_loaded, {x=x, y=y, z=z})
+                local n_cavern = nvals_cavern[nixyz]
+                local nodrad =
+                    ((x - ccenx) ^ 2 + (y - cceny) ^ 2 + (z - ccenz) ^ 2) ^ 0.5
+                local oily =
+                    (cavern_radius - nodrad) / cavern_radius + n_cavern *
+                        cavern_noise_amp
+                if oily >= 0 and area:position(vi).y > y0 + 12 then
+                    data[vi] = c_air
+                elseif oily >= outer_thresh then
+                    data[vi] = c_stone
+                    local vi_pos = area:position(vi)
+                    local above = area:index(vi_pos.x, vi_pos.y + 1, vi_pos.z)
+                    if data[above] == c_air then
+                        if random(24) == 1 then
+                            data[above] = c_loot
                         end
-                        if (dist > 28 and dist < 32) or
-                            (dist < 28 and a:position(vi).y < pos1.y + 1) then
-                            data[vi] = outer_id
-                            if random(1, 32) == 1 then
-                                data[vi] = ore_table[random(1, #ore_table)]
-                            end
-                        end
-                        for n = 1, #lava_ids do
-                            if data[vi] == lava_ids[n] then
-                                data[vi] = air
-                            end
+                    end
+                    if random(48) == 1 then
+                        data[vi] = c_ore[random(#c_ore)]
+                    end
+                end
+                local bi = area:index(x, y - 1, z) -- Below current index
+                if data[bi] == c_stone and data[vi] == c_air then
+                    if random(24) == 1 then data[vi] = c_loot end
+                end
+                if data[vi] == c_stone and data[bi] == c_air then
+                    if random(18) == 1 then
+                        local len = random(3, 6)
+                        for i = 1, len do
+                            local vi_pos = area:position(vi)
+                            local si = area:index(vi_pos.x, vi_pos.y - i,
+                                                  vi_pos.z)
+                            data[si] = c_stone
                         end
                     end
                 end
+                nixyz = nixyz + 1
+                vi = vi + 1
             end
         end
     end
-    if name == "draconis:ice_dragon" then
-        table.insert(draconis.ice_cavern_spawns, pos)
-    elseif name == "draconis:fire_dragon" then
-        table.insert(draconis.fire_cavern_spawns, pos)
-    end
+    local dragon
+    minetest.after(4, function()
+        dragon = draconis.spawn_dragon(vector.new(pos.x, minp.y + 20, pos.z), "draconis:fire_dragon", true, 200)
+        minetest.after(1, function()
+            if not dragon then
+                dragon = draconis.spawn_dragon(vector.new(pos.x, minp.y + 20, pos.z), "draconis:fire_dragon", true, 200)
+            end
+            minetest.after(1, function()
+                if not dragon then
+                    dragon = draconis.spawn_dragon(vector.new(pos.x, minp.y + 20, pos.z), "draconis:fire_dragon", true, 200)
+                end
+            end)
+        end)
+    end)
+    minetest.after(7, function()
+        for i = 1, #force_loaded do
+            minetest.forceload_free_block(force_loaded[i])
+        end
+    end)
     vm:set_data(data)
-    vm:write_to_map(true)
+    vm:set_lighting({day = 0, night = 0})
+    vm:calc_lighting()
+    vm:write_to_map(data)
 end
+
+local function create_ice_cavern(pos, minp, maxp)
+    local y0 = minp.y
+    local y1 = maxp.y
+
+    local x0 = minp.x
+    local x1 = maxp.x
+    local z0 = minp.z
+    local z1 = maxp.z
+    local ccenx = math.floor((x0 + x1) / 2)
+    local cceny = math.floor((y0 + y1) / 2)
+    local ccenz = math.floor((z0 + z1) / 2)
+
+    local vm, emin, emax = minetest.get_mapgen_object("voxelmanip")
+    local area = VoxelArea:new{MinEdge = emin, MaxEdge = emax}
+    local data = vm:get_data()
+
+    local c_air = minetest.get_content_id("air")
+    local c_stone = minetest.get_content_id("draconis:frozen_stone")
+    local c_ore = ice_ores
+    local c_loot = ice_loot
+
+    local sidelen = x1 - x0 + 1
+    local chulens = {x = sidelen, y = sidelen, z = sidelen}
+    local minposxyz = {x = x0, y = y0, z = z0}
+
+    local force_loaded = {}
+
+    local nvals_cavern =
+        minetest.get_perlin_map(np_cavern, chulens):get3dMap_flat(minposxyz)
+
+    local nixyz = 1
+    for z = z0, z1 do
+        for y = y0, y1 do
+            local vi = area:index(x0, y, z)
+            for x = x0, x1 do
+                minetest.forceload_block({x=x, y=y, z=z}, false)
+                table.insert(force_loaded, {x=x, y=y, z=z})
+                local n_cavern = nvals_cavern[nixyz]
+                local nodrad =
+                    ((x - ccenx) ^ 2 + (y - cceny) ^ 2 + (z - ccenz) ^ 2) ^ 0.5
+                local oily =
+                    (cavern_radius - nodrad) / cavern_radius + n_cavern *
+                        cavern_noise_amp
+                if oily >= 0 and area:position(vi).y > y0 + 12 then
+                    data[vi] = c_air
+                elseif oily >= outer_thresh then
+                    data[vi] = c_stone
+                    local vi_pos = area:position(vi)
+                    local above = area:index(vi_pos.x, vi_pos.y + 1, vi_pos.z)
+                    if data[above] == c_air then
+                        if random(24) == 1 then
+                            data[above] = c_loot
+                        end
+                    end
+                    if random(48) == 1 then
+                        data[vi] = c_ore[random(#c_ore)]
+                    end
+                end
+                local bi = area:index(x, y - 1, z) -- Below current index
+                if data[bi] == c_stone and data[vi] == c_air then
+                    if random(24) == 1 then data[vi] = c_loot end
+                end
+                if data[vi] == c_stone and data[bi] == c_air then
+                    if random(18) == 1 then
+                        local len = random(3, 6)
+                        for i = 1, len do
+                            local vi_pos = area:position(vi)
+                            local si = area:index(vi_pos.x, vi_pos.y - i,
+                                                  vi_pos.z)
+                            data[si] = c_stone
+                        end
+                    end
+                end
+                nixyz = nixyz + 1
+                vi = vi + 1
+            end
+        end
+    end
+    local dragon
+    minetest.after(4, function()
+        dragon = draconis.spawn_dragon(vector.new(pos.x, minp.y + 20, pos.z), "draconis:ice_dragon", true, 200)
+        minetest.after(1, function()
+            if not dragon then
+                dragon = draconis.spawn_dragon(vector.new(pos.x, minp.y + 20, pos.z), "draconis:ice_dragon", true, 200)
+            end
+            minetest.after(1, function()
+                if not dragon then
+                    dragon = draconis.spawn_dragon(vector.new(pos.x, minp.y + 20, pos.z), "draconis:ice_dragon", true, 200)
+                end
+            end)
+        end)
+    end)
+    minetest.after(7, function()
+        for i = 1, #force_loaded do
+            minetest.forceload_free_block(force_loaded[i])
+        end
+    end)
+    vm:set_data(data)
+    vm:set_lighting({day = 0, night = 0})
+    vm:calc_lighting()
+    vm:write_to_map(data)
+end
+
+----------------
+-- Generation --
+----------------
 
 minetest.register_on_generated(function(minp, maxp, blockseed)
 
@@ -354,8 +886,8 @@ minetest.register_on_generated(function(minp, maxp, blockseed)
     local height_max = -32
     local pr = PseudoRandom(blockseed)
 
-    if minp.y < height_max and maxp.y > height_min and
-        random(1, cavern_spawn_rate) == 1 then
+    if minp.y < height_max and maxp.y > height_min and random(cavern_spawn_rate) <
+        2 then
 
         local buffer = 5
 
@@ -370,55 +902,37 @@ minetest.register_on_generated(function(minp, maxp, blockseed)
         }
 
         if can_spawn_ice_cavern(pos) then
-            create_cavern(pos, ice_cavern_data.outer_id,
-                          ice_cavern_data.loot_id, ice_cavern_data.ore_table,
-                          "draconis:ice_dragon")
+            create_ice_cavern(pos, minp, maxp)
         end
         if can_spawn_fire_cavern(pos) then
-            create_cavern(pos, fire_cavern_data.outer_id,
-                          fire_cavern_data.loot_id, fire_cavern_data.ore_table,
-                          "draconis:fire_dragon")
+            create_fire_cavern(pos, minp, maxp)
         end
     end
 
-    if maxp.y > 1 and random(1, roost_spawn_rate) == 1 then
+    if maxp.y > 1 and random(roost_spawn_rate) < 2 then
 
         local heightmap = minetest.get_mapgen_object("heightmap")
         if not heightmap then return end
-        local y = 0
-
-        local index = 0
-        for _ = minp.z, maxp.z do
-            for _ = minp.x, maxp.x do
-                index = index + 1
-                local height = heightmap[index]
-                height = math.floor(height + 0.5)
-                y = height
-            end
-        end
 
         local pos = {
             x = minp.x + math.floor((maxp.x - minp.x) / 2),
-            y = y,
+            y = minp.y,
             z = minp.z + math.floor((maxp.z - minp.z) / 2)
         }
 
-        if pos.y < 0 then return end
+        local hm_i = (pos.x - minp.x + 1) + (((pos.z - minp.z)) * 80)
+        pos.y = heightmap[hm_i]
 
+        if pos.y < 0 then return end
         if can_spawn_ice_roost(pos) then
-            create_roost(pos, ice_roost_data.loot_id, ice_roost_data.soil_id,
-                         ice_roost_data.stone_id, ice_roost_data.tree_id,
-                         ice_roost_data.leaves_id, ice_roost_data.flora_id,
-                         "draconis:ice_dragon")
+            create_ice_roost(pos, minp, maxp)
         end
         if can_spawn_fire_roost(pos) then
-            create_roost(pos, fire_roost_data.loot_id, fire_roost_data.soil_id,
-                         fire_roost_data.stone_id, fire_roost_data.tree_id,
-                         fire_roost_data.leaves_id, fire_roost_data.flora_id,
-                         "draconis:fire_dragon")
+            create_fire_roost(pos, minp, maxp)
         end
     end
 end)
+end
 
 -----------------
 -- Decorations --
@@ -427,21 +941,21 @@ end)
 minetest.register_decoration({
     deco_type = "simple",
     place_on = {"default:dry_dirt_with_dry_grass", "default:desert_sand"},
-	biomes = {"desert", "savanna"},
-	sidelen = 16,
-	fill_ratio = 0.00001,
-	y_min = 10,
-	y_max = 90,
-	decoration = "draconis:dracolily_fire"
+    biomes = {"desert", "savanna"},
+    sidelen = 16,
+    fill_ratio = 0.00001,
+    y_min = 10,
+    y_max = 90,
+    decoration = "draconis:dracolily_fire"
 })
 
 minetest.register_decoration({
     deco_type = "simple",
     place_on = "default:dirt_with_snowy_grass",
-	biomes = {"snowy_grassland", "taiga"},
-	sidelen = 16,
-	fill_ratio = 0.00001,
-	y_min = 10,
-	y_max = 90,
-	decoration = "draconis:dracolily_ice"
+    biomes = {"snowy_grassland", "taiga"},
+    sidelen = 16,
+    fill_ratio = 0.00001,
+    y_min = 10,
+    y_max = 90,
+    decoration = "draconis:dracolily_ice"
 })

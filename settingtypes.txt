@@ -1,17 +1,29 @@
-#    Dragon Roost Spawn Rate. (This setting only applies when Simple Spawning is off)
-roost_spawn_rate (Dragon Roost Spawn Rate) float 64
-
-#    Dragon Cavern Spawn Rate. Recommended to be at least 4x the Dragon Roost Spawn Rate. (This setting only applies when Simple Spawning is off)
-cavern_spawn_rate (Dragon Cavern Spawn Rate) float 256
-
-#    If true, Dragons will spawn similarly to any other mob, rather than in Caverns and Roosts.
+#    If true, Dragons will spawn randomly throughout the world
 simple_spawning (Simple Spawning) bool false
 
-#    Dragon Spawn Rate. Higher number = less Dragons. (This setting only applies when Simple Spawning is on)
-dragon_spawn_rate (Dragon Spawn Rate) float 550
+#    Dragon Spawn Rate. 1 in x chance per spawn tick for a Dragon to spawn. This setting only applies when Simple Spawning is enabled.
+simple_spawn_rate (Simple Spawn Rate) float 512
+
+#    If true, Dragons will spawn in mountains with nests
+nest_spawning (Nest Spawning) bool true
+
+#    Dragon Nest Spawn Rate. 1 in x chance per chunk generated for a Dragon Nest to spawn. This setting only applies when Nest Spawning is enabled.
+nest_spawn_rate (Nest Spawn Rate) float 64
+
+#    If true, Dragons will spawn in roosts and caverns like Minecrafts Ice and Fire mod.
+i_f_spawning (Ice and Fire Spawning) bool false
+
+#    Dragon Roost Spawn Rate. This setting only applies when Ice and Fire spawning is enabled.
+roost_spawn_rate (I/F Roost Spawn Rate) float 32
+
+#    Dragon Cavern Spawn Rate. This setting only applies when Ice and Fire spawning is enabled.
+cavern_spawn_rate (I/F Cavern Spawn Rate) float 32
 
 #    If true, Dragon breath will scorch/freeze nodes and Dragons will attempt to break blocks when stuck.
 terrain_destruction (Terrain Destruction) bool true
+
+#    Chance (by percentage of 100) for a special color to occur on one of Dragons potential color regions
+unique_color_chance (Unique Color Chance) float 65
 
 
 

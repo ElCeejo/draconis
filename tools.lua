@@ -73,7 +73,7 @@ minetest.register_tool("draconis:axe_dragonbone", {
 minetest.register_tool("draconis:sword_dragonbone", {
     description = "Dragonbone Sword",
     inventory_image = "draconis_dragonbone_sword.png",
-    wield_scale = {x = 1.5, y = 1.5, z = 0.5},
+    wield_scale = {x = 1.5, y = 1.5, z = 1},
     tool_capabilities = {
         full_punch_interval = 0.1,
         max_drop_level = 1,
@@ -84,8 +84,9 @@ minetest.register_tool("draconis:sword_dragonbone", {
                 maxlevel = 3
             }
         },
-        damage_groups = {fleshy = 8}
+        damage_groups = {fleshy = 12}
     },
+    range = 6,
     sound = {breaks = "default_tool_breaks"},
     groups = {sword = 1}
 })
@@ -101,6 +102,7 @@ for _, element in pairs(elements) do
 minetest.register_tool("draconis:pick_"..element.."_draconic_steel", {
     description = SF(element).."-Forged Draconic Steel Pickaxe",
     inventory_image = "draconis_"..element.."_draconic_steel_pick.png",
+    wield_scale = {x = 2, y = 2, z = 1},
     tool_capabilities = {
         full_punch_interval = 4,
         max_drop_level = 3,
@@ -125,6 +127,7 @@ minetest.register_tool("draconis:pick_"..element.."_draconic_steel", {
 minetest.register_tool("draconis:shovel_"..element.."_draconic_steel", {
     description = SF(element).."-Forged Draconic Steel Shovel",
     inventory_image = "draconis_"..element.."_draconic_steel_shovel.png",
+    wield_scale = {x = 2, y = 2, z = 1},
     tool_capabilities = {
         full_punch_interval = 5.5,
         max_drop_level = 1,
@@ -145,7 +148,7 @@ minetest.register_tool("draconis:shovel_"..element.."_draconic_steel", {
 minetest.register_tool("draconis:axe_"..element.."_draconic_steel", {
     description = SF(element).."-Forged Draconic Steel Axe",
     inventory_image = "draconis_"..element.."_draconic_steel_axe.png",
-    wield_scale = {x = 1.5, y = 1.5, z = 1},
+    wield_scale = {x = 2, y = 2, z = 1},
     tool_capabilities = {
         full_punch_interval = 3,
         max_drop_level = 1,

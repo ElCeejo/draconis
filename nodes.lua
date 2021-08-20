@@ -99,6 +99,33 @@ minetest.register_craft({
 		{"draconis:"..material.."_tree"},
 	}
 })
+
+minetest.register_abm({
+	label = "draconis:abm_"..material.."_soil_recovery",
+	nodenames = {"draconis:"..material.."_soil"},
+	interval = 64,
+	chance = 32,
+	catch_up = false,
+	action = function(pos, node)
+		local above = {x = pos.x, y = pos.y + 1, z = pos.z}
+		local name = minetest.get_node(above).name
+		local nodedef = minetest.registered_nodes[name]
+		if name ~= "ignore"
+        and nodedef
+        and not ((nodedef.sunlight_propagates
+        or nodedef.paramtype == "light")
+        and nodedef.liquidtype == "none") then
+			if node.name == "default:dry_dirt_with_dry_grass" then
+				minetest.set_node(pos, {name = "default:dry_dirt"})
+			else
+				minetest.set_node(pos, {name = "default:dirt"})
+			end
+		else
+            minetest.set_node(pos, {name = "default:dirt"})
+        end
+	end
+})
+
 end
 
 -------------------------
@@ -168,6 +195,38 @@ minetest.register_node("draconis:dracolily_ice", {
         type = "fixed",
         fixed = {-0.15, -0.5, -0.15, 0.15, 0.2, 0.15},
     }
+})
+
+--------------------
+-- Draconic Stone --
+--------------------
+
+minetest.register_node("draconis:fire_draconic_stone", {
+    description = "Fire-Forged Draconic Stone",
+    tiles = {"draconis_fire_draconic_stone.png"},
+    groups = {cracky = 3},
+    sounds = default.node_sound_stone_defaults()
+})
+
+minetest.register_node("draconis:fire_draconic_stone_brick", {
+    description = "Fire-Forged Draconic Stone Brick",
+    tiles = {"draconis_fire_draconic_stone_brick.png"},
+    groups = {cracky = 3},
+    sounds = default.node_sound_stone_defaults()
+})
+
+minetest.register_node("draconis:ice_draconic_stone", {
+    description = "Ice-Forged Draconic Stone",
+    tiles = {"draconis_ice_draconic_stone.png"},
+    groups = {cracky = 3},
+    sounds = default.node_sound_stone_defaults()
+})
+
+minetest.register_node("draconis:ice_draconic_stone_brick", {
+    description = "Ice-Forged Draconic Stone Brick",
+    tiles = {"draconis_ice_draconic_stone_brick.png"},
+    groups = {cracky = 3},
+    sounds = default.node_sound_stone_defaults()
 })
 
 -------------

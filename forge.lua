@@ -173,7 +173,7 @@ function draconis.register_forge(name, def)
 			if not timer:is_started()
 			and is_forge_complete(pos, def.seg1_block, def.seg2_block) then
 				timer:start(1)
-				meta:set_int("smelting_time", smelting_time + 1)
+				meta:set_int("smelting_time", smelting_time + 3)
 				return
 			end
 		end,

@@ -1,8 +1,8 @@
 draconis = {}
 
-draconis.fire_colors = {"black", "bronze", "green", "red"}
+draconis.fire_colors = {"black", "bronze", "green", "red", "gold"}
 
-draconis.ice_colors = {"light_blue", "sapphire", "slate", "white"}
+draconis.ice_colors = {"light_blue", "sapphire", "slate", "white", "silver"}
 
 draconis.global_meat = {}
 
@@ -42,7 +42,19 @@ draconis.all_flora = {}
 
 draconis.all_lava = {}
 
+draconis.mobkit_mobs = {}
+
 minetest.register_on_mods_loaded(function()
+		-- Entities
+		for name in pairs(minetest.registered_entities) do
+			local mob = minetest.registered_entities[name]
+			if (mob.logic or mob.brainfunc)
+			and ((mob.armor_groups
+			and mob.armor_groups.fleshy)
+			or name:match("^petz:")) then
+				table.insert(draconis.mobkit_mobs, name)
+			end
+		end
 	for name in pairs(minetest.registered_nodes) do
 		if name ~= "air" and name ~= "ignore" then
 			if minetest.registered_nodes[name].walkable then
@@ -80,7 +92,7 @@ draconis.cold_biomes = {}
 
 minetest.register_on_mods_loaded(function()
     for name in pairs(minetest.registered_biomes) do
-		if minetest.registered_biomes[name].heat_point >= 75 then
+		if minetest.registered_biomes[name].heat_point >= 50 then
 			table.insert(draconis.warm_biomes, name)
 		end
 		if minetest.registered_biomes[name].heat_point <= 25 then
@@ -140,7 +152,8 @@ end
 local path = minetest.get_modpath("draconis")
 local storage = dofile(path.."/storage.lua")
 
-draconis.bonded_dragons = storage.bonded_dragons
+draconis.dragons = storage.dragons
+draconis.bonded_dragons = storage.dragons
 draconis.ice_cavern_spawns = storage.ice_caverns
 draconis.fire_cavern_spawns = storage.fire_caverns
 draconis.ice_roost_spawns = storage.ice_roosts
@@ -149,8 +162,6 @@ draconis.fire_roost_spawns = storage.fire_roosts
 dofile(path.."/api/api.lua")
 dofile(path.."/api/hq_lq.lua")
 dofile(path.."/api/mount.lua")
-dofile(path.."/api/pathfinding.lua")
-dofile(path.."/api/spawning.lua")
 dofile(path.."/api/legacy_convert.lua")
 dofile(path.."/mobs/fire_dragon.lua")
 dofile(path.."/mobs/ice_dragon.lua")
@@ -164,8 +175,6 @@ if minetest.get_modpath("3d_armor") then
 	dofile(path.."/armor.lua")
 end
 
-if not minetest.settings:get_bool("simple_spawning") then
-	dofile(path.."/mapgen.lua")
-end
+dofile(path.."/mapgen.lua")
 
 minetest.log("action", "[MOD] Draconis v1.0 Dev loaded")

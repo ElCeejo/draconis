@@ -19,14 +19,14 @@ local old_fire_ents = {
     "draconis:fire_dragon",
     "draconis:fire_wyvern",
     "draconis:hatched_fire_dragon",
-    "draconis:hatched_fire_wyvern" 
+    "draconis:hatched_fire_wyvern"
 }
 
 for _, ent in pairs(old_ice_ents) do
     minetest.register_entity(":"..ent, {
-        on_activate = function(self, staticdata)
+        on_activate = function(self)
             local pos = self.object:get_pos()
-            minetest.add_entity(pos, "draconis:fire_dragon_egg_" .. fire_colors[random(1, 4)] .. "_ent")
+            minetest.add_entity(pos, "draconis:ice_dragon_egg_" .. ice_colors[random(1, 4)] .. "_ent")
             self.object:remove()
         end,
     })
@@ -34,9 +34,9 @@ end
 
 for _, ent in pairs(old_fire_ents) do
     minetest.register_entity(":"..ent, {
-        on_activate = function(self, staticdata)
+        on_activate = function(self)
             local pos = self.object:get_pos()
-            minetest.add_entity(pos, "draconis:ice_dragon_egg_" .. ice_colors[random(1, 4)] .. "_ent")
+            minetest.add_entity(pos, "draconis:fire_dragon_egg_" .. fire_colors[random(1, 4)] .. "_ent")
             self.object:remove()
         end,
     })

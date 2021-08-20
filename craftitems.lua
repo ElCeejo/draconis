@@ -26,27 +26,19 @@ minetest.register_craftitem("draconis:draconic_steel_ingot_fire", {
 	description = "Fire-Forged Draconic Steel Ingot",
 	inventory_image = "draconis_fire_draconic_steel_ingot.png",
 	stack_max = 8,
+	groups = {draconic_steel_ingot = 1}
 })
 
 minetest.register_craftitem("draconis:draconic_steel_ingot_ice", {
 	description = "Ice-Forged Draconic Steel Ingot",
 	inventory_image = "draconis_ice_draconic_steel_ingot.png",
 	stack_max = 8,
+	groups = {draconic_steel_ingot = 1}
 })
 
-local fire_colors = {
-	"black",
-	"bronze",
-	"green",
-	"red"
-}
+local fire_colors = draconis.fire_colors
 
-local ice_colors = {
-	"light_blue",
-	"sapphire",
-	"slate",
-	"white"
-}
+local ice_colors = draconis.ice_colors
 
 for _, fire_color in pairs(fire_colors) do
 	minetest.register_craftitem("draconis:scales_fire_dragon_"..fire_color, {
@@ -82,6 +74,21 @@ local function get_info_flute(self)
 	return info
 end
 
+
+local function get_info_horn(self)
+	local info = "Dragon Horn\n"..minetest.colorize("#a9a9a9", mob_core.get_name_proper(self.name))
+	if self.nametag ~= "" then
+		info = info.."\n"..infotext(self.nametag)
+	end
+	if self.age then
+		info = info.."\n"..infotext(self.age)
+	end
+	if self.color then
+		info = info.."\n"..infotext(self.color, true)
+	end
+	return info
+end
+
 local function get_info_gem(self)
 	local info = "Dragon Summoning Gem\n"..minetest.colorize("#a9a9a9", mob_core.get_name_proper(self.name))
 	if self.nametag ~= "" then
@@ -93,11 +100,94 @@ local function get_info_gem(self)
 	return info
 end
 
+local function get_line(a, b)
+    local steps = vector.distance(a, b)
+    local index = {}
+    for i = 0, steps do
+        local c
+
+        if steps > 0 then
+            c = {
+                x = a.x + (b.x - a.x) * (i / steps),
+                y = a.y + (b.y - a.y) * (i / steps),
+                z = a.z + (b.z - a.z) * (i / steps)
+            }
+        else
+            c = a
+        end
+
+        table.insert(index, c)
+    end
+    return index
+end
+
+local function pointed_dragon(player, range)
+	local dir, pos = player:get_look_dir(), player:get_pos()
+	pos.y = pos.y + player:get_properties().eye_height or 1.625
+	pos = vector.add(pos, vector.multiply(dir, 1))
+	local dist = 1
+	local dest = vector.add(pos, vector.multiply(dir, range))
+	local line = get_line(pos, dest)
+	local ent
+	while dist < #line and not ent do
+		local objects = minetest.get_objects_inside_radius(line[dist], 8)
+		if objects then
+			for _, object in ipairs(objects) do
+				if object:get_luaentity() then
+					local luaent = object:get_luaentity()
+					if (luaent.name == "draconis:ice_dragon"
+					or luaent.name == "draconis:fire_dragon")
+					and luaent.tamed
+					and luaent.owner == player:get_player_name()
+					and not luaent.driver then
+						ent = luaent
+						break
+					end
+				end
+			end
+		end
+		dist = dist + 1
+	end
+	if ent then
+		return ent
+	end
+end
+
+local function capture(clicker, ent, type)
+	if not clicker:is_player()
+	or not clicker:get_inventory() then
+		return false
+	end
+	local stack = clicker:get_wielded_item()
+	local meta = stack:get_meta()
+	if not meta:get_string("mob")
+	or meta:get_string("mob") == "" then
+		draconis.set_color_string(ent)
+		meta:set_string("mob", ent.name)
+		meta:set_string("staticdata", ent:get_staticdata())
+		local info
+		if type == "horn" then
+			meta:set_int("timestamp", os.time())
+			info = get_info_horn(ent)
+		else
+			info = get_info_flute(ent)
+		end
+		meta:set_string("description", info)
+		clicker:set_wielded_item(stack)
+		ent.object:remove()
+		return stack
+	else
+		minetest.chat_send_player(clicker, "This Dragon ".. SF(type)  " already contains a Dragon")
+		return false
+	end
+end
+
 minetest.register_craftitem("draconis:dragon_flute", {
 	description = "Dragon Flute",
 	inventory_image = "draconis_dragon_flute.png",
 	stack_max = 1,
 	on_place = function(itemstack, placer, pointed_thing)
+		local meta = itemstack:get_meta()
 		local pos = pointed_thing.above
 		local under = minetest.get_node(pointed_thing.under)
 		local node = minetest.registered_nodes[under.name]
@@ -107,90 +197,97 @@ minetest.register_craftitem("draconis:dragon_flute", {
 		if pos
 		and not minetest.is_protected(pos, placer:get_player_name()) then
 			pos.y = pos.y + 3
-			local mob = itemstack:get_meta():get_string("mob")
-			local staticdata = itemstack:get_meta():get_string("staticdata")
+			local mob = meta:get_string("mob")
+			local staticdata = meta:get_string("staticdata")
 			if mob ~= "" then
 				minetest.add_entity(pos, mob, staticdata)
-				itemstack:get_meta():set_string("mob", nil)
-				itemstack:get_meta():set_string("staticdata", nil)
-				itemstack:get_meta():set_string("description", "Dragon Flute")
+				meta:set_string("mob", nil)
+				meta:set_string("staticdata", nil)
+				meta:set_string("description", "Dragon Flute")
 			end
 		end
 		return itemstack
 	end,
 	on_secondary_use = function(itemstack, player)
-		local mob = itemstack:get_meta():get_string("mob")
+		local meta = itemstack:get_meta()
+		local mob = meta:get_string("mob")
 		if mob ~= "" then return end
-		local name = player:get_player_name()
-		local dir = player:get_look_dir()
-		local pos = player:get_pos()
-		pos.y = pos.y + player:get_properties().eye_height or 1.625
-		pos = vector.add(pos, vector.multiply(dir, 1))
-		local dest = vector.add(pos, vector.multiply(dir, 100))
-		local ray = minetest.raycast(pos, dest, true, false)
-		for pointed_thing in ray do
-			if pointed_thing.type == "object" then
-				local obj = pointed_thing.ref
-				if obj:get_luaentity() then
-					obj = obj:get_luaentity()
-				else
-					return
-				end
-				if obj.name == "draconis:fire_dragon"
-				or obj.name == "draconis:ice_dragon" then
-					if not obj.tamed then
-						minetest.chat_send_player(name, "You do not own this Dragon")
-					elseif obj.owner == name then
-						mobkit.clear_queue_high(obj)
-						if not obj.isonground then
-							obj.order = mobkit.remember(obj, "order", "follow")
-							draconis.hq_follow(obj, 22, player)
-						end
-					end
-				end
+		local ent = pointed_dragon(player, 40)
+		if not ent then
+			return
+		end
+		if vector.distance(player:get_pos(), ent.object:get_pos()) < 14 then
+			return capture(player, ent, "flute")
+		else
+			mobkit.clear_queue_high(ent)
+			if not ent.isonground then
+				ent.order = mobkit.remember(ent, "order", "follow")
+				draconis.hq_follow(ent, 22, player)
 			end
 		end
 	end
 })
 
-function draconis.capture_with_flute(self, clicker)
-	if not clicker:is_player()
-	or not clicker:get_inventory() then
-		return false
-	end
-	local dragon = self.name
-	local catcher = clicker:get_player_name()
-	local flute = clicker:get_wielded_item()
-	if flute:get_name() ~= "draconis:dragon_flute" then
-		return false
-	end
-	if not self.tamed then
-		return false
-	end
-	if self.owner ~= catcher then
-		minetest.chat_send_player(catcher, "This Dragon is owned by @1"..self.owner)
-		return false
-	end
-	if clicker:get_inventory():room_for_item("main", dragon) then
-		local stack = clicker:get_wielded_item()
-		local meta = stack:get_meta()
-		if not meta:get_string("mob")
-		or meta:get_string("mob") == "" then
-			draconis.set_color_string(self)
-			meta:set_string("mob", dragon)
-			meta:set_string("staticdata", self:get_staticdata())
-			local info = get_info_flute(self)
-			meta:set_string("description", info)
-			clicker:set_wielded_item(stack)
-			self.object:remove()
-			return stack
+minetest.register_craftitem("draconis:dragon_horn", {
+	description = "Dragon Horn",
+	inventory_image = "draconis_dragon_horn.png",
+	stack_max = 1,
+	on_place = function(itemstack, placer, pointed_thing)
+		local meta = itemstack:get_meta()
+		local pos = pointed_thing.above
+		local under = minetest.get_node(pointed_thing.under)
+		local node = minetest.registered_nodes[under.name]
+		if node and node.on_rightclick then
+			return node.on_rightclick(pointed_thing.under, under, placer, itemstack)
+		end
+		if pos
+		and not minetest.is_protected(pos, placer:get_player_name()) then
+			pos.y = pos.y + 3
+			local mob = meta:get_string("mob")
+			local staticdata = meta:get_string("staticdata")
+			if mob ~= "" then
+				local ent = minetest.add_entity(pos, mob, staticdata)
+				meta:set_string("mob", nil)
+				meta:set_string("staticdata", nil)
+				meta:set_string("description", "Dragon Horn")
+				if meta:get_int("timestamp") then
+					local time = meta:get_int("timestamp")
+					local diff = os.time() - time
+					ent:get_luaentity().time_in_horn = diff
+					meta:set_int("timestamp", os.time())
+				end
+			end
+		end
+		return itemstack
+	end,
+	on_secondary_use = function(itemstack, player)
+		local meta = itemstack:get_meta()
+		local mob = meta:get_string("mob")
+		if mob ~= "" then return end
+		local ent = pointed_dragon(player, 80)
+		if not ent
+		or not ent.dragon_id then
+			return
+		end
+		if not meta:get_string("id")
+		or meta:get_string("id") == "" then
+			meta:set_string("id", ent.dragon_id)
+			return itemstack
+		elseif meta:get_string("id") ~= ""
+		and meta:get_string("id") ~= ent.dragon_id then
+			return
+		end
+		if vector.distance(player:get_pos(), ent.object:get_pos()) < 14 then
+			return capture(player, ent, "horn")
 		else
-			minetest.chat_send_player(catcher, "This Dragon Flute already contains a Dragon")
-			return false
+			mobkit.clear_queue_high(ent)
+			if not ent.isonground then
+				ent.order = mobkit.remember(ent, "order", "follow")
+				draconis.hq_follow(ent, 22, player)
+			end
 		end
 	end
-	return true
-end
+})
 
 -------------------
 -- Summoning Gem --
@@ -201,9 +298,10 @@ minetest.register_craftitem("draconis:summoning_gem", {
 	inventory_image = "draconis_summoning_gem.png",
 	stack_max = 1,
 	on_secondary_use = function(itemstack, player, pointed_thing)
+		local meta = itemstack:get_meta()
 		local name = player:get_player_name()
 		if pointed_thing.type == "object"
-		and itemstack:get_meta():get_string("id") == "" then
+		and meta:get_string("id") == "" then
 			local ent = pointed_thing.ref:get_luaentity()
 			if ent.name
 			and (ent.name == "draconis:fire_dragon"
@@ -214,35 +312,36 @@ minetest.register_craftitem("draconis:summoning_gem", {
 				if owner
 				and owner == name
 				and dragon_id then
-					itemstack:get_meta():set_string("id", dragon_id)
+					meta:set_string("id", dragon_id)
 					local info = get_info_gem(ent)
-					itemstack:get_meta():set_string("description", info)
+					meta:set_string("description", info)
 					return itemstack
 				end
 			end
-		elseif itemstack:get_meta():get_string("id") ~= "" then
-			local last_pos = draconis.bonded_dragons[player:get_player_name()].last_pos
-			local pos = {x=math.floor(last_pos.x), y=math.floor(last_pos.y), z=math.floor(last_pos.z)}
-			draconis.forceload(pos)
-			for _, ent in pairs(minetest.luaentities) do
-				if ent.dragon_id
-				and ent.dragon_id == itemstack:get_meta():get_string("id") then
-					minetest.chat_send_player(name, "Dragon teleported from: "..minetest.pos_to_string(pos))
+		elseif meta:get_string("id") ~= "" then
+			local id = meta:get_string("id")
+			local last_pos = draconis.dragons[id].last_pos
+			minetest.chat_send_player(name, "Attempting to teleport Dragon, wait 4 seconds before attempting again.")
+			minetest.after(3.5, function()
+				local can_summon, object = draconis.load_dragon(id)
+				if can_summon then
+					minetest.chat_send_player(name, "Dragon teleported from: "..minetest.pos_to_string(last_pos))
 					local ppos = player:get_pos()
 					ppos.y = ppos.y + 3
-					ent.object:set_pos(player:get_pos())
+					object:set_pos(player:get_pos())
 					return
 				end
-			end
-			minetest.chat_send_player(name, "Could not be teleported. Last seen at: "
-														..minetest.pos_to_string(pos)..
-														"\n Try again a couple more times.")
+				minetest.chat_send_player(name, "Could not be teleported. Last seen at: "
+				..minetest.pos_to_string(last_pos)..
+				"\n Try again a couple more times.")
+			end)
 		end
 	end,
 	on_place = function(itemstack, player, pointed_thing)
+		local meta = itemstack:get_meta()
 		local name = player:get_player_name()
 		if pointed_thing.type == "object"
-		and not itemstack:get_meta():get_string("id") then
+		and not meta:get_string("id") then
 			local ent = pointed_thing.ref:get_luaentity()
 			if ent.name
 			and (ent.name == "draconis:fire_dragon"
@@ -253,28 +352,28 @@ minetest.register_craftitem("draconis:summoning_gem", {
 				if owner
 				and owner == name
 				and dragon_id then
-					itemstack:get_meta():set_string("id", dragon_id)
+					meta:set_string("id", dragon_id)
 					local info = get_info_gem(ent)
-					itemstack:get_meta():set_string("description", info)
+					meta:set_string("description", info)
 				end
 			end
-		elseif itemstack:get_meta():get_string("id") ~= "" then
-			local last_pos = draconis.bonded_dragons[player:get_player_name()].last_pos
-			local pos = {x=math.floor(last_pos.x), y=math.floor(last_pos.y), z=math.floor(last_pos.z)}
-			draconis.forceload(pos)
-			for _, ent in pairs(minetest.luaentities) do
-				if ent.dragon_id
-				and ent.dragon_id == itemstack:get_meta():get_string("id") then
-					minetest.chat_send_player(name, "Dragon teleported from: "..minetest.pos_to_string(pos))
+		elseif meta:get_string("id") ~= "" then
+			local id = meta:get_string("id")
+			local last_pos = draconis.dragons[id].last_pos
+			minetest.chat_send_player(name, "Attempting to teleport Dragon, wait 4 seconds before attempting again.")
+			local can_summon, object = draconis.load_dragon(id)
+			minetest.after(3.5, function()
+				if can_summon then
+					minetest.chat_send_player(name, "Dragon teleported from: "..minetest.pos_to_string(last_pos))
 					local ppos = player:get_pos()
 					ppos.y = ppos.y + 3
-					ent.object:set_pos(player:get_pos())
+					object:set_pos(player:get_pos())
 					return
 				end
-			end
-			minetest.chat_send_player(name, "Could not be teleported. Last seen at: "
-														..minetest.pos_to_string(pos)..
-														"\n Try again a couple more times.")
+				minetest.chat_send_player(name, "Could not be teleported. Last seen at: "
+				..minetest.pos_to_string(last_pos)..
+				"\n Try again a couple more times.")
+			end)
 		end
 	end
 })
@@ -317,72 +416,82 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 	if formname == "draconis:bestiary_main" then
 		if fields.pg_ice_dragon then
 			local text = {
-				"The Fire Dragon is a mythical creature said to \n",
-				"live in large patches of scorched terrain \n",
-				"littered with shimmering treasure in cold, \n",
-				"snowy biomes. They fly through the skies near \n",
-				"these roosts in search of prey. Once they find \n",
-				"prey they will begin to attack with their ice \n",
-				"breath and sharp claws. While the individuals \n",
-				"seen near these roosts are usually very large \n",
-				"animals, the ones rumored to live in large \n",
-				"caverns underground are truly massive. Their \n",
-				"breath is freezing cold, leaving any terrain it's \n",
-				"path frozen solid and any creatures in a solid \n",
-				"block of ice."
+				"The Ice Dragon is large flying reptile that is said to be found in \n",
+				"cold mountainous areas. Similar to their fire breathing \n",
+				"relative, they are rumored to make nests with various sources \n",
+				"reporting conflicting information on the appearance of these \n",
+				"structures. They are spotted far less requently than the Fire \n",
+				"Dragon and are found almost exclusively in frigid mountains. \n",
+				"Their attack patterns are similar to the Fire Dragon, but their \n",
+				"icy breath is said to freeze living beings solid for period of \n",
+				"time, giving them no chance of escape. Their biology is \n",
+				"confusing, given that most creatures produce heat and require \n",
+				"it to live. Beyond that, while fire breath is easily explained \n",
+				"through science, the Ice Dragons ability to produce such icy \n",
+				"breath should be impossible considering it's diet of \n",
+				"exclusively meat."
 			}
+			local tex_light_blue = "draconis_ice_dragon_light_blue.png^draconis_ice_dragon_head_detail.png^draconis_ice_eyes_blue.png"
+			local tex_sapphire = "draconis_ice_dragon_sapphire.png^draconis_ice_dragon_head_detail.png^draconis_ice_eyes_purple.png"
+			local tex_slate = "draconis_ice_dragon_slate.png^draconis_ice_dragon_head_detail.png^draconis_ice_eyes_blue.png"
+			local tex_white = "draconis_ice_dragon_white.png^draconis_ice_dragon_head_detail.png^draconis_ice_eyes_blue.png"
 			local ice_dragon_form = table.concat({
 				"formspec_version[3]",
 				"size[16,10]",
 				"background[-0.7,-0.5;17.5,11.5;draconis_bestiary_bg.png]",
-				"image[0.5,0.75;5.85,1.6;draconis_ice_dragon_form_1.png]",
-				"image[0.5,2.75;5.85,1.6;draconis_ice_dragon_form_2.png]",
-				"image[0.5,4.75;5.85,1.6;draconis_ice_dragon_form_3.png]",
-				"image[0.5,6.75;5.85,1.6;draconis_ice_dragon_form_4.png]",
+				"model[0.5,0;6,4;mob_mesh;draconis_ice_dragon.b3d;", tex_light_blue, ";-10,-130;false;false;510,510]",
+				"model[0.5,2.25;6,4;mob_mesh;draconis_ice_dragon.b3d;", tex_sapphire, ";-10,-130;false;false;510,510]",
+				"model[0.5,4.5;6,4;mob_mesh;draconis_ice_dragon.b3d;", tex_slate, ";-10,-130;false;false;510,510]",
+				"model[0.5,6.75;6,4;mob_mesh;draconis_ice_dragon.b3d;", tex_white, ";-10,-130;false;false;510,510]",
 				"label[9.25,0.5;", table.concat(text, ""), "]",
 			}, "")
 			minetest.show_formspec(player:get_player_name(), "draconis:bestiary_ice_dragon", ice_dragon_form)
 		end
 		if fields.pg_fire_dragon then
 			local text = {
-				"The Fire Dragon is a mythical creature said to \n",
-				"live in large patches of scorched terrain \n",
-				"littered with golden treasure in warm biomes. \n",
-				"They fly through the skies near these roosts in \n",
-				"search of prey. Once they find prey they will \n",
-				"begin to attack with their fire breath and sharp \n",
-				"claws. While the individuals seen near these \n",
-				"roosts are usually very large animals, the ones \n",
-				"rumored to live in large caverns underground \n",
-				"are truly massive. Their breath is scorches \n",
-				"everything in it's path, leaving terrain a \n",
-				"charred mess and piles of ash where living \n",
-				"creatures once stood."
+				"The Fire Dragon is large flying reptile that is said to to be \n",
+				"found in warm climates and high mountains. Unlike most \n",
+				"reptiles they are said to create large nests almost like a bird. \n",
+				"The appearance of these nests greatly vary from sighting to \n",
+				"sighting, with some claiming them to be a shallow burrow, \n",
+				"and others saying they appear to be more like a scorched \n",
+				"patch of earth littered with burnt logs. Some even say they \n",
+				"don't make nests at all, or live in deep caverns underground. \n",
+				"Though reports of their nesting behavior seems inconsistent, \n",
+				"the reports of their violent destruction are all similar. Those \n",
+				"who manage to survive their attacks say they fly overhead, \n",
+				"burning those beneath them, and occasionally land to get \n",
+				"closer to small targets. Brave souls who try to get close \n",
+				"enough for an attack are flung back by the Dragons beating \n",
+				"wings, making close quarter combat nearly impossible.",
 			}
+			local tex_black = "draconis_fire_dragon_black.png^draconis_fire_dragon_head_detail.png^draconis_fire_eyes_red.png"
+			local tex_bronze = "draconis_fire_dragon_bronze.png^draconis_fire_dragon_head_detail.png^draconis_fire_eyes_green.png"
+			local tex_green = "draconis_fire_dragon_green.png^draconis_fire_dragon_head_detail.png^draconis_fire_eyes_orange.png"
+			local tex_red = "draconis_fire_dragon_red.png^draconis_fire_dragon_head_detail.png^draconis_fire_eyes_orange.png"
 			local fire_dragon_form = table.concat({
 				"formspec_version[3]",
 				"size[16,10]",
 				"background[-0.7,-0.5;17.5,11.5;draconis_bestiary_bg.png]",
-				"image[0.5,0.75;5.85,1.6;draconis_fire_dragon_form_1.png]",
-				"image[0.5,2.75;5.85,1.6;draconis_fire_dragon_form_2.png]",
-				"image[0.5,4.75;5.85,1.6;draconis_fire_dragon_form_3.png]",
-				"image[0.5,6.75;5.85,1.6;draconis_fire_dragon_form_4.png]",
+				"model[0.5,0;6,4;mob_mesh;draconis_fire_dragon.b3d;", tex_black, ";-10,-130;false;false;510,510]",
+				"model[0.5,2.25;6,4;mob_mesh;draconis_fire_dragon.b3d;", tex_bronze, ";-10,-130;false;false;510,510]",
+				"model[0.5,4.5;6,4;mob_mesh;draconis_fire_dragon.b3d;", tex_green, ";-10,-130;false;false;510,510]",
+				"model[0.5,6.75;6,4;mob_mesh;draconis_fire_dragon.b3d;", tex_red, ";-10,-130;false;false;510,510]",
 				"label[9.25,0.5;", table.concat(text, ""), "]",
 			}, "")
 			minetest.show_formspec(player:get_player_name(), "draconis:bestiary_fire_dragon", fire_dragon_form)
 		end
 		if fields.pg_ice_dragon_egg then
 			local text = {
-				"Ice Dragon Eggs are among the rarest things in the \n",
-				"world, rarer than even Fire Dragon Eggs. As with Fire \n",
-				"Dragon Eggs, obtaining one requires killing a large \n",
-				"Dragon. In the case of Ice Dragons, it may take more \n",
-				"than one person to kill, as any assisting animals will \n",
-				"be quickly frozen and killed. Ice Dragon Eggs are not \n",
-				"often seen in markets, as most people don't dare \n",
-				"do often don't come back. There are many theories \n",
-				"on how to hatch an Ice Dragon Egg, most of them \n",
-				"claiming that ice or water is involved."
+				"While the Fire Dragon Egg is rare thing to find, Ice Dragon Eggs \n",
+				"are often put off as myths. Few of these supposed Ice Dragon \n",
+				"Eggs exist, and are claimed be sceptics to be a dyed Fire \n",
+				"Dragon Egg. Surely they do exist, seeing as the Ice Dragon \n",
+				"builds similar nests to the Fire Dragon. In line with the \n",
+				"mystery of the Ice Dragon's anatomy, how it incubates Eggs is \n",
+				"also quite mysterious. Eggs require heat to incubate properly, \n",
+				"and yet somehow the freezing Ice Dragon manages to hatch \n",
+				"it's Eggs without issue."
 			}
 			local ice_dragon_egg_form = table.concat({
 				"formspec_version[3]",
@@ -398,15 +507,18 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		end
 		if fields.pg_fire_dragon_egg then
 			local text = {
-				"Fire Dragon Eggs are incredibly rare to find. \n",
-				"Obtaining one requires killing a large Dragon, which \n",
-				"are very rarely found, and even more rarely slain. \n",
-				"Most Dragon Eggs are sold in shops for high prices to \n",
-				"rich men who want something to place on their in \n",
-				"their home as a status symbol. However, it is said \n",
-				"that with prolonged exposure to extreme heat, they \n",
-				"will can be hatched. As of yet, nobody has \n",
-				"attempted to do so."
+				"The Fire Dragon Egg is considered to be one of the most \n",
+				"valuable items out there. Despite the fact no human could \n",
+				"possibly incubate one, they are so sought after that wealthy \n",
+				"lords will trade a Dragon's weight in gold for them. Though \n",
+				"some attempt to hatch them, most choose to leave them on \n",
+				"display as a symbol of wealth and power. Obtaining one is \n",
+				"presumably difficult, seeing as where they're even found is a \n",
+				"mystery. Those who have managed to obtain an Egg give \n",
+				"conflicting reports of how they've done so. Some claim to \n",
+				"have quietly raided a sleeping Dragons nest, while others \n",
+				"make the bold and ridiculous claim that they killed a massive \n",
+				"Dragon in a underground cavern and raided it's clutch."
 			}
 			local fire_dragon_egg_form = table.concat({
 				"formspec_version[3]",
@@ -563,8 +675,6 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 	end
 end)
 
-
-
 minetest.register_craftitem("draconis:bestiary", {
 	description = "Bestiary",
 	inventory_image = "draconis_bestiary.png",
@@ -617,7 +727,6 @@ minetest.register_craftitem("draconis:blood_ice_dragon", {
 -----------------------
 -- Essence of Growth --
 -----------------------
-
 
 minetest.register_craftitem("draconis:growth_essence_fire", {
 	description = "Fiery Essence of Growth",
