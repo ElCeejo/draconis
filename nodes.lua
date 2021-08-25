@@ -471,3 +471,53 @@ minetest.register_node("draconis:lectern", {
         end
     end
 })
+
+-- Dragon Spawning
+
+minetest.register_node("draconis:spawn_node", {
+    drawtype = "airlike",
+    groups = {not_in_creative_inventory = 1}
+})
+
+
+minetest.register_abm({
+    label = "Dragon Spawning",
+    nodenames = {"draconis:spawn_node"},
+    interval = 4,
+    chance = 1,
+    action = function(pos)
+        local meta = minetest.get_meta(pos)
+        local name = meta:get_string("name")
+        local age = meta:get_int("age")
+        local dragon = minetest.add_entity(pos, name)
+        if dragon then
+            local ent = dragon:get_luaentity()
+            ent._mem = mobkit.remember(ent, "_mem", true) -- initializes memory (I don't know why this works but it does)
+            ent.age = mobkit.remember(ent, "age", age)
+            ent.growth_scale = mobkit.remember(ent, "growth_scale", age * 0.01)
+            ent.mapgen_spawn = mobkit.remember(ent, "mapgen_spawn", true)
+            if age <= 25 then
+                ent.child = mobkit.remember(ent, "child", true)
+                ent.growth_stage = mobkit.remember(ent, "growth_stage", 1)
+            end
+            if age <= 50 then
+                ent.growth_stage = mobkit.remember(ent, "growth_stage", 2)
+            end
+            if age <= 75 then
+                ent.growth_stage = mobkit.remember(ent, "growth_stage", 3)
+            end
+            if age > 75 then
+                ent.growth_stage = mobkit.remember(ent, "growth_stage", 4)
+            end
+            if math.random(3) < 2 then
+                ent.gender = mobkit.remember(ent, "gender", "male")
+            else
+                ent.gender = mobkit.remember(ent, "gender", "female")
+            end
+            mob_core.set_scale(ent, ent.growth_scale)
+            mob_core.set_textures(ent)
+            draconis.set_drops(ent)
+        end
+        minetest.remove_node(pos)
+    end,
+})

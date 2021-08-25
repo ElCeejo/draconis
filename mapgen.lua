@@ -1,7 +1,14 @@
 -------------
 --- Mapgen --
 -------------
--- Ver 1.0 --
+-- Ver 1.1 --
+
+local function add_spawn_node(pos, name, age)
+    minetest.set_node(pos, {name = "draconis:spawn_node"})
+    local meta = minetest.get_meta(pos)
+    meta:set_string("name", name)
+    meta:set_int("age", age)
+end
 
 -----------------
 -- Content IDs --
@@ -195,22 +202,18 @@ local function create_ice_nest(pos, minp, maxp)
             end
         end
     end
-    local s_pos = pos
-    while minetest.registered_nodes[minetest.get_node(pos).name].walkable do
-        s_pos.y = s_pos.y + 1
-    end
-    s_pos.y = s_pos.y + 3
-    draconis.spawn_dragon(s_pos, "draconis:ice_dragon", true, random(30, 75))
-    minetest.after(7, function()
-        for i = 1, #force_loaded do
-            minetest.forceload_free_block(force_loaded[i])
-        end
-    end)
 
     vm:set_data(data)
     vm:set_lighting({day = 0, night = 0})
     vm:calc_lighting()
     vm:write_to_map(data)
+
+    local s_pos = pos
+    while minetest.registered_nodes[minetest.get_node(pos).name].walkable do
+        s_pos.y = s_pos.y + 1
+    end
+    s_pos.y = s_pos.y + 3
+    add_spawn_node(s_pos, "draconis:ice_dragon", random(30, 75))
 end
 
 local function create_fire_nest(pos, minp, maxp)
@@ -285,22 +288,18 @@ local function create_fire_nest(pos, minp, maxp)
             end
         end
     end
-    local s_pos = pos
-    while minetest.registered_nodes[minetest.get_node(pos).name].walkable do
-        s_pos.y = s_pos.y + 1
-    end
-    s_pos.y = s_pos.y + 3
-    draconis.spawn_dragon(s_pos, "draconis:fire_dragon", false, random(30, 75))
-    minetest.after(7, function()
-        for i = 1, #force_loaded do
-            minetest.forceload_free_block(force_loaded[i])
-        end
-    end)
 
     vm:set_data(data)
     vm:set_lighting({day = 0, night = 0})
     vm:calc_lighting()
     vm:write_to_map(data)
+
+    local s_pos = pos
+    while minetest.registered_nodes[minetest.get_node(pos).name].walkable do
+        s_pos.y = s_pos.y + 1
+    end
+    s_pos.y = s_pos.y + 3
+    add_spawn_node(s_pos, "draconis:fire_dragon", random(30, 75))
 end
 
 minetest.register_on_generated(function(minp, maxp)
@@ -327,7 +326,6 @@ minetest.register_on_generated(function(minp, maxp)
             else
                 create_fire_nest(pos, minp, maxp)
             end
-            minetest.chat_send_all(minetest.pos_to_string(pos))
         end
     end
 end)
@@ -473,21 +471,18 @@ local function create_fire_roost(pos, minp, maxp)
             end
         end
     end
+
+    vm:set_data(data)
+    vm:set_lighting({day = 0, night = 0})
+    vm:calc_lighting()
+    vm:write_to_map(data)
+
     local s_pos = pos
     while minetest.registered_nodes[minetest.get_node(pos).name].walkable do
         s_pos.y = s_pos.y + 1
     end
     s_pos.y = s_pos.y + 3
-    dragon = draconis.spawn_dragon(s_pos, "draconis:fire_dragon", false, random(30, 75))
-    minetest.after(7, function()
-        for i = 1, #force_loaded do
-            minetest.forceload_free_block(force_loaded[i])
-        end
-    end)
-    vm:set_data(data)
-    vm:set_lighting({day = 0, night = 0})
-    vm:calc_lighting()
-    vm:write_to_map(data)
+    add_spawn_node(s_pos, "draconis:fire_dragon", random(30, 75))
 end
 
 local function create_ice_roost(pos, minp, maxp)
@@ -573,21 +568,17 @@ local function create_ice_roost(pos, minp, maxp)
             end
         end
     end
-    local s_pos = pos
-    while minetest.registered_nodes[minetest.get_node(pos).name].walkable do
-        s_pos.y = s_pos.y + 1
-    end
-    s_pos.y = s_pos.y + 3
-    dragon = draconis.spawn_dragon(s_pos, "draconis:ice_dragon", false, random(30, 75))
-    minetest.after(7, function()
-        for i = 1, #force_loaded do
-            minetest.forceload_free_block(force_loaded[i])
-        end
-    end)
+
     vm:set_data(data)
     vm:set_lighting({day = 0, night = 0})
     vm:calc_lighting()
     vm:write_to_map(data)
+
+    local s_pos = pos
+    while minetest.registered_nodes[minetest.get_node(pos).name].walkable do
+        s_pos.y = s_pos.y + 1
+    end
+    add_spawn_node(s_pos, "draconis:ice_dragon", random(30, 75))
 end
 
 -------------
@@ -688,16 +679,13 @@ local function create_fire_cavern(pos, minp, maxp)
             end
         end
     end
-    draconis.spawn_dragon(vector.new(pos.x, minp.y + 20, pos.z), "draconis:fire_dragon", true, 200)
-    minetest.after(7, function()
-        for i = 1, #force_loaded do
-            minetest.forceload_free_block(force_loaded[i])
-        end
-    end)
+
     vm:set_data(data)
     vm:set_lighting({day = 0, night = 0})
     vm:calc_lighting()
     vm:write_to_map(data)
+
+    add_spawn_node(vector.new(pos.x, minp.y + 20, pos.z), "draconis:fire_dragon", 200)
 end
 
 local function create_ice_cavern(pos, minp, maxp)
@@ -778,16 +766,13 @@ local function create_ice_cavern(pos, minp, maxp)
             end
         end
     end
-    draconis.spawn_dragon(vector.new(pos.x, minp.y + 20, pos.z), "draconis:ice_dragon", true, 200)
-    minetest.after(7, function()
-        for i = 1, #force_loaded do
-            minetest.forceload_free_block(force_loaded[i])
-        end
-    end)
+
     vm:set_data(data)
     vm:set_lighting({day = 0, night = 0})
     vm:calc_lighting()
     vm:write_to_map(data)
+
+    add_spawn_node(vector.new(pos.x, minp.y + 20, pos.z), "draconis:ice_dragon", 200)
 end
 
 ----------------
