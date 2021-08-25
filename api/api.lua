@@ -110,7 +110,7 @@ local creative = minetest.settings:get_bool("creative_mode")
 
 local terrain_destruction = minetest.settings:get_bool("terrain_destruction", true)
 
-local unique_color_chance = minetest.settings:get("unique_color_chance") or 65
+local unique_color_chance = tonumber(minetest.settings:get("unique_color_chance")) or 65
 
 ----------------------
 -- Helper Functions --
@@ -1474,7 +1474,7 @@ function draconis.spawn_child(pos, mob, color_no, owner) -- Spawn a mob with chi
     end
 end
 
-function draconis.spawn_dragon(pos, mob, mapgen, age)
+local function spawn_dragon(pos, mob, mapgen, age)
     if not pos then return false end
     local dragon = minetest.add_entity(pos, mob)
     if dragon then
@@ -1504,11 +1504,33 @@ function draconis.spawn_dragon(pos, mob, mapgen, age)
         mob_core.set_scale(ent, ent.growth_scale)
         mob_core.set_textures(ent)
         draconis.set_drops(ent)
-        return dragon
     end
-    return nil
 end
 
+function draconis.spawn_dragon(pos, mob, mapgen, age)
+    minetest.forceload_block(pos, false)
+    minetest.after(4, function()
+        spawn_dragon(pos, mob, mapgen, age)
+        minetest.after(0.01, function()
+            local loop = true
+            local objects = minetest.get_objects_inside_radius(pos, 0.5)
+            for i = 1, #objects do
+                local object = objects[i]
+                if object
+                and object:get_luaentity()
+                and object:get_luaentity().name == mob then
+                    loop = false
+                end
+            end
+            minetest.after(1, function()
+                minetest.forceload_free_block(pos)
+            end)
+            if loop then
+                draconis.spawn_dragon(pos, mob, mapgen, age)
+            end 
+        end)
+    end)
+end
 -------------------
 -- Register Eggs --
 -------------------

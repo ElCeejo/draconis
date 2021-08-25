@@ -58,11 +58,11 @@ end
 -- Settings --
 --------------
 
-local nest_spawn_rate = minetest.settings:get("nest_spawn_rate") or 64
+local nest_spawn_rate = tonumber(minetest.settings:get("nest_spawn_rate")) or 64
 
-local roost_spawn_rate = minetest.settings:get("roost_spawn_rate") or 32
+local roost_spawn_rate = tonumber(minetest.settings:get("roost_spawn_rate")) or 32
 
-local cavern_spawn_rate = minetest.settings:get("cavern_spawn_rate") or 64
+local cavern_spawn_rate = tonumber(minetest.settings:get("cavern_spawn_rate")) or 64
 
 ------------
 -- Locals --
@@ -200,24 +200,7 @@ local function create_ice_nest(pos, minp, maxp)
         s_pos.y = s_pos.y + 1
     end
     s_pos.y = s_pos.y + 3
-
-    local dragon
-
-    minetest.after(4, function()
-        dragon = draconis.spawn_dragon(s_pos, "draconis:ice_dragon", true, random(30, 75))
-        minetest.add_entity(pos, "draconis:ice_dragon_egg_" .. draconis.ice_colors[math.random(5)] .. "_ent")
-        minetest.after(1, function()
-            if not dragon then
-                dragon = draconis.spawn_dragon(s_pos, "draconis:ice_dragon", true, random(30, 75))
-            end
-            minetest.after(1, function()
-                if not dragon then
-                    dragon = draconis.spawn_dragon(s_pos, "draconis:ice_dragon", true, random(30, 75))
-                end
-            end)
-        end)
-    end)
-
+    draconis.spawn_dragon(s_pos, "draconis:ice_dragon", true, random(30, 75))
     minetest.after(7, function()
         for i = 1, #force_loaded do
             minetest.forceload_free_block(force_loaded[i])
@@ -307,24 +290,7 @@ local function create_fire_nest(pos, minp, maxp)
         s_pos.y = s_pos.y + 1
     end
     s_pos.y = s_pos.y + 3
-
-    local dragon
-
-    minetest.after(4, function()
-        dragon = draconis.spawn_dragon(s_pos, "draconis:fire_dragon", false, random(30, 75))
-        minetest.add_entity(pos, "draconis:fire_dragon_egg_" .. draconis.fire_colors[math.random(5)] .. "_ent")
-        minetest.after(1, function()
-            if not dragon then
-                dragon = draconis.spawn_dragon(s_pos, "draconis:fire_dragon", true, random(30, 75))
-            end
-            minetest.after(1, function()
-                if not dragon then
-                    dragon = draconis.spawn_dragon(s_pos, "draconis:fire_dragon", true, random(30, 75))
-                end
-            end)
-        end)
-    end)
-
+    draconis.spawn_dragon(s_pos, "draconis:fire_dragon", false, random(30, 75))
     minetest.after(7, function()
         for i = 1, #force_loaded do
             minetest.forceload_free_block(force_loaded[i])
@@ -512,20 +478,7 @@ local function create_fire_roost(pos, minp, maxp)
         s_pos.y = s_pos.y + 1
     end
     s_pos.y = s_pos.y + 3
-    local dragon
-    minetest.after(4, function()
-        dragon = draconis.spawn_dragon(s_pos, "draconis:fire_dragon", false, random(30, 75))
-        minetest.after(1, function()
-            if not dragon then
-                dragon = draconis.spawn_dragon(s_pos, "draconis:fire_dragon", false, random(30, 75))
-            end
-            minetest.after(1, function()
-                if not dragon then
-                    dragon = draconis.spawn_dragon(s_pos, "draconis:fire_dragon", false, random(30, 75))
-                end
-            end)
-        end)
-    end)
+    dragon = draconis.spawn_dragon(s_pos, "draconis:fire_dragon", false, random(30, 75))
     minetest.after(7, function()
         for i = 1, #force_loaded do
             minetest.forceload_free_block(force_loaded[i])
@@ -625,20 +578,7 @@ local function create_ice_roost(pos, minp, maxp)
         s_pos.y = s_pos.y + 1
     end
     s_pos.y = s_pos.y + 3
-    local dragon
-    minetest.after(4, function()
-        dragon = draconis.spawn_dragon(s_pos, "draconis:ice_dragon", false, random(30, 75))
-        minetest.after(1, function()
-            if not dragon then
-                dragon = draconis.spawn_dragon(s_pos, "draconis:ice_dragon", false, random(30, 75))
-            end
-            minetest.after(1, function()
-                if not dragon then
-                    dragon = draconis.spawn_dragon(s_pos, "draconis:ice_dragon", false, random(30, 75))
-                end
-            end)
-        end)
-    end)
+    dragon = draconis.spawn_dragon(s_pos, "draconis:ice_dragon", false, random(30, 75))
     minetest.after(7, function()
         for i = 1, #force_loaded do
             minetest.forceload_free_block(force_loaded[i])
@@ -748,20 +688,7 @@ local function create_fire_cavern(pos, minp, maxp)
             end
         end
     end
-    local dragon
-    minetest.after(4, function()
-        dragon = draconis.spawn_dragon(vector.new(pos.x, minp.y + 20, pos.z), "draconis:fire_dragon", true, 200)
-        minetest.after(1, function()
-            if not dragon then
-                dragon = draconis.spawn_dragon(vector.new(pos.x, minp.y + 20, pos.z), "draconis:fire_dragon", true, 200)
-            end
-            minetest.after(1, function()
-                if not dragon then
-                    dragon = draconis.spawn_dragon(vector.new(pos.x, minp.y + 20, pos.z), "draconis:fire_dragon", true, 200)
-                end
-            end)
-        end)
-    end)
+    draconis.spawn_dragon(vector.new(pos.x, minp.y + 20, pos.z), "draconis:fire_dragon", true, 200)
     minetest.after(7, function()
         for i = 1, #force_loaded do
             minetest.forceload_free_block(force_loaded[i])
@@ -851,20 +778,7 @@ local function create_ice_cavern(pos, minp, maxp)
             end
         end
     end
-    local dragon
-    minetest.after(4, function()
-        dragon = draconis.spawn_dragon(vector.new(pos.x, minp.y + 20, pos.z), "draconis:ice_dragon", true, 200)
-        minetest.after(1, function()
-            if not dragon then
-                dragon = draconis.spawn_dragon(vector.new(pos.x, minp.y + 20, pos.z), "draconis:ice_dragon", true, 200)
-            end
-            minetest.after(1, function()
-                if not dragon then
-                    dragon = draconis.spawn_dragon(vector.new(pos.x, minp.y + 20, pos.z), "draconis:ice_dragon", true, 200)
-                end
-            end)
-        end)
-    end)
+    draconis.spawn_dragon(vector.new(pos.x, minp.y + 20, pos.z), "draconis:ice_dragon", true, 200)
     minetest.after(7, function()
         for i = 1, #force_loaded do
             minetest.forceload_free_block(force_loaded[i])

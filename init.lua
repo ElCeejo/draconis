@@ -177,4 +177,4 @@ end
 
 dofile(path.."/mapgen.lua")
 
-minetest.log("action", "[MOD] Draconis v1.0 Dev loaded")
+minetest.log("action", "[MOD] Draconis v1.1 loaded")
