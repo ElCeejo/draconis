@@ -647,7 +647,8 @@ function draconis.register_dragon(type, def)
             if draconis.feed(self, clicker, 64 * self.growth_scale) then
                 return
             end
-            if not self.owner then return end
+            if not self.owner
+            or name ~= self.owner then return end
             mob_core.protect(self, clicker, true)
             if item:get_name() == "" then
                 if clicker:get_player_control().sneak == true then
@@ -2290,6 +2291,8 @@ function draconis.fire_breath(self, goal, range)
                 end
             end
         end
+    else
+        minetest.chat_send_all("bruh")
     end
     world_breath_timer = world_breath_timer - self.dtime
     world_particle_timer = world_particle_timer - self.dtime

@@ -24,8 +24,8 @@ minetest.register_entity("draconis:fire_eyes", {
         end
         if not self.color then return end
         self.object:set_armor_groups({immortal = 1})
-        if not self.object:get_attach() then self.object:remove() end
-        if self.object:get_attach() and self.object:get_attach():get_luaentity() then
+        if self.object:get_attach()
+        and self.object:get_attach():get_luaentity() then
             local parent = self.object:get_attach():get_luaentity()
             if parent.hp <= 0 then
                 self.object:set_properties({textures = {"transparency.png"}})

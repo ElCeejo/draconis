@@ -760,10 +760,14 @@ function draconis.hq_landed_attack(self, prty, target)
                     end
                     draconis.lq_idle(self, 0.1, "stand_fire", tyaw)
                 else
-                    target:punch(self.object, 1.0, {
-                        full_punch_interval = 0.1,
-                        damage_groups = {fleshy = 12 * scale_factor}
-                    }, nil)
+                    local box_center = self.object:get_pos()
+                    box_center.y = box_center.y + (self.height * 0.5)
+                    if get_line_of_sight(box_center, tpos) then
+                        target:punch(self.object, 1.0, {
+                            full_punch_interval = 0.1,
+                            damage_groups = {fleshy = 12 * scale_factor}
+                        }, nil)
+                    end
                     local knockback_dir = minetest.yaw_to_dir(yaw)
                     local knockback = vector.multiply(dir, (32 + diff(yaw, tyaw)) * scale_factor)
                     knockback.y = 8 * scale_factor

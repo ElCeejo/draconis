@@ -245,6 +245,8 @@ function draconis.mount(self, clicker)
 end
 
 function draconis.attach(entity, player)
+    if not player
+    or not player:get_player_name() then return end
     local name = player:get_player_name()
     if not default.player_attached[name] then
         minetest.after(0, function() attach(name, entity) end)
@@ -252,6 +254,8 @@ function draconis.attach(entity, player)
 end
 
 function draconis.detach(player)
+    if not player
+    or not player:get_player_name() then return end
     local name = player:get_player_name()
     if default.player_attached[name] then
         minetest.after(0, function() detach(name) end)

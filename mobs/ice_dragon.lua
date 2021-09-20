@@ -18,9 +18,14 @@ minetest.register_entity("draconis:ice_eyes", {
     glow = 11,
     blink_timer = 18,
     on_step = function(self, dtime)
+        if not self.object:get_attach() then
+            self.object:remove()
+            return
+        end
+        if not self.color then return end
         self.object:set_armor_groups({immortal = 1})
-        if not self.object:get_attach() then self.object:remove() end
-        if self.object:get_attach() and self.object:get_attach():get_luaentity() then
+        if self.object:get_attach()
+        and self.object:get_attach():get_luaentity() then
             local parent = self.object:get_attach():get_luaentity()
             if parent.status ~= "sleeping" then
                 self.blink_timer = self.blink_timer - dtime
