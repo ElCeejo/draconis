@@ -2291,8 +2291,6 @@ function draconis.fire_breath(self, goal, range)
                 end
             end
         end
-    else
-        minetest.chat_send_all("bruh")
     end
     world_breath_timer = world_breath_timer - self.dtime
     world_particle_timer = world_particle_timer - self.dtime
