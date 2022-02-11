@@ -3,98 +3,109 @@
 -----------------------
 ------- Ver 1.0 -------
 
+-- Get Craft Items --
+
+local gold_block = "default:goldblock"
+local steel_block = "default:steelblock"
+local diamond = "default:diamond"
+local steel_ingot = "default:steel_ingot"
+local book = "default:book"
+local furnace = "default:furnace"
+local red_dye = "dye:red"
+
+minetest.register_on_mods_loaded(function()
+	for name, def in pairs(minetest.registered_items) do
+		if name:find("gold") and name:find("block") then
+			gold_block = name
+		end
+        if (name:find("steel") or name:find("iron")) and name:find("block") then
+			steel_block = name
+		end
+        if name:match(":diamond") then
+			diamond = name
+		end
+        if name:match(":steel_ingot") or name:match(":ingot_steel")
+		or name:match(":iron_ingot") or name:match(":ingot_iron") then
+			steel_ingot = name
+		end
+        if name:match(":book") then
+			book = name
+		end
+        if name:match(":furnace") then
+			furnace = name
+		end
+        if minetest.get_item_group(name, "dye") > 0
+        and name:find("red") then
+            red_dye = name
+        end
+	end
+end)
+
+
+local ice_colors = {
+    ["light_blue"] = "9df8ff",
+    ["sapphire"] = "001fea",
+    ["silver"] = "c5e4ed",
+    ["slate"] = "4c646b",
+    ["white"] = "e4e4e4"
+}
+
+local fire_colors = {
+    ["black"] = "393939",
+    ["bronze"] = "ff6d00",
+    ["gold"] = "ffa300",
+    ["green"] = "0abc00",
+    ["red"] = "b10000"
+}
+
 --------------
 -- Crafting --
 --------------
-
-minetest.register_craft({
-	output = "draconis:lectern",
-	recipe = {
-		{"stairs:slab_wood", "stairs:slab_wood", "stairs:slab_wood"},
-		{"", "default:wood", ""},
-		{"stairs:slab_wood", "stairs:slab_wood", "stairs:slab_wood"},
-	}
-})
 
 minetest.register_craft({
 	output = "draconis:dragon_flute",
 	recipe = {
 		{"", "", "draconis:dragon_bone"},
 		{"", "draconis:dragon_bone", "draconis:dragon_bone"},
+		{steel_block, "draconis:dragon_bone", ""},
+	}
+})
+
+minetest.register_craft({
+	output = "draconis:dragon_horn",
+	recipe = {
+		{"", "", gold_block},
+		{"", "draconis:dragon_bone", gold_block},
 		{"draconis:dragon_bone", "draconis:dragon_bone", ""},
 	}
 })
 
 minetest.register_craft({
-	output = "draconis:growth_essence_fire",
-	recipe = {
-		{"draconis:dracolily_fire", "draconis:blood_fire_dragon", "draconis:dracolily_fire"},
-		{"draconis:blood_fire_dragon", "vessels:glass_bottle", "draconis:blood_fire_dragon"},
-		{"draconis:dracolily_fire", "draconis:blood_fire_dragon", "draconis:dracolily_fire"},
-	}
-})
-
-minetest.register_craft({
-	output = "draconis:growth_essence_ice",
-	recipe = {
-		{"draconis:dracolily_ice", "draconis:blood_ice_dragon", "draconis:dracolily_ice"},
-		{"draconis:blood_ice_dragon", "vessels:glass_bottle", "draconis:blood_ice_dragon"},
-		{"draconis:dracolily_ice", "draconis:blood_ice_dragon", "draconis:dracolily_ice"},
-	}
-})
-
-minetest.register_craft({
 	output = "draconis:summoning_gem",
 	recipe = {
-		{"", "group:dragon_blood", ""},
-		{"group:dragon_blood", "default:diamond", "group:dragon_blood"},
-		{"", "group:dragon_blood", ""},
+		{"", "group:dragon_scales", ""},
+		{"group:dragon_scales", diamond, "group:dragon_scales"},
+		{"", "group:dragon_scales", ""},
 	}
 })
 
 minetest.register_craft({
-	output = "draconis:summoning_gem",
-	recipe = {
-		{"", "draconis:blood_fire_dragon", ""},
-		{"draconis:blood_fire_dragon", "default:diamond", "draconis:blood_fire_dragon"},
-		{"", "draconis:blood_fire_dragon", ""},
-	}
-})
-
-minetest.register_craft({
-	output = "draconis:bestiary",
+	output = "draconis:libri_draconis",
 	recipe = {
 		{"", "", ""},
 		{"group:dragon_scales", "", ""},
-		{"default:book", "group:color_red", ""},
+		{"group:book", "group:color_red", ""},
 	}
 })
 
-for _, fire_color in pairs(draconis.fire_colors) do
-    local scales = "draconis:scales_fire_dragon_"..fire_color
-    local bricks = "default:stonebrick"
-    minetest.register_craft({
-        output = "draconis:fire_scale_brick_"..fire_color.." 4",
-        recipe = {
-            {bricks, scales, bricks},
-            {scales, scales, scales},
-            {bricks, scales, bricks},
-        }
-    })
-end
-
-for _, ice_color in pairs(draconis.ice_colors) do
-    local scales = "draconis:scales_ice_dragon_"..ice_color
-    local bricks = "default:stonebrick"
-    minetest.register_craft({
-        output = "draconis:ice_scale_brick_"..ice_color.." 4",
-        recipe = {
-            {bricks, scales, bricks},
-            {scales, scales, scales},
-            {bricks, scales, bricks},
-        }
-    })
-end
+minetest.register_craft({
+	output = "draconis:libri_draconis",
+	recipe = {
+		{"", "", ""},
+		{"group:dragon_scales", "", ""},
+		{"group:book", "group:unicolor_red", ""},
+	}
+})
 
 minetest.register_craft({
 	output = "draconis:draconic_steel_forge_ice",
@@ -112,6 +123,62 @@ minetest.register_craft({
 		{"draconis:scorched_stone", "default:furnace", "draconis:scorched_stone"},
 		{"draconis:scorched_stone", "draconis:scorched_stone", "draconis:scorched_stone"},
 	}
+})
+
+for string in pairs(fire_colors) do
+    minetest.register_craft({
+        output = "draconis:fire_scale_block_" .. string,
+        recipe = {
+            {"draconis:scales_fire_dragon_" .. string, "draconis:scales_fire_dragon_" .. string, "draconis:scales_fire_dragon_" .. string},
+            {"draconis:scales_fire_dragon_" .. string, "draconis:scales_fire_dragon_" .. string, "draconis:scales_fire_dragon_" .. string},
+            {"draconis:scales_fire_dragon_" .. string, "draconis:scales_fire_dragon_" .. string, "draconis:scales_fire_dragon_" .. string},
+        }
+    })
+end
+
+for string in pairs(ice_colors) do
+    minetest.register_craft({
+        output = "draconis:ice_scale_block_" .. string,
+        recipe = {
+            {"draconis:scales_ice_dragon_" .. string, "draconis:scales_ice_dragon_" .. string, "draconis:scales_ice_dragon_" .. string},
+            {"draconis:scales_ice_dragon_" .. string, "draconis:scales_ice_dragon_" .. string, "draconis:scales_ice_dragon_" .. string},
+            {"draconis:scales_ice_dragon_" .. string, "draconis:scales_ice_dragon_" .. string, "draconis:scales_ice_dragon_" .. string},
+        }
+    })
+end
+
+minetest.register_craft({
+    output = "draconis:dragonstone_bricks_fire 5",
+    recipe = {
+        {"draconis:stone_bricks_scorched", "group:fire_dragon_scale_block", "draconis:stone_bricks_scorched"},
+        {"group:fire_dragon_scale_block", "draconis:stone_bricks_scorched", "group:fire_dragon_scale_block"},
+        {"draconis:stone_bricks_scorched", "group:fire_dragon_scale_block", "draconis:stone_bricks_scorched"},
+    }
+})
+
+minetest.register_craft({
+    output = "draconis:dragonstone_bricks_ice 5",
+    recipe = {
+        {"draconis:stone_bricks_frozen", "group:ice_dragon_scale_block", "draconis:stone_bricks_frozen"},
+        {"group:ice_dragon_scale_block", "draconis:stone_bricks_frozen", "group:ice_dragon_scale_block"},
+        {"draconis:stone_bricks_frozen", "group:ice_dragon_scale_block", "draconis:stone_bricks_frozen"},
+    }
+})
+
+minetest.register_craft({
+    output = "draconis:stone_bricks_frozen 4",
+    recipe = {
+        {"draconis:stone_frozen", "draconis:stone_frozen"},
+        {"draconis:stone_frozen", "draconis:stone_frozen"}
+    }
+})
+
+minetest.register_craft({
+    output = "draconis:stone_bricks_scorched 4",
+    recipe = {
+        {"draconis:stone_scorched", "draconis:stone_scorched"},
+        {"draconis:stone_scorched", "draconis:stone_scorched"}
+    }
 })
 
 ---------------------------
@@ -213,25 +280,25 @@ end
 -- Dragon Bone Tools --
 
 craft_pick({
-    handle = "default:steel_ingot",
+    handle = steel_ingot,
     material = "draconis:dragon_bone",
     output = "draconis:pick_dragonbone"
 })
 
 craft_shovel({
-    handle = "default:steel_ingot",
+    handle = steel_ingot,
     material = "draconis:dragon_bone",
     output = "draconis:shovel_dragonbone"
 })
 
 craft_axe({
-    handle = "default:steel_ingot",
+    handle = steel_ingot,
     material = "draconis:dragon_bone",
     output = "draconis:axe_dragonbone"
 })
 
 craft_sword({
-    handle = "default:steel_ingot",
+    handle = steel_ingot,
     material = "draconis:dragon_bone",
     output = "draconis:sword_dragonbone"
 })

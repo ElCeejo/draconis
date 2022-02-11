@@ -1,332 +1,394 @@
--------------
---- Nodes ---
--------------
--- Ver 1.0 --
+-----------
+-- Nodes --
+-----------
 
+-- Sounds --
 
-local SF = draconis.string_format
+-- Get Craft Items --
 
-----------------------------
--- Scorched/Frozen Blocks --
-----------------------------
+local steel_ingot = "default:steel_ingot"
 
-local material_types = {"scorched", "frozen"}
-
-for _, material in pairs(material_types) do
-
-    local frozen = 0
-
-    if material == "frozen" then
-        frozen = 2
-    end
-
-minetest.register_node("draconis:"..material.."_stone", {
-    description = SF(material).." Stone",
-    tiles = {"draconis_"..material.."_stone.png"},
-    groups = {cracky = 3, slippery = frozen, stone = 1},
-    sounds = default.node_sound_stone_defaults()
-})
-
-minetest.register_node("draconis:"..material.."_stone_block", {
-    description = SF(material).." Stone Block",
-    tiles = {"draconis_"..material.."_stone_block.png"},
-    groups = {cracky = 3},
-    sounds = default.node_sound_stone_defaults()
-})
-
-minetest.register_node("draconis:"..material.."_stone_brick", {
-    description = SF(material).." Stone Brick",
-    tiles = {"draconis_"..material.."_stone_brick.png"},
-    groups = {cracky = 3},
-    sounds = default.node_sound_stone_defaults()
-})
-
-minetest.register_node("draconis:"..material.."_soil", {
-    description = SF(material).." Soil",
-    tiles = {"draconis_"..material.."_soil.png"},
-    groups = {crumbly = 3, slippery = frozen, soil = 1},
-    sounds = default.node_sound_dirt_defaults()
-})
-
-minetest.register_node("draconis:"..material.."_tree", {
-    description = SF(material).." Tree",
-    tiles = {
-        "draconis_"..material.."_tree_top.png", "draconis_"..material.."_tree_top.png",
-        "draconis_"..material.."_tree.png"
-    },
-    paramtype2 = "facedir",
-    is_ground_content = false,
-    groups = {
-        tree = 1,
-        choppy = 2,
-        oddly_breakable_by_hand = 1,
-        falling_node = 1
-    },
-    sounds = default.node_sound_wood_defaults(),
-    on_place = minetest.rotate_node
-})
-
-minetest.register_node("draconis:"..material.."_wood", {
-    description = SF(material).." Wood Planks",
-    paramtype2 = "facedir",
-    place_param2 = 0,
-    tiles = {"draconis_"..material.."_wood_planks.png"},
-    is_ground_content = false,
-    groups = {choppy = 2, oddly_breakable_by_hand = 2, flammable = 2, wood = 1},
-    sounds = default.node_sound_wood_defaults()
-})
-
-minetest.register_craft({
-	output = "draconis:"..material.."_stone_brick 4",
-	recipe = {
-		{"draconis:"..material.."_stone", "draconis:"..material.."_stone"},
-		{"draconis:"..material.."_stone", "draconis:"..material.."_stone"},
-	}
-})
-
-minetest.register_craft({
-	output = "draconis:"..material.."_stone_block 9",
-	recipe = {
-		{"draconis:"..material.."_stone", "draconis:"..material.."_stone", "draconis:"..material.."_stone"},
-		{"draconis:"..material.."_stone", "draconis:"..material.."_stone", "draconis:"..material.."_stone"},
-		{"draconis:"..material.."_stone", "draconis:"..material.."_stone", "draconis:"..material.."_stone"},
-	}
-})
-
-minetest.register_craft({
-	output = "draconis:"..material.."_wood 4",
-	recipe = {
-		{"draconis:"..material.."_tree"},
-	}
-})
-
-minetest.register_abm({
-	label = "draconis:abm_"..material.."_soil_recovery",
-	nodenames = {"draconis:"..material.."_soil"},
-	interval = 64,
-	chance = 32,
-	catch_up = false,
-	action = function(pos, node)
-		local above = {x = pos.x, y = pos.y + 1, z = pos.z}
-		local name = minetest.get_node(above).name
-		local nodedef = minetest.registered_nodes[name]
-		if name ~= "ignore"
-        and nodedef
-        and not ((nodedef.sunlight_propagates
-        or nodedef.paramtype == "light")
-        and nodedef.liquidtype == "none") then
-			if node.name == "default:dry_dirt_with_dry_grass" then
-				minetest.set_node(pos, {name = "default:dry_dirt"})
-			else
-				minetest.set_node(pos, {name = "default:dirt"})
-			end
-		else
-            minetest.set_node(pos, {name = "default:dirt"})
-        end
+minetest.register_on_mods_loaded(function()
+	for name, def in pairs(minetest.registered_items) do
+		if name:match(":steel_ingot") or name:match(":ingot_steel")
+		or name:match(":iron_ingot") or name:match(":ingot_iron") then
+			steel_ingot = name
+			break
+		end
 	end
-})
+end)
 
+-- Local Utilities --
+
+local function correct_name(str)
+    if str then
+        if str:match(":") then str = str:split(":")[2] end
+        return (string.gsub(" " .. str, "%W%l", string.upper):sub(2):gsub("_", " "))
+    end
 end
-
--------------------------
--- Dragon Scale Bricks --
--------------------------
 
 local function infotext(str, format)
 	if format then
-		return minetest.colorize("#a9a9a9", SF(str))
+		return minetest.colorize("#a9a9a9", correct_name(str))
 	end
 	return minetest.colorize("#a9a9a9", str)
 end
 
-for _, fire_color in pairs(draconis.fire_colors) do
-    minetest.register_node("draconis:fire_scale_brick_"..fire_color, {
-        description = "Fire Dragon Scale Brick \n" .. infotext(fire_color, true),
-        tiles = {"draconis_fire_scale_brick_"..fire_color..".png"},
-        groups = {cracky = 1, level = 1},
-        sounds = default.node_sound_stone_defaults()
-    })
+local stair_queue = {}
+
+local function register_node(name, def, register_stair)
+	minetest.register_node(name, def)
+	table.insert(stair_queue, name)
 end
 
-for _, ice_color in pairs(draconis.ice_colors) do
-    minetest.register_node("draconis:ice_scale_brick_"..ice_color, {
-        description = "Ice Dragon Scale Brick \n" .. infotext(ice_color, true),
-        tiles = {"draconis_ice_scale_brick_"..ice_color..".png"},
-        groups = {cracky = 1, level = 1},
-        sounds = default.node_sound_stone_defaults()
-    })
+local ice_colors = {
+    ["light_blue"] = "9df8ff",
+    ["sapphire"] = "001fea",
+    ["silver"] = "c5e4ed",
+    ["slate"] = "4c646b",
+    ["white"] = "e4e4e4"
+}
+
+local fire_colors = {
+    ["black"] = "393939",
+    ["bronze"] = "ff6d00",
+    ["gold"] = "ffa300",
+    ["green"] = "0abc00",
+    ["red"] = "b10000"
+}
+
+-- Logs --
+
+register_node("draconis:log_scorched", {
+	description = "Scorched Log",
+	tiles = {"draconis_log_scorched_top.png", "draconis_log_scorched_top.png", "draconis_log_scorched.png"},
+	paramtype2 = "facedir",
+	is_ground_content = false,
+	groups = {tree = 1, choppy = 2, oddly_breakable_by_hand = 1, flammable = 2},
+	sounds = draconis.sounds.wood,
+	on_place = minetest.rotate_node
+}, true)
+
+register_node("draconis:log_frozen", {
+	description = "Frozen Log",
+	tiles = {"draconis_log_frozen_top.png", "draconis_log_frozen_top.png", "draconis_log_frozen.png"},
+	paramtype2 = "facedir",
+	is_ground_content = false,
+	groups = {tree = 1, choppy = 2, oddly_breakable_by_hand = 1, flammable = 2},
+	sounds = draconis.sounds.wood,
+	on_place = minetest.rotate_node
+}, true)
+
+-- Stone --
+
+register_node("draconis:stone_scorched", {
+	description = "Scorched Stone",
+	tiles = {"draconis_stone_scorched.png"},
+	paramtype2 = "facedir",
+	place_param2 = 0,
+	is_ground_content = false,
+	groups = {cracky = 1, level = 3},
+	sounds = draconis.sounds.stone
+}, true)
+
+register_node("draconis:stone_frozen", {
+	description = "Frozen Stone",
+	tiles = {"draconis_stone_frozen.png"},
+	paramtype2 = "facedir",
+	place_param2 = 0,
+	is_ground_content = false,
+	groups = {cracky = 1, level = 3},
+	sounds = draconis.sounds.stone
+}, true)
+
+-- Soil --
+
+register_node("draconis:soil_scorched", {
+	description = "Scorched Soil",
+	tiles = {"draconis_soil_scorched.png"},
+	groups = {crumbly = 3, soil = 1},
+	sounds = draconis.sounds.dirt
+})
+
+register_node("draconis:soil_frozen", {
+	description = "Frozen Soil",
+	tiles = {"draconis_soil_frozen.png"},
+	groups = {crumbly = 3, soil = 1},
+	sounds = draconis.sounds.dirt
+})
+
+-- Wood Planks
+
+register_node("draconis:wood_planks_scorched", {
+	description = "Scorched Wood Planks",
+	tiles = {"draconis_wood_planks_scorched.png"},
+	is_ground_content = false,
+	groups = {tree = 1, choppy = 2, oddly_breakable_by_hand = 1, flammable = 2},
+	sounds = draconis.sounds.wood,
+}, true)
+
+register_node("draconis:wood_planks_frozen", {
+	description = "Frozen Wood Planks",
+	tiles = {"draconis_wood_planks_frozen.png"},
+	is_ground_content = false,
+	groups = {tree = 1, choppy = 2, oddly_breakable_by_hand = 1, flammable = 2},
+	sounds = draconis.sounds.wood,
+}, true)
+
+-- Stone Bricks --
+
+register_node("draconis:dragonstone_bricks_fire", {
+	description = "Fire Dragonstone Bricks",
+	tiles = {"draconis_dragonstone_bricks_fire.png"},
+	paramtype2 = "facedir",
+	place_param2 = 0,
+	is_ground_content = false,
+	groups = {cracky = 1, level = 2},
+	sounds = draconis.sounds.stone
+}, true)
+
+register_node("draconis:dragonstone_bricks_ice", {
+	description = "Ice Dragonstone Bricks",
+	tiles = {"draconis_dragonstone_bricks_ice.png"},
+	paramtype2 = "facedir",
+	place_param2 = 0,
+	is_ground_content = false,
+	groups = {cracky = 1, level = 2},
+	sounds = draconis.sounds.stone
+}, true)
+
+register_node("draconis:stone_bricks_scorched", {
+	description = "Scorched Stone Brick",
+	tiles = {"draconis_stone_brick_scorched.png"},
+	paramtype2 = "facedir",
+	place_param2 = 0,
+	is_ground_content = false,
+	groups = {cracky = 1, level = 3},
+	sounds = draconis.sounds.stone
+}, true)
+
+register_node("draconis:stone_bricks_frozen", {
+	description = "Frozen Stone Brick",
+	tiles = {"draconis_stone_brick_frozen.png"},
+	paramtype2 = "facedir",
+	place_param2 = 0,
+	is_ground_content = false,
+	groups = {cracky = 1, level = 3},
+	sounds = draconis.sounds.stone
+}, true)
+
+------------------
+-- Scale Blocks --
+------------------
+
+for string, hex in pairs(fire_colors) do
+	register_node("draconis:fire_scale_block_" .. string, {
+		description = "Fire Dragon Scale Block \n" .. infotext(string, true),
+		tiles = {"draconis_dragon_scale_block.png^[multiply:#" .. hex,},
+		paramtype2 = "facedir",
+		place_param2 = 0,
+		is_ground_content = false,
+		groups = {cracky = 1, level = 3, fire_dragon_scale_block = 1},
+		sounds = draconis.sounds.stone
+	})
 end
 
--- Dracolillies --
-
-minetest.register_node("draconis:dracolily_fire", {
-    description = "Fiery Dracolily",
-    drawtype = "plantlike",
-    waving = 1,
-    tiles = {"draconis_dracolily_fire.png"},
-    inventory_image = "draconis_dracolily_fire.png",
-    sunlight_propagates = true,
-    paramtype = "light",
-    walkable = false,
-    buildable_to = true,
-    stack_max = 99,
-    groups = {snappy = 3, flower = 1, flora = 1, attached_node = 1},
-    sounds = default.node_sound_leaves_defaults(),
-    selection_box = {
-        type = "fixed",
-        fixed = {-0.15, -0.5, -0.15, 0.15, 0.2, 0.15},
-    }
-})
-
-minetest.register_node("draconis:dracolily_ice", {
-    description = "Icy Dracolily",
-    drawtype = "plantlike",
-    waving = 1,
-    tiles = {"draconis_dracolily_ice.png"},
-    inventory_image = "draconis_dracolily_ice.png",
-    sunlight_propagates = true,
-    paramtype = "light",
-    walkable = false,
-    buildable_to = true,
-    stack_max = 99,
-    groups = {snappy = 3, flower = 1, flora = 1, attached_node = 1},
-    sounds = default.node_sound_leaves_defaults(),
-    selection_box = {
-        type = "fixed",
-        fixed = {-0.15, -0.5, -0.15, 0.15, 0.2, 0.15},
-    }
-})
-
---------------------
--- Draconic Stone --
---------------------
-
-minetest.register_node("draconis:fire_draconic_stone", {
-    description = "Fire-Forged Draconic Stone",
-    tiles = {"draconis_fire_draconic_stone.png"},
-    groups = {cracky = 3},
-    sounds = default.node_sound_stone_defaults()
-})
-
-minetest.register_node("draconis:fire_draconic_stone_brick", {
-    description = "Fire-Forged Draconic Stone Brick",
-    tiles = {"draconis_fire_draconic_stone_brick.png"},
-    groups = {cracky = 3},
-    sounds = default.node_sound_stone_defaults()
-})
-
-minetest.register_node("draconis:ice_draconic_stone", {
-    description = "Ice-Forged Draconic Stone",
-    tiles = {"draconis_ice_draconic_stone.png"},
-    groups = {cracky = 3},
-    sounds = default.node_sound_stone_defaults()
-})
-
-minetest.register_node("draconis:ice_draconic_stone_brick", {
-    description = "Ice-Forged Draconic Stone Brick",
-    tiles = {"draconis_ice_draconic_stone_brick.png"},
-    groups = {cracky = 3},
-    sounds = default.node_sound_stone_defaults()
-})
-
--------------
--- Lectern --
--------------
-
-local function lectern_pages_formspec(meta, show_pages)
-    local pages = {
-        "pg_ice_dragon;Ice Dragon",
-        "pg_fire_dragon;Fire Dragon",
-        "pg_ice_dragon_egg;Ice Dragon Eggs",
-        "pg_fire_dragon_egg;Fire Dragon Eggs",
-        "pg_raising;Raising Dragons",
-        "pg_forge;Draconic Steel Forge"
-    }
-    local inactive_form = {
-        "formspec_version[3]",
-        "size[11,9]",
-        "background[-0.75,-1;12.5,10;draconis_lectern_bg.png]",
-        "list[current_player;main;0.65,5;8,1;]",
-        "list[context;book;2.75,1.5;1,1;]",
-        "list[context;pages;2.75,3.5;1,1;]",
-        "listring[current_player;main]",
-        "listring[context;book]",
-        "listring[current_player;main]",
-        "listring[context;pages]",
-        "listring[current_player;main]"
-    }
-    local active_form = {
-        "formspec_version[3]",
-        "size[11,9]",
-        "background[-0.75,-1;12.5,10;draconis_lectern_bg.png]",
-        "list[current_player;main;0.65,5;8,1;]",
-        "list[context;book;2.75,1.5;1,1;]",
-        "list[context;pages;2.75,3.5;1,1;]",
-        "listring[current_player;main]",
-        "listring[context;book]",
-        "listring[current_player;main]",
-        "listring[context;pages]",
-        "listring[current_player;main]",
-        "button[5.75,1.5;2.5,0.8;"..pages[math.random(1, 6)].."]",
-        "button[5.75,2.5;2.5,0.8;"..pages[math.random(1, 6)].."]",
-        "button[5.75,3.5;2.5,0.8;"..pages[math.random(1, 6)].."]"
-    }
-    if show_pages then
-        meta:set_string("formspec", table.concat(active_form, ""))
-    else
-        meta:set_string("formspec", table.concat(inactive_form, ""))
-    end
+for string, hex in pairs(ice_colors) do
+	register_node("draconis:ice_scale_block_" .. string, {
+		description = "Ice Dragon Scale Block \n" .. infotext(string, true),
+		tiles = {"draconis_dragon_scale_block.png^[multiply:#" .. hex,},
+		paramtype2 = "facedir",
+		place_param2 = 0,
+		is_ground_content = false,
+		groups = {cracky = 1, level = 3, ice_dragon_scale_block = 1},
+		sounds = draconis.sounds.stone
+	})
 end
 
-minetest.register_entity("draconis:book_ent", {
-	visual = "sprite",
-	visual_size = {x=0.75, y=0.75},
-	collisionbox = {0},
-	physical = false,
-	textures = {"draconis_book_ent.png"},
-	on_activate = function(self)
-		local pos = self.object:get_pos()
-		local pos_under = {x=pos.x, y=pos.y-1, z=pos.z}
-		if minetest.get_node(pos_under).name ~= "draconis:lectern" then
-			self.object:remove()
+--------------------------
+-- Draconic Steel Forge --
+--------------------------
+
+local forge_materials = {
+	["draconis:draconic_forge_fire"] = "draconis:dragonstone_bricks_fire",
+	["draconis:draconic_forge_ice"] = "draconis:dragonstone_bricks_ice"
+}
+
+local forge_fuels = {
+	["draconis:draconic_steel_ingot_fire"] = "draconis:log_scorched",
+	["draconis:draconic_steel_ingot_ice"] = "draconis:log_frozen"
+}
+
+local function update_forge_form(progress, meta)
+	local formspec
+	if progress > 0 and progress <= 100 then
+		local item_percent = math.floor(progress / 32 * 100)
+		formspec = table.concat({
+			"formspec_version[3]",
+			"size[11,10]",
+			"image[0,0;11,10;draconis_form_forge_bg.png]",
+			"image[4.1,0.7;3,3;draconis_form_smelt_empty.png^[lowpart:"..
+			(item_percent)..":draconis_form_smelt_full.png]",
+			"list[current_player;main;0.65,5;8,4;]",
+			"list[context;input;1.7,1.7;1,1;]",
+			"list[context;fuel;4.95,3.75;1,1;]",
+			"list[context;output;8.1,1.7;1,1;]",
+			"listring[current_player;main]",
+			"listring[context;input]",
+			"listring[current_player;main]",
+			"listring[context;fuel]",
+			"listring[current_player;main]",
+			"listring[context;output]",
+			"listring[current_player;main]"
+		}, "")
+	else
+		formspec = table.concat({
+			"formspec_version[3]",
+			"size[11,10]",
+			"image[0,0;11,10;draconis_form_forge_bg.png]",
+			"image[4.1,0.7;3,3;draconis_form_smelt_empty.png]",
+			"list[current_player;main;0.65,5;8,4;]",
+			"list[context;input;1.7,1.7;1,1;]",
+			"list[context;fuel;4.95,3.75;1,1;]",
+			"list[context;output;8.1,1.7;1,1;]",
+			"listring[current_player;main]",
+			"listring[context;input]",
+			"listring[current_player;main]",
+			"listring[context;fuel]",
+			"listring[current_player;main]",
+			"listring[context;output]",
+			"listring[current_player;main]"
+		}, "")
+	end
+	meta:set_string("formspec", formspec)
+end
+
+local function get_forge_structure(pos) -- Check if structure around forge is complete
+	local node = minetest.get_node(pos)
+	local name = node.name
+	local material = forge_materials[name]
+	local structure_v = {
+		{x = 1, y = 0, z = -1},
+		{x = 1, y = 0, z = 1},
+		{x = -1, y = 0, z = -1},
+		{x = -1, y = 0, z = 1},
+		{x = -1, y = 1, z = 0},
+		{x = 1, y = 1, z = 0},
+		{x = 0, y = 1, z = -1},
+		{x = 0, y = 1, z = 1},
+		{x = -1, y = -1, z = 0},
+		{x = 1, y = -1, z = 0},
+		{x = 0, y = -1, z = -1},
+		{x = 0, y = -1, z = 1},
+		{x = 1, y = 1, z = -1},
+		{x = 1, y = 1, z = 1},
+		{x = -1, y = 1, z = -1},
+		{x = -1, y = 1, z = 1},
+		{x = 1, y = -1, z = -1},
+		{x = 1, y = -1, z = 1},
+		{x = -1, y = -1, z = -1},
+		{x = -1, y = -1, z = 1},
+		{x = 0, y = 1, z = 0},
+		{x = 0, y = -1, z = 0}
+	}
+	for i = 1, 22 do
+		local node = minetest.get_node(vector.add(pos, structure_v[i]))
+		if node.name ~= material then
+			return false
 		end
 	end
-})
+	return true
+end
 
-minetest.register_node("draconis:lectern", {
-	description = "Lectern",
-	tiles = {"draconis_lectern.png",},
+local function initiate_forge(pos)
+	if get_forge_structure(pos) then
+		local meta = minetest.get_meta(pos)
+		update_forge_form(0, meta)
+		local inv = meta:get_inventory()
+		inv:set_size("input", 1)
+		inv:set_size("fuel", 1)
+		inv:set_size("output", 1)
+	end
+end
+
+local function add_ingot(pos, ingot)
+	local meta = minetest.get_meta(pos)
+	local inv = meta:get_inventory()
+	local input = inv:get_stack("input", 1)
+	local fuel = inv:get_stack("fuel", 1)
+	local output = inv:get_stack("output", 1)
+	if input:get_name() ~= steel_ingot
+	or fuel:get_name() ~= forge_fuels[ingot]
+	or fuel:get_count() < 11
+	or not inv:room_for_item("output", ingot) then
+		minetest.get_node_timer(pos):stop()
+		update_forge_form(0, meta)
+	else
+		input:take_item(1)
+		inv:set_stack("input", 1, input)
+		fuel:take_item(11)
+		inv:set_stack("fuel", 1, fuel)
+		inv:add_item("output", ingot)
+	end
+end
+
+local function ice_forge_step(pos)
+	local meta = minetest.get_meta(pos)
+	local progress = meta:get_int("progress") or 0
+
+	if progress >= 60 then
+		add_ingot(pos, "draconis:draconic_steel_ingot_ice")
+		progress = 0
+	end
+
+	local smelt = meta:get_int("smelt") or 0
+
+	update_forge_form(progress, meta)
+
+	meta:set_int("progress", progress)
+end
+
+local function fire_forge_step(pos)
+	local meta = minetest.get_meta(pos)
+	local progress = meta:get_int("progress") or 0
+
+	if progress >= 60 then
+		add_ingot(pos, "draconis:draconic_steel_ingot_fire")
+		progress = 0
+	end
+
+	local smelt = meta:get_int("smelt") or 0
+
+	update_forge_form(progress, meta)
+
+	meta:set_int("progress", progress)
+end
+
+minetest.register_node("draconis:draconic_forge_fire", {
+	description = "Fire Draconic Steel Forge",
+	tiles = {"draconis_draconic_forge_fire_top.png", "draconis_draconic_forge_fire_top.png", "draconis_draconic_forge_fire.png"},
 	paramtype2 = "facedir",
-	groups = {cracky = 2, tubedevice = 1, tubedevice_receiver = 1},
-	legacy_facedir_simple = true,
+	place_param2 = 0,
 	is_ground_content = false,
-	sounds = default.node_sound_wood_defaults(),
-    drawtype = "mesh",
-    mesh = "draconis_lectern.obj",
-
-	on_construct = function(pos)
-        local meta = minetest.get_meta(pos)
-        lectern_pages_formspec(meta, false)
-        local inv = meta:get_inventory()
-        inv:set_size("book", 1)
-        inv:set_size("pages", 1)
-    end,
+	groups = {cracky = 1, level = 2},
+	sounds = draconis.sounds.stone,
+	on_construct = initiate_forge,
 
 	can_dig = function(pos)
 		local meta = minetest.get_meta(pos)
 		local inv = meta:get_inventory()
-		return inv:is_empty("book") and inv:is_empty("pages")
+		return inv:is_empty("input") and inv:is_empty("fuel") and inv:is_empty("output")
 	end,
 
 	allow_metadata_inventory_put = function(pos, listname, _, stack, player)
 		if minetest.is_protected(pos, player:get_player_name()) then
 			return 0
 		end
-		if listname == "book" then
-			return stack:get_name() == "draconis:bestiary" and stack:get_count() or 0
+		if listname == "fuel" then
+			return stack:get_name() == "draconis:log_scorched" and stack:get_count() or 0
 		end
-		if listname == "pages" then
-			return stack:get_name() == "draconis:manuscript" and stack:get_count() or 0
+		if listname == "input" then
+			return stack:get_name() == steel_ingot and stack:get_count() or 0
 		end
 		return 0
 	end,
@@ -338,186 +400,308 @@ minetest.register_node("draconis:lectern", {
 			return 0
 		end
 		return stack:get_count()
-    end,
+	end,
 
 	on_metadata_inventory_put = function(pos) -- Recalculate on_put
 		local meta = minetest.get_meta(pos)
 		local inv = meta:get_inventory()
+		local timer = minetest.get_node_timer(pos)
 
-		local stack = inv:get_stack("book", 1)
-        if stack:get_name() == "draconis:bestiary" then
-            local num = #minetest.get_objects_inside_radius(pos, 0.9)
-            if num == 0 then
-                minetest.add_entity({x=pos.x, y=pos.y+0.85, z=pos.z}, "draconis:book_ent")
-            end
-            local pages = inv:get_stack("pages", 1)
-            if pages:get_name() == "draconis:manuscript"
-            and pages:get_count() >= 2 then
-                lectern_pages_formspec(meta, true)
-            end
+		if not inv:room_for_item("output", "draconis:draconic_steel_ingot_fire") then
+			timer:stop()
+			return
+		end
+
+		local progress = meta:get_int("progress") or 0
+
+		if progress < 1 then
+			update_forge_form(0, meta)
 		end
 	end,
 
 	on_metadata_inventory_take = function(pos)
 		local meta = minetest.get_meta(pos)
-        local inv = meta:get_inventory()
+		local inv = meta:get_inventory()
+		local input = inv:get_stack("input", 1)
+		local fuel = inv:get_stack("fuel", 1)
+		local timer = minetest.get_node_timer(pos)
+		local progress = meta:get_int("progress") or 0
 
-        local pages = inv:get_stack("pages", 1)
-        if pages:get_name() ~= "draconis:manuscript" then
-            lectern_pages_formspec(meta, false)
-        end
-
-		local stack = inv:get_stack("book", 1)
-        if stack:get_name() ~= "draconis:bestiary" then
-            lectern_pages_formspec(meta, false)
-            for _, obj in pairs(minetest.get_objects_inside_radius(pos, 1)) do
-                if obj and obj:get_luaentity()
-                and obj:get_luaentity().name == "draconis:book_ent" then
-                    obj:remove()
-                    break
-                end
-            end
-		end
-    end,
-
-    on_receive_fields = function(pos, _, fields)
-
-        local meta = minetest.get_meta(pos)
-        local inv = meta:get_inventory()
-
-        local stack = inv:get_stack("book", 1)
-        if stack:get_name() ~= "draconis:bestiary" then
-            return
+		if input:get_name() ~= steel_ingot then
+			timer:stop()
+			update_forge_form(0, meta)
+			if progress > 0 then
+				meta:set_int("progress", 0)
+			end
+			return
 		end
 
-		local pages = inv:get_stack("pages", 1)
-        if pages:get_name() ~= "draconis:manuscript"
-        or pages:get_count() < 2 then
-            return
-        end
+		if fuel:get_name() ~= "draconis:log_scorched" then
+			timer:stop()
+			update_forge_form(0, meta)
+			if progress > 0 then
+				meta:set_int("progress", 0)
+			end
+			return
+		end
 
-        if fields.quit then return end
+		if progress < 1 then
+			update_forge_form(0, meta)
+		end
+	end,
 
-        local stack_meta = stack:get_meta()
-        local stack_pages = minetest.deserialize(stack_meta:get_string("pages")) or {}
-        local desc = stack_meta:get_string("description")
-        if desc == "" then
-            desc = "Bestiary"
-        end
+	on_timer = fire_forge_step,
 
-        if fields.pg_ice_dragon
-        and not draconis.find_value_in_table(stack_pages,"pg_ice_dragon;Ice Dragon") then
-            table.insert(stack_pages, "pg_ice_dragon;Ice Dragon")
-            stack_meta:set_string("description", desc.."\n"..minetest.colorize("#a9a9a9", "Ice Dragon"))
-        end
+	on_breath = function(pos)
+		local meta = minetest.get_meta(pos)
+		local inv = meta:get_inventory()
+		local timer = minetest.get_node_timer(pos)
+		local input = inv:get_stack("input", 1)
+		local fuel = inv:get_stack("fuel", 1)
+		local progress = meta:get_int("progress") or 0
 
-        if fields.pg_fire_dragon
-        and not draconis.find_value_in_table(stack_pages, "pg_fire_dragon;Fire Dragon") then
-            table.insert(stack_pages, "pg_fire_dragon;Fire Dragon")
-            stack_meta:set_string("description", desc.."\n"..minetest.colorize("#a9a9a9", "Fire Dragon"))
-        end
+		if input:get_name() ~= steel_ingot
+		or fuel:get_name() ~= forge_fuels["draconis:draconic_steel_ingot_fire"] then
+			update_forge_form(0, meta)
+			return
+		end
 
-        if fields.pg_ice_dragon_egg
-        and not draconis.find_value_in_table(stack_pages, "pg_ice_dragon_egg;Ice Dragon Eggs") then
-            table.insert(stack_pages, "pg_ice_dragon_egg;Ice Dragon Eggs")
-            stack_meta:set_string("description", desc.."\n"..minetest.colorize("#a9a9a9", "Ice Dragon Eggs"))
-        end
+		if not timer:is_started()
+		and get_forge_structure(pos) then
+			timer:start(1)
+			meta:set_int("progress", progress + 30)
+		end
 
-        if fields.pg_fire_dragon_egg
-        and not draconis.find_value_in_table(stack_pages, "pg_fire_dragon_egg;Fire Dragon Eggs") then
-            table.insert(stack_pages, "pg_fire_dragon_egg;Fire Dragon Eggs")
-            stack_meta:set_string("description", desc.."\n"..minetest.colorize("#a9a9a9", "Fire Dragon Eggs"))
-        end
+		local dirs = {
+			{x = 1, y = 0, z = 0},
+			{x = 0, y = 0, z = 1},
+			{x = -1, y = 0, z = 0},
+			{x = 0, y = 0, z = -1}
+		}
 
-        if fields.pg_raising
-        and not draconis.find_value_in_table(stack_pages, "pg_raising;Raising Dragons") then
-            table.insert(stack_pages, "pg_raising;Raising Dragons")
-            stack_meta:set_string("description", desc.."\n"..minetest.colorize("#a9a9a9", "Raising Dragons"))
-        end
-
-        if fields.pg_forge
-        and not draconis.find_value_in_table(stack_pages, "pg_forge;Draconic Steel Forge") then
-            table.insert(stack_pages, "pg_forge;Draconic Steel Forge")
-            stack_meta:set_string("description", desc.."\n"..minetest.colorize("#a9a9a9", "Draconic Steel Forge"))
-        end
-
-        stack_meta:set_string("pages", minetest.serialize(stack_pages))
-        inv:set_stack("book", 1, stack)
-        pages:take_item(2)
-        inv:set_stack("pages", 1, pages)
-        if pages:get_count() < 2 then
-            lectern_pages_formspec(meta, false)
-        end
-        return stack, pages
-    end,
-
-
-	on_blast = function(pos)
-		local drops = {}
-		default.get_inventory_drops(pos, "book", drops)
-		default.get_inventory_drops(pos, "pages", drops)
-		table.insert(drops, "draconis:lectern")
-		minetest.remove_node(pos)
-		return drops
-    end,
-
-    on_destruct = function(pos)
-        for _, obj in pairs(minetest.get_objects_inside_radius(pos, 1)) do
-            if obj and obj:get_luaentity()
-            and obj:get_luaentity().name == "draconis:book_ent" then
-                obj:remove()
-                break
-            end
-        end
-    end
+		for i = 1, 4 do
+			local dir = dirs[i]
+			minetest.add_particlespawner({
+				amount = 2,
+				time = 0.25,
+				minpos = vector.add(pos, dir),
+				maxpos = vector.add(pos, dir),
+				minvel = vector.multiply(dir, 2),
+				maxvel = vector.multiply(dir, 3),
+				minacc = {x = 0, y = 2, z = 0},
+				maxacc = {x = 0, y = 6, z = 0},
+				minexptime = 0.5,
+				maxexptime = 1.5,
+				minsize = 5,
+				maxsize = 8,
+				collisiondetection = false,
+				vertical = false,
+				glow = 16,
+				texture = "fire_basic_flame.png"
+			})
+		end
+	end
 })
 
--- Dragon Spawning
+minetest.register_node("draconis:draconic_forge_ice", {
+	description = "Ice Draconic Steel Forge",
+	tiles = {"draconis_draconic_forge_ice_top.png", "draconis_draconic_forge_ice_top.png", "draconis_draconic_forge_ice.png"},
+	paramtype2 = "facedir",
+	place_param2 = 0,
+	is_ground_content = false,
+	groups = {cracky = 1, level = 2},
+	sounds = draconis.sounds.stone,
+	on_construct = initiate_forge,
 
-minetest.register_node("draconis:spawn_node", {
-    drawtype = "airlike",
-    groups = {not_in_creative_inventory = 1}
+	can_dig = function(pos)
+		local meta = minetest.get_meta(pos)
+		local inv = meta:get_inventory()
+		return inv:is_empty("input") and inv:is_empty("fuel") and inv:is_empty("output")
+	end,
+
+	allow_metadata_inventory_put = function(pos, listname, _, stack, player)
+		if minetest.is_protected(pos, player:get_player_name()) then
+			return 0
+		end
+		if listname == "fuel" then
+			return stack:get_name() == "draconis:log_frozen" and stack:get_count() or 0
+		end
+		if listname == "input" then
+			return stack:get_name() == steel_ingot and stack:get_count() or 0
+		end
+		return 0
+	end,
+
+	allow_metadata_inventory_move = function() return 0 end,
+
+	allow_metadata_inventory_take = function (pos, _, _, stack, player)
+		if minetest.is_protected(pos, player:get_player_name()) then
+			return 0
+		end
+		return stack:get_count()
+	end,
+
+	on_metadata_inventory_put = function(pos) -- Recalculate on_put
+		local meta = minetest.get_meta(pos)
+		local inv = meta:get_inventory()
+		local timer = minetest.get_node_timer(pos)
+
+		if not inv:room_for_item("output", "draconis:draconic_steel_ingot_ice") then
+			timer:stop()
+			return
+		end
+
+		local progress = meta:get_int("progress") or 0
+
+		if progress < 1 then
+			update_forge_form(0, meta)
+		end
+	end,
+
+	on_metadata_inventory_take = function(pos)
+		local meta = minetest.get_meta(pos)
+		local inv = meta:get_inventory()
+		local input = inv:get_stack("input", 1)
+		local fuel = inv:get_stack("fuel", 1)
+		local timer = minetest.get_node_timer(pos)
+		local progress = meta:get_int("progress") or 0
+
+		if input:get_name() ~= steel_ingot then
+			timer:stop()
+			update_forge_form(0, meta)
+			if progress > 0 then
+				meta:set_int("progress", 0)
+			end
+			return
+		end
+
+		if fuel:get_name() ~= "draconis:log_frozen" then
+			timer:stop()
+			update_forge_form(0, meta)
+			if progress > 0 then
+				meta:set_int("progress", 0)
+			end
+			return
+		end
+
+		if progress < 1 then
+			update_forge_form(0, meta)
+		end
+	end,
+
+	on_timer = ice_forge_step,
+
+	on_breath = function(pos)
+		local meta = minetest.get_meta(pos)
+		local inv = meta:get_inventory()
+		local timer = minetest.get_node_timer(pos)
+		local input = inv:get_stack("input", 1)
+		local fuel = inv:get_stack("fuel", 1)
+		local progress = meta:get_int("progress") or 0
+
+		if input:get_name() ~= steel_ingot
+		or fuel:get_name() ~= forge_fuels["draconis:draconic_steel_ingot_ice"] then
+			update_forge_form(0, meta)
+			return
+		end
+
+		if not timer:is_started()
+		and get_forge_structure(pos) then
+			timer:start(1)
+			meta:set_int("progress", progress + 30)
+		end
+
+		local dirs = {
+			{x = 1, y = 0, z = 0},
+			{x = 0, y = 0, z = 1},
+			{x = -1, y = 0, z = 0},
+			{x = 0, y = 0, z = -1}
+		}
+
+		for i = 1, 4 do
+			local dir = dirs[i]
+			minetest.add_particlespawner({
+				amount = 2,
+				time = 0.25,
+				minpos = vector.add(pos, dir),
+				maxpos = vector.add(pos, dir),
+				minvel = vector.multiply(dir, 2),
+				maxvel = vector.multiply(dir, 3),
+				minacc = {x = 0, y = 2, z = 0},
+				maxacc = {x = 0, y = 6, z = 0},
+				minexptime = 0.5,
+				maxexptime = 1.5,
+				minsize = 3,
+				maxsize = 6,
+				collisiondetection = false,
+				vertical = false,
+				glow = 16,
+				texture = "draconis_ice_particle_" .. math.random(1, 3) .. ".png"
+			})
+		end
+	end
 })
 
+------------
+-- Stairs --
+------------
 
-minetest.register_abm({
-    label = "Dragon Spawning",
-    nodenames = {"draconis:spawn_node"},
-    interval = 4,
-    chance = 1,
-    action = function(pos)
-        local meta = minetest.get_meta(pos)
-        local name = meta:get_string("name")
-        local age = meta:get_int("age")
-        local dragon = minetest.add_entity(pos, name)
-        if dragon then
-            local ent = dragon:get_luaentity()
-            ent._mem = mobkit.remember(ent, "_mem", true) -- initializes memory (I don't know why this works but it does)
-            ent.age = mobkit.remember(ent, "age", age)
-            ent.growth_scale = mobkit.remember(ent, "growth_scale", age * 0.01)
-            ent.mapgen_spawn = mobkit.remember(ent, "mapgen_spawn", true)
-            if age <= 25 then
-                ent.child = mobkit.remember(ent, "child", true)
-                ent.growth_stage = mobkit.remember(ent, "growth_stage", 1)
-            end
-            if age <= 50 then
-                ent.growth_stage = mobkit.remember(ent, "growth_stage", 2)
-            end
-            if age <= 75 then
-                ent.growth_stage = mobkit.remember(ent, "growth_stage", 3)
-            end
-            if age > 75 then
-                ent.growth_stage = mobkit.remember(ent, "growth_stage", 4)
-            end
-            if math.random(3) < 2 then
-                ent.gender = mobkit.remember(ent, "gender", "male")
-            else
-                ent.gender = mobkit.remember(ent, "gender", "female")
-            end
-            mob_core.set_scale(ent, ent.growth_scale)
-            mob_core.set_textures(ent)
-            draconis.set_drops(ent)
-        end
-        minetest.remove_node(pos)
-    end,
-})
+local register_stairs = minetest.settings:get_bool("register_stairs")
+
+if minetest.get_modpath("stairs")
+and register_stairs then
+	for i = 1, #stair_queue do
+		local name = stair_queue[i]
+		local def = minetest.registered_nodes[name]
+		stairs.register_stair_and_slab(
+			name:split(":")[2],
+			name,
+			def.groups,
+			def.tiles,
+			def.description .. " Stairs",
+			def.description .. " Slab",
+			def.sounds,
+			false,
+			def.description .. " Stairs Outer",
+			def.description .. " Stairs Inner"
+		)
+	end
+end
+
+--------------
+-- Aliasing --
+--------------
+
+for string in pairs(ice_colors) do
+	minetest.register_alias_force("draconis:ice_scale_brick_" .. string, "draconis:stone_bricks_frozen")
+	minetest.register_alias_force("draconis:egg_ice_" .. string, "draconis:egg_ice_" .. string)
+end
+
+for string in pairs(fire_colors) do
+	minetest.register_alias_force("draconis:fire_scale_brick_" .. string, "draconis:stone_bricks_scorched")
+	minetest.register_alias_force("draconis:egg_fire_" .. string, "draconis:egg_fire_" .. string)
+end
+
+minetest.register_alias_force("draconis:dracolily_ice", "")
+minetest.register_alias_force("draconis:dracolily_fire", "")
+minetest.register_alias_force("draconis:growth_essence_ice", "")
+minetest.register_alias_force("draconis:growth_essence_fire", "")
+minetest.register_alias_force("draconis:blood_ice_dragon", "")
+minetest.register_alias_force("draconis:blood_fire_dragon", "")
+minetest.register_alias_force("draconis:manuscript", "")
+
+minetest.register_alias_force("draconis:frozen_soil", "draconis:soil_frozen")
+minetest.register_alias_force("draconis:frozen_stone", "draconis:stone_frozen")
+minetest.register_alias_force("draconis:frozen_tree", "draconis:log_frozen")
+minetest.register_alias_force("draconis:frozen_wood", "draconis:wood_planks_frozen")
+minetest.register_alias_force("draconis:frozen_stone_brick", "draconis:stone_bricks_frozen")
+minetest.register_alias_force("draconis:frozen_stone_block", "draconis:stone_frozen")
+minetest.register_alias_force("draconis:draconic_steel_forge_ice", "draconis:draconic_forge_ice")
+
+minetest.register_alias_force("draconis:scorched_soil", "draconis:soil_scorched")
+minetest.register_alias_force("draconis:scorched_stone", "draconis:stone_scorched")
+minetest.register_alias_force("draconis:scorched_tree", "draconis:log_scorched")
+minetest.register_alias_force("draconis:scorched_wood", "draconis:wood_planks_scorched")
+minetest.register_alias_force("draconis:scorched_stone_brick", "draconis:stone_bricks_scorched")
+minetest.register_alias_force("draconis:scorched_stone_block", "draconis:stone_scorched")
+minetest.register_alias_force("draconis:draconic_steel_forge_fire", "draconis:draconic_forge_fire")

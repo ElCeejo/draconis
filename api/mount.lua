@@ -1,51 +1,22 @@
--------------
---- Mount ---
--------------
--- Ver 1.0 --
+---------------
+-- Mount API --
+---------------
 
-----------
--- Math --
-----------
+draconis.mounted_player_data = {}
 
 local abs = math.abs
-local atan2 = math.atan2
-local sin = math.sin
-local cos = math.cos
-local deg = math.deg
-local function diff(a, b) -- Get difference between 2 angles
-    return atan2(sin(b - a), cos(b - a))
-end
-local function round(x) -- Round to nearest multiple of 0.5
-	return x + 0.5 - (x + 0.5) % 1
-end
 
---------------
--- Settings --
---------------
-
-draconis.attached = {}
-
-local dragon_mount_data = {}
-
-local mount_refs = {}
-
-local mesh = "character.b3d"
-
-if minetest.get_modpath("3d_armor") then
-    mesh = "3d_armor_character.b3d"
-end
-
-local function lerp(a, b, w)
-    return a + (b - a) * w
-end
+-------------------
+-- Player Visual --
+-------------------
 
 minetest.register_entity("draconis:mounted_player_visual", {
     initial_properties = {
-        mesh = mesh,
+        mesh = "character.b3d",
         visual = "mesh",
-        collisionbox = {0, 0, 0, 0, 0, 0},
-        stepheight = 1,
-        physical = true,
+        collisionbox = {0, 0, 0, 0, 1, 0},
+        stepheight = 0,
+        physical = false,
         collide_with_objects = false
     },
     on_activate = function(self, static)
@@ -79,34 +50,28 @@ minetest.register_entity("draconis:mounted_player_visual", {
     on_step = function(self) self.object:set_velocity(vector.new()) end
 })
 
-----------------------
--- Helper Functions --
-----------------------
-
-local function clear_hud(name)
-	local player = minetest.get_player_by_name(name)
-	if player then
-		if dragon_mount_data[player:get_player_name()] and
-            dragon_mount_data[player:get_player_name()].hud then
-            player:hud_set_flags({wielditem = true})
-			player:hud_remove(dragon_mount_data[player:get_player_name()]
-								  .hud)
-			dragon_mount_data[player:get_player_name()].hud = nil
-			dragon_mount_data[player:get_player_name()] = nil
-		end
-	end
-end
-
---------------------
--- Main Functions --
---------------------
-
-local function attach_visual(name, entity)
-    local player = minetest.get_player_by_name(name)
-    if not player then return end
-	if mount_refs[name] ~= nil then return end
-	if not entity.dragon_id then return end
-    mount_refs[name] = {
+function draconis.set_fake_player(self, player)
+    if not player
+    or not player:get_look_horizontal()
+    or not player:is_player() then
+        return
+    end
+    local player_name = player:get_player_name()
+    if draconis.mounted_player_data[player_name]
+    and draconis.mounted_player_data[player_name].fake_player
+    and draconis.mounted_player_data[player_name].fake_player:get_pos() then
+        draconis.unset_fake_player(self, player)
+        return
+    end
+    local pos = self.object:get_pos()
+    local player_pos = player:get_pos()
+    local fake_player = minetest.add_entity(
+        player_pos,
+        "draconis:mounted_player_visual",
+        minetest.serialize({player = player_name})
+    )
+    -- Cache Player Data
+    draconis.mounted_player_data[player_name] = {
         collision = table.copy(player:get_properties().collisionbox),
         textures = table.copy(player:get_properties().textures),
         visual_size = table.copy(player:get_properties().visual_size),
@@ -118,475 +83,413 @@ local function attach_visual(name, entity)
         inventory = player:get_inventory():get_lists(),
         formspec = player:get_inventory_formspec(),
         hotbar = player:hud_get_hotbar_itemcount(),
-		nametag = player:get_nametag_attributes().text,
-		dragon_id = entity.dragon_id,
-        ent = minetest.add_entity(player:get_pos(),
-                                  "draconis:mounted_player_visual",
-                                  minetest.serialize({player = name})):get_luaentity()
+		nametag = player:get_nametag_attributes(),
+		dragon = self,
+        fake_player = fake_player
     }
+    -- Set Players Data
     player:set_properties({
-        collisionbox = {-0.4, 0, -0.4, 0.4, 0.45, 0.4},
         visual_size = {x = 0, y = 0, z = 0},
-        mesh = mesh,
-        textures = {"transparency.png"}
+        textures = {}
     })
     player:set_nametag_attributes({text = " "})
-    mount_refs[name].ent.object:set_attach(entity.object, "Torso.2",
-                                           {x = 0, y = 0.75, z = 0.15},
-                                           {x = 90, y = 0, z = 180})
-    mount_refs[name].ent.object:set_animation({x = 81, y = 160}, 30, 0)
-    local visual_size = mount_refs[name].ent.object:get_properties().visual_size
-    local ent_visual_size = entity.object:get_properties().visual_size
-    mount_refs[name].ent.object:set_properties(
-        {
-            visual_size = {
-                x = visual_size.x / ent_visual_size.x,
-                y = visual_size.y / ent_visual_size.y
-            },
-            pointable = false
-        })
+    -- Attach Fake Player
+    fake_player:set_attach(self.object, "Torso.2", {x = 0, y = 0.75, z = 0.075}, {x = 90, y = 0, z = 180})
+    fake_player:set_animation({x = 81, y = 160}, 30, 0)
+    local player_size = fake_player:get_properties().visual_size
+    local dragon_size = self.object:get_properties().visual_size
+    fake_player:set_properties({
+        visual_size = {
+            x = player_size.x / dragon_size.x,
+            y = player_size.y / dragon_size.y
+        },
+        mesh = draconis.mounted_player_data[player_name].mesh,
+        pointable = false
+    })
 end
 
-local function attach(name, entity)
-    local player = minetest.get_player_by_name(name)
-    if not player then return end
-	if player:get_attach() then return end
-	if not entity or not entity.object:get_pos() then return end
-    dragon_mount_data[name] = {hud = nil}
-    entity.driver = mobkit.remember(entity, "driver", name)
-    if default.player_attached ~= nil then default.player_attached[name] = true end
-    draconis.attached[name] = entity.dragon_id
-    player:set_attach(entity.object, "Torso.2", {x = 0, y = 0, z = 0},
-                      {x = 0, y = 0, z = 0})
+function draconis.unset_fake_player(self, player)
+    if not player
+    or not player:get_look_horizontal()
+    or not player:is_player() then
+        return
+    end
+    local player_name = player:get_player_name()
+    if not draconis.mounted_player_data[player_name]
+    or not draconis.mounted_player_data[player_name].fake_player
+    or not draconis.mounted_player_data[player_name].fake_player:get_pos() then
+        return
+    end
+    -- Cache Player Data
+    local data = draconis.mounted_player_data[player_name]
+    local fake_player = data.fake_player
+    -- Set Players Data
+    player:set_properties({
+        visual_size = data.visual_size,
+        textures = data.textures
+    })
+    player:set_nametag_attributes(data.nametag)
+    player:set_eye_offset(data.eye_offset_first, data.eye_offset_third)
+    -- Unset Data
+    draconis.mounted_player_data[player_name] = nil
+    -- Remove Fake Player
+    fake_player:remove()
+end
+
+----------------
+-- Attachment --
+----------------
+
+local function set_hud(player, def)
+    local hud = {
+        hud_elem_type = "image",
+        position = def.position,
+        text = def.text,
+        scale = {x = 3, y = 3},
+        alignment = {x = 1, y = -1},
+        offset = {x = 0, y = -5}
+    }
+    return player:hud_add(hud)
+end
+
+local function update_hud(player, hud, image)
+    return player:hud_change(hud, "text", image)
+end
+
+function draconis.attach_player(self, player)
+    if not player
+    or not player:get_look_horizontal()
+    or not player:is_player() then
+        return
+    end
+    local scale = self.growth_scale
+    -- Attach Player
+    player:set_attach(self.object, "Torso.2", {x = 0, y = 0, z = 0}, {x = 0, y = 0, z = 0})
+    -- Set Players Eye Offset
     player:set_eye_offset({
         x = 0,
-        y = 60 * entity.growth_scale,
-        z = -160 * entity.growth_scale
-    }, {x = 0, y = 0, z = 0})
-    attach_visual(name, entity)
-    player:set_look_horizontal(entity.object:get_yaw() or 0)
-    local driver_mount_data = dragon_mount_data[name]
-    if not dragon_mount_data.hud then
+        y = 60 * scale,
+        z = -160 * scale
+    }, {x = 0, y = 0, z = 0}) -- 3rd person eye offset is limited to 15 on each axis (Fix this, devs.)
+    player:set_look_horizontal(self.object:get_yaw() or 0)
+    -- Set Fake Player (Using a fake player and changing 1st person eye offset works around the above issue)
+    draconis.set_fake_player(self, player)
+    -- Set Dragon Data
+    self.rider = player
+    -- Set HUD
+    local data = draconis.mounted_player_data[player:get_player_name()]
+    if not data.huds then
+        local health = self.hp / math.ceil(self.max_health * self.growth_scale) * 100
+        local hunger = self.hunger / math.ceil(self.max_hunger * self.growth_scale) * 100
+        local stamina = self.flight_stamina / 900 * 100
+        local breath = self.attack_stamina / 100 * 100
         player:hud_set_flags({wielditem = false})
-        driver_mount_data.hud = player:hud_add(
-                                    {
-                hud_elem_type = "image",
-                position = {x = 0, y = 1},
-                text = "draconis_forge_formspec_fire_bg.png^[lowpart:" ..
-                    (entity.breath_meter) ..
-                    ":draconis_forge_formspec_fire_fg.png",
-                scale = {x = 3, y = 3},
-                alignment = {x = 1, y = -1},
-                offset = {x = 0, y = -5}
+        draconis.mounted_player_data[player:get_player_name()].huds = {
+            ["health"] = set_hud(player, {
+                text = "draconis_forms_health_bg.png^[lowpart:" .. health .. ":draconis_forms_health_fg.png",
+                position = {x = 0, y = 0.7}
+            }),
+            ["hunger"] = set_hud(player, {
+                text = "draconis_forms_hunger_bg.png^[lowpart:" .. hunger .. ":draconis_forms_hunger_fg.png",
+                position = {x = 0, y = 0.8}
+            }),
+            ["stamina"] = set_hud(player, {
+                text = "draconis_forms_stamina_bg.png^[lowpart:" .. stamina .. ":draconis_forms_stamina_fg.png",
+                position = {x = 0, y = 0.9}
+            }),
+            ["breath"] = set_hud(player, {
+                text = "draconis_forms_breath_bg.png^[lowpart:" .. breath .. ":draconis_forms_breath_fg.png",
+                position = {x = 0, y = 1}
             })
+        }
     end
 end
 
-local function detach_visual(name)
-    local player = minetest.get_player_by_name(name)
-    if not player then return end
-    if not mount_refs[name] then return end
-    local props = mount_refs[name]
-    player:set_properties({visual_size = {x = 0, y = 0}})
-    player:set_eye_offset(props.eye_offset_first, props.eye_offset_third)
-    player:set_physics_override({speed = 1, jump = 1, gravity = 1, sneak = true})
-    player:set_look_vertical(props.vertical)
-    player:set_look_horizontal(props.horizontal)
-    player:set_properties({
-        collisionbox = props.collision,
-        mesh = props.mesh,
-        textures = props.textures,
-        visual_size = props.visual_size
-    })
-    mount_refs[name] = nil
-    draconis.attached[name] = nil
-    minetest.after(0.6, function()
-        player:set_nametag_attributes({text = props.nametag})
-        player:set_properties({visual_size = {x = 1, y = 1}})
-        props.ent.object:set_detach()
-        props.ent.object:remove()
-    end)
-end
-
-local function detach(name)
-    local player = minetest.get_player_by_name(name)
-    if not player then return end
-    if player:get_attach() then
-        local parent = player:get_attach()
-        local ent = parent:get_luaentity()
-        if ent
-        and ent.driver
-        and ent.driver == player then
-            ent.driver = nil
-            mobkit.clear_queue_high(ent)
-            ent.status = mobkit.remember(ent, "status", "")
-        end
-        player:set_detach()
-    end
-    clear_hud(name)
-    detach_visual(name)
-    player:set_properties({visual_size = {x = 1, y = 1}, pointable = true})
-    default.player_set_animation(player, "stand", 30)
-    default.player_attached[name] = false
-    local pos = player:get_pos()
-    minetest.after(0.1, function() player:set_pos(pos) end)
-end
-
-function draconis.mount(self, clicker)
-    if not self.driver and self.child == false then
-        draconis.detach(clicker)
-        mobkit.clear_queue_high(self)
-        self.status = mobkit.remember(self, "status", "ridden")
-        draconis.attach(self, clicker)
-        return false
-    else
-        return true
-    end
-end
-
-function draconis.attach(entity, player)
+function draconis.detach_player(self, player)
     if not player
-    or not player:get_player_name() then return end
-    local name = player:get_player_name()
-    if not default.player_attached[name] then
-        minetest.after(0, function() attach(name, entity) end)
+    or not player:get_look_horizontal()
+    or not player:is_player() then
+        return
     end
+    local player_name = player:get_player_name()
+    local scale = self.growth_scale
+    local data = draconis.mounted_player_data[player_name]
+    -- Attach Player
+    player:set_detach()
+    -- Set HUD
+    player:hud_set_flags({wielditem = true})
+    player:hud_remove(data.huds["health"])
+    player:hud_remove(data.huds["hunger"])
+    player:hud_remove(data.huds["stamina"])
+    player:hud_remove(data.huds["breath"])
+    -- Set Fake Player (Using a fake player and changing 1st person eye offset works around the above issue)
+    draconis.unset_fake_player(self, player)
+    -- Set Dragon Data
+    self.rider = nil
 end
 
-function draconis.detach(player)
-    if not player
-    or not player:get_player_name() then return end
-    local name = player:get_player_name()
-    if default.player_attached[name] then
-        minetest.after(0, function() detach(name) end)
-    end
-end
+--------------
+-- Settings --
+--------------
 
-function draconis.reattach(self)
-    if self.driver and minetest.get_player_by_name(self.driver) then
-        local driver = minetest.get_player_by_name(self.driver)
-        local pos = self.object:get_pos()
-        draconis.detach(driver)
-        if self.owner
-        and pos then
-            draconis.dragons[self.dragon_id] = {owner = self.owner, last_pos = pos}
-        end
-        draconis.load_dragon(draconis.attached[self.driver])
-        minetest.after(4, function()
-            driver:set_pos(pos)
-        end)
-    end
-end
-
----------------------------
--- Attachment Management --
----------------------------
-
-minetest.register_on_leaveplayer(function(player)
-	minetest.after(0, clear_hud, player:get_player_name())
-    draconis.detach(player)
-end)
-
-minetest.register_on_shutdown(function()
-    local players = minetest.get_connected_players()
-    for i = 1, #players do
-		minetest.after(0, clear_hud, players[i]:get_player_name())
-        draconis.detach(players[i])
-    end
-end)
-
-minetest.register_on_dieplayer(function(player)
-	minetest.after(0, clear_hud, player:get_player_name())
-    draconis.detach(player)
-    return true
-end)
-
-function draconis.hq_mount_logic(self, prty)
-    local jump_meter = 0
-    local tvel = 0
-    local last_pos = {}
-    local mount_state = "ground"
-    local anim = "stand"
-    local timer = 0.25
-    local view_point = 3
-    local view_pressed = false
-    local safe_pos = self.object:get_pos()
-    local eye_offset = {
-        x = 0,
-        y = 60 * self.growth_scale,
-        z = -160 * self.growth_scale
+local function menu_form()
+    local formspec = {
+        "size[6,3.476]",
+        "real_coordinates[true]",
+        "button[0.25,1.3;2.3,0.8;btn_view_point;Change View Point]",
+        --"button[2.25,1.3;1.6,0.8;btn_pitch_fly;Crystal Bond]",
+        "button[3.5,1.3;2.3,0.8;btn_pitch_toggle;Toggle Pitch Flight]",
     }
+    return table.concat(formspec, "")
+end
+
+minetest.register_chatcommand("dragon_mount_settings", {
+    privs = {
+        interact = true,
+    },
+    func = function(name)
+        minetest.show_formspec(name, "draconis:dragon_mount_settings", menu_form())
+    end,
+})
+
+minetest.register_on_player_receive_fields(function(player, formname, fields)
+    local name = player:get_player_name()
+    if formname == "draconis:dragon_mount_settings" then
+        if fields.btn_view_point then
+            draconis.aux_key_setting[name] = "pov"
+            minetest.chat_send_player(name, "Sprint key now changes point of view")
+        end
+        if fields.btn_pitch_toggle then
+            draconis.aux_key_setting[name] = "vert_method"
+            minetest.chat_send_player(name, "Sprint key now changes vertical movement method")
+        end
+    end
+end)
+
+minetest.register_on_joinplayer(function(player)
+    local name = player:get_player_name()
+    if not draconis.aux_key_setting[name] then
+        draconis.aux_key_setting[name] = "pov"
+    end
+end)
+
+--------------
+-- Behavior --
+--------------
+
+creatura.register_utility("draconis:mount", function(self)
+    local is_landed = true
+    local jump_held = 0
+    local view_held = false
+    local view_point = 3
+    local initial_age = self.age
+    self:halt()
     local func = function(self)
-        if not (self.driver) then
-            return true
-        elseif self.driver
-        and (not minetest.get_player_by_name(self.driver)
-        or not minetest.get_player_by_name(self.driver):get_attach()) then
-            if minetest.get_player_by_name(self.driver) then
-                draconis.detach(minetest.get_player_by_name(self.driver))
-            end
-            self.driver = nil
-            mobkit.forget(self, "driver")
+        local player = self.rider
+        if not player
+        or not player:get_look_horizontal() then
             return true
         end
 
-        local y = 0
-        local pos = self.object:get_pos()
-        local driver = minetest.get_player_by_name(self.driver)
+        local player_name = player:get_player_name()
+        local control = player:get_player_control()
 
-        local look_dir = driver:get_look_dir()
+        local look_dir = player:get_look_dir()
+        local look_yaw = minetest.dir_to_yaw(look_dir)
 
-        local ping = vector.distance(pos, driver:get_pos())
+        local look_to_horz = look_yaw
+        local look_to_vert = look_dir.y
 
-        if vector.distance(pos, safe_pos) > 32
-        and vector.distance(pos, safe_pos) > ping then
-            self.object:set_pos(safe_pos)
-        else
-            safe_pos = pos
-        end
-
-        if timer <= 0 then
-            last_pos = pos
-            timer = 0.1
-        end
-
-        local ctrl = driver:get_player_control()
-        local tyaw = driver:get_look_horizontal() or 0
-        local yaw = self.object:get_yaw()
         local rot = self.object:get_rotation()
-        local cur_vel = self.object:get_velocity()
-        local look_to = minetest.dir_to_yaw(driver:get_look_dir())
-        self:move_head(look_to, look_dir.y)
+        local scale = self.growth_scale
+        local player_data = draconis.mounted_player_data[player_name]
 
-        if cur_vel.y < -24 then
-            cur_vel.y = -24 -- stops front flips
+        if not player_data then return end
+
+        --[[if self.age ~= initial_age then
+            local fake_props = player_data.fake_player:get_properties()
+            local dragon_size = self.object:get_properties().visual_size
+            fake_props.visual_size = {
+                x = fake_props.visual_size.x / dragon_size.x,
+                y = fake_props.visual_size.y / dragon_size.y
+            }
+            player_data.fake_player:set_properties(fake_props)
+        end
+]]
+        local health = self.hp / math.ceil(self.max_health * self.growth_scale) * 100
+        local hunger = self.hunger / math.ceil(self.max_hunger * self.growth_scale) * 100
+        local stamina = self.flight_stamina / 900 * 100
+        local breath = self.attack_stamina / 100 * 100
+        local hud_data = player_data.huds
+        if hud_data["health"] then
+            player:hud_change(player_data.huds["health"], "text", "draconis_forms_health_bg.png^[lowpart:" .. health .. ":draconis_forms_health_fg.png")
+        end
+        if hud_data["hunger"] then
+            player:hud_change(player_data.huds["hunger"], "text", "draconis_forms_hunger_bg.png^[lowpart:" .. hunger .. ":draconis_forms_hunger_fg.png")
+        end
+        if hud_data["stamina"] then
+            player:hud_change(player_data.huds["stamina"], "text", "draconis_forms_stamina_bg.png^[lowpart:" .. stamina .. ":draconis_forms_stamina_fg.png")
+        end
+        if hud_data["breath"] then
+            player:hud_change(player_data.huds["breath"], "text", "draconis_forms_breath_bg.png^[lowpart:" .. breath .. ":draconis_forms_breath_fg.png")
         end
 
-        local pitch = rot.x + ((cur_vel.y * 0.041) - rot.x) * 0.25
+        draconis.mounted_player_data[player_name].huds = player_data.huds
 
-		self.object:set_rotation({x = pitch, y = rot.y, z = rot.z})
+        local player_props = player:get_properties()
 
-        if ctrl.RMB then
-            draconis.play_sound(self, "random")
+        if player_props.visual_size.x ~= 0 then
+            player:set_properties({
+                visual_size = {x = 0, y = 0, z = 0},
+                textures = {}
+            })
         end
 
-		if mount_state == "ground" then
-            if self.isonground then
-                self.object:set_yaw(yaw)
-            end
-		else
-			mob_core.tilt_to_yaw(self, tyaw, 2)
-		end
-
-        if dragon_mount_data[driver:get_player_name()] and dragon_mount_data[driver:get_player_name()].hud then
-		    local hud = dragon_mount_data[driver:get_player_name()].hud
-            local meter_percentage = (self.breath_meter / self.breath_meter_max) * 100
-            driver:hud_change(hud, "text", "draconis_forge_formspec_fire_bg.png^[lowpart:" .. meter_percentage .. ":draconis_forge_formspec_fire_fg.png")
-        end
-
-        if ctrl.left and ctrl.right then
-			if not view_pressed then
-				local mount_ref = mount_refs[driver:get_player_name()]
-                if view_point == 3 then
-                    view_point = 1
-                    mount_ref.ent.object:set_properties(
-						{textures = {"transparency.png"}
-                    })
-                    driver:set_eye_offset({
-                        x = 0,
-                        y = 82 * self.growth_scale,
-                        z = 1 * self.growth_scale
-                    }, {x = 0, y = 0, z = 0})
-                    driver:hud_set_flags({wielditem = true})
-                    view_pressed = true
-                    eye_offset = {
-                        x = 0,
-                        y = 82 * self.growth_scale,
-                        z = 1 * self.growth_scale
-                    }
-                    return
+        if control.aux1 then
+            if draconis.aux_key_setting[player_name] == "pov" then
+                if not view_held then
+                    if view_point == 3 then
+                        view_point = 1
+                        player_data.fake_player:set_properties({
+                            textures = {}
+                        })
+                        player:set_eye_offset({
+                            x = 0,
+                            y = 82 * scale,
+                            z = 1 * scale
+                        }, {x = 0, y = 0, z = 0})
+                        player:hud_set_flags({wielditem = true})
+                    elseif view_point == 1 then
+                        view_point = 2
+                        player_data.fake_player:set_properties({
+                            textures = player_data.textures
+                        })
+                        player:set_eye_offset({
+                            x = 45 * scale,
+                            y = 80 * scale,
+                            z = -110 * scale
+                        }, {x = 0, y = 0, z = 0})
+                        player:hud_set_flags({wielditem = false})
+                    elseif view_point == 2 then
+                        view_point = 3
+                        player_data.fake_player:set_properties({
+                            textures = player_data.textures
+                        })
+                        player:set_eye_offset({
+                            x = 0,
+                            y = 80 * scale,
+                            z = -160 * scale
+                        }, {x = 0, y = 0, z = 0})
+                        player:hud_set_flags({wielditem = false})
+                    end
+                    view_held = true
                 end
-                if view_point == 1 then
-                    view_point = 2
-                    mount_ref.ent.object:set_properties({
-                        textures = mount_ref.textures
-                    })
-                    driver:set_eye_offset({
-                        x = 45 * self.growth_scale,
-                        y = 80 * self.growth_scale,
-                        z = -110 * self.growth_scale
-                    }, {x = 0, y = 0, z = 0})
-                    driver:hud_set_flags({wielditem = false})
-                    view_pressed = true
-                    eye_offset = {
-                        x = 45 * self.growth_scale,
-                        y = 80 * self.growth_scale,
-                        z = -110 * self.growth_scale
-                    }
-                    return
-                end
-                if view_point == 2 then
-                    view_point = 3
-                    mount_ref.ent.object:set_properties({
-                        textures = mount_ref.textures
-                    })
-                    driver:set_eye_offset({
-                        x = 0,
-                        y = 80 * self.growth_scale,
-                        z = -160 * self.growth_scale
-                    }, {x = 0, y = 0, z = 0})
-                    driver:hud_set_flags({wielditem = false})
-                    view_pressed = true
-                    eye_offset = {
-                        x = 0,
-                        y = 80 * self.growth_scale,
-                        z = -160 * self.growth_scale
-                    }
-                    return
+            else
+                view_held = true
+                if self.pitch_fly then
+                    self.pitch_fly = self:memorize("pitch_fly", false)
+                else
+                    self.pitch_fly = self:memorize("pitch_fly", true)
                 end
             end
         else
-            view_pressed = false
+            view_held = false
         end
 
-        if mount_state == "ground" then
+        local anim
 
-            -- Move Forward
-            if ctrl.up then
-                tvel = lerp(tvel, 13, 0.1)
-                mobkit.turn2yaw(self, tyaw, 4)
-            else
-                anim = "stand"
-            end
-
-            -- Jump
-            if ctrl.jump then
-                if self.isonground then
-                    y = (self.jump_height) + 4
-                end
-                jump_meter = jump_meter + self.dtime
-                if jump_meter > 0.5 then -- Takeoff
-                    self.object:add_velocity({x = 0, y = 12, z =0})
-                    mount_state = "flight"
-                end
-            else
-                jump_meter = 0
-                y = cur_vel.y
-            end
-
-			if ctrl.LMB then
-                local from = pos
-                from.y = from.y + (self.height + (6 * self.growth_scale))
-				local pointed_at = vector.add(from, vector.multiply(look_dir, 64))
-                pointed_at.y = pointed_at.y + 2
-                if self.name == "draconis:fire_dragon" then
-                    draconis.fire_breath(self, pointed_at, self.view_range)
-                elseif self.name == "draconis:ice_dragon" then
-                    draconis.ice_breath(self, pointed_at, self.view_range)
-                end
-            end
-
-            if round(tvel) > 0 then
+        if is_landed then
+            self:set_gravity(-9.8)
+            anim = "stand"
+            if control.up then
+                self:set_forward_velocity(12)
+                self:turn_to(look_yaw, 4)
                 anim = "walk"
             end
-        end
 
-        if mount_state == "flight" then
-
-            if self.isinliquid then
-                mount_state = "ground"
-                return
-            end
-
-            self.object:set_acceleration({x = 0, y = 0, z = 0})
-
-            if ctrl.up then
-                tvel = lerp(tvel, 32, 0.1)
-                y = look_dir.y * 24
-            elseif ctrl.jump then
-                y = 14
-            elseif ctrl.down then
-                y = -14
-                pos.y = pos.y - 1
-                timer = timer - self.dtime
-                if timer <= 0 and last_pos and last_pos.y == pos.y then
-                    mount_state = "ground"
+            if control.jump then
+                if self.touching_ground then
+                    self.object:add_velocity({x = 0, y = 4, z =0})
                 end
-            end
-
-            -- Stand
-
-			if ctrl.LMB then
-                local from = pos
-                from.y = from.y + (self.height + (6 * self.growth_scale))
-				local pointed_at = vector.add(from, vector.multiply(look_dir, 64))
-                pointed_at.y = pointed_at.y + 2
-                if self.name == "draconis:fire_dragon" then
-                    draconis.fire_breath(self, pointed_at, self.view_range)
-                elseif self.name == "draconis:ice_dragon" then
-                    draconis.ice_breath(self, pointed_at, self.view_range)
+                jump_held = jump_held + self.dtime
+                if jump_held > 0.5 then
+                    self.object:add_velocity({x = 0, y = 12, z =0})
+                    is_landed = false
                 end
-            end
-
-            if round(tvel) <= 0.5 then
-                anim = "fly_idle"
             else
+                jump_held = 0
+            end
+        else
+            self:set_gravity(0)
+            anim = "fly_idle"
+            if control.up then
+                if self.pitch_fly then
+                    self:set_vertical_velocity(12 * look_dir.y)
+                end
+                self:set_forward_velocity(24)
+                self:tilt_to(look_yaw, 5)
+                rot = self.object:get_rotation()
+                local vel = self.object:get_velocity()
+                local pitch = rot.x + ((vel.y * 0.041) - rot.x) * 0.25
+                self.object:set_rotation({x = pitch, y = rot.y, z = rot.z})
                 anim = "fly"
+            else
+                local vel_len = vector.length(self.object:get_velocity())
+                if abs(vel_len) < 0.5 then
+                    vel_len = 0
+                end
+                if abs(rot.z) > 0.01 then
+                    self:tilt_to(look_yaw, 5)
+                end
+                if abs(rot.x) > 0.01 then
+                    rot = self.object:get_rotation()
+                    local vel = self.object:get_velocity()
+                    local pitch = rot.x + ((vel.y * 0.041) - rot.x) * 0.25
+                    self.object:set_rotation({x = pitch, y = rot.y, z = rot.z})
+                end
+                self:set_vertical_velocity(0)
+                self:set_forward_velocity(vel_len * 0.5)
+            end
+
+            if not self.pitch_fly then
+                if control.jump then
+                    self:set_vertical_velocity(12)
+                elseif control.down then
+                    self:set_vertical_velocity(-12)
+                else
+                    self:set_vertical_velocity(0)
+                end
+            end
+
+
+            if self.touching_ground then
+                is_landed = true
             end
         end
 
-        if ctrl.LMB then
+        if control.RMB then
+            local start = self.object:get_pos()
+            local offset = player:get_eye_offset()
+            local dir = look_dir
+            local eye_correction = vector.multiply({x = look_dir.x, y = 0, z= look_dir.z}, offset.z * 0.125)
+            start = vector.add(start, eye_correction)
+            start.y = start.y + (offset.y * 0.125)
+            local tpos = vector.add(start, vector.multiply(look_dir, 64))
+            local head_dir = vector.direction(start, tpos)
+            look_dir.y = head_dir.y
+            self:breath_attack(tpos)
             anim = anim .. "_fire"
         end
-        draconis.animate(self, anim)
-        anim = nil
 
-        -- Velocity Control
+        self:move_head(look_yaw, look_dir.y)
 
-        if mount_state == "flight"
-        and (not ctrl.up
-        and not ctrl.jump
-        and not ctrl.down) then
-            y = 0
+        if anim then
+            self:animate(anim)
         end
 
-        if tvel ~= 0
-        and not ctrl.up then
-            tvel = lerp(tvel, 0, 0.1)
-        end
-
-        if round(tvel) > 0 then
-            tvel = tvel - (ping * 0.5)
-        end
-
-        local vel = vector.multiply(minetest.yaw_to_dir(yaw), tvel)
-        vel.y = y
-
-        local yaw_diff = diff(yaw, self._tyaw)
-
-        if view_point ~= 1 then
-            yaw_diff = 0
-        end
-
-        if mount_state == "flight"
-        and abs(yaw_diff) > math.pi then
-            draconis.set_velocity(self, vel)
-        else
-            self.object:set_velocity(vel)
-        end
-
-        driver:set_eye_offset({
-            x = eye_offset.x + deg(rot.z * self.growth_scale),
-            y = eye_offset.y - abs(deg(rot.z * self.growth_scale)),
-            z = eye_offset.z - ((deg(rot.x * self.growth_scale) - abs(deg(rot.z * self.growth_scale))) - (abs(deg(yaw_diff)) * 0.33)),
-        }, {x = 0, y = 0, z = 0})
-
-        if ctrl.sneak then
-            draconis.attached[self.driver] = nil
-            self.driver = mobkit.forget(self, "driver")
-            draconis.detach(driver)
-            return true
+        if control.sneak then
+            draconis.detach_player(self, player)
         end
     end
-    mobkit.queue_high(self, func, prty)
-end
+    self:set_utility(func)
+end)

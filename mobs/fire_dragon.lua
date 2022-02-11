@@ -4,281 +4,248 @@
 
 local creative = minetest.settings:get_bool("creative_mode")
 
-minetest.register_entity("draconis:fire_eyes", {
-    hp_max = 1,
-    armor_groups = {immortal = 1},
-    physical = false,
-    collisionbox = {0, 0, 0, 0, 0, 0},
-    visual = "mesh",
-    mesh = "draconis_eyes.b3d",
-    visual_size = {x = 1.01, y = 1.01},
-    textures = {"draconis_fire_eyes_orange.png"},
-    is_visible = true,
-    makes_footstep_sound = false,
-    glow = 11,
-    blink_timer = 18,
-    on_step = function(self, dtime)
-        if not self.object:get_attach() then
-            self.object:remove()
-            return
-        end
-        if not self.color then return end
-        self.object:set_armor_groups({immortal = 1})
-        if self.object:get_attach()
-        and self.object:get_attach():get_luaentity() then
-            local parent = self.object:get_attach():get_luaentity()
-            if parent.hp <= 0 then
-                self.object:set_properties({textures = {"transparency.png"}})
-                return
-            end
-            if parent.status ~= "sleeping" then
-                self.blink_timer = self.blink_timer - dtime
-                if parent.age < 25 then
-                    self.object:set_properties(
-                        {textures = {"draconis_fire_eyes_child_"..self.color..".png"}})
-                else
-                    self.object:set_properties(
-                        {textures = {"draconis_fire_eyes_"..self.color..".png"}})
-                end
-                if self.blink_timer <= 0 then
-                    local tex = self.object:get_properties().textures[1]
-                    self.object:set_properties({textures = {"transparency.png"}})
-                    minetest.after(0.25, function()
-                        self.object:set_properties({textures = {tex}})
-                        self.blink_timer = math.random(6, 18)
-                    end)
-                end
-            else
-                self.blink_timer = 18
-                self.object:set_properties({textures = {"transparency.png"}})
-            end
+local function is_value_in_table(tbl, val)
+    for _, v in pairs(tbl) do
+        if v == val then
+            return true
         end
     end
-})
-
---------------
--- Behavior --
---------------
-
-local function get_sounds(self)
-    local age = self.age
-    if age < 25 then
-        self.sounds = self.child_sounds
-    end
-    if age < 50 then
-        self.sounds = self.juvi_sounds
-    end
-    self.sounds = self.adult_sounds
+    return false
 end
 
-local function fire_dragon_logic(self)
+local colors = {"black", "bronze", "green", "red", "gold"}
 
-    if self.hp <= 0 then
-        if self.driver then
-            draconis.detach(minetest.get_player_by_name(self.driver))
-            self.driver = nil
-        else
-            --mob_core.on_die(self)
-            draconis.animate(self, "death")
-            mobkit.clear_queue_high(self)
-            mobkit.clear_queue_low(self)
-            self.object:set_yaw(self.object:get_yaw())
-        end
-        return
-    end
-
-    if self.shoulder_mounted then
-        local player = minetest.get_player_by_name(self.owner)
-        if player:get_player_control().sneak == true
-        or self.age > 4 then
-            self.object:set_detach()
-            self.shoulder_mounted = mobkit.remember(self, "shoulder_mounted", false)
-            self.object:set_properties({
-                physical = true,
-                collide_with_objects = true
-            })
-        end
-    end
-
-    mobkit.remember(self, "idle_timer", self.idle_timer)
-
-    if mobkit.timer(self, 1) then
-
-        if not self.isonground
-        and self.logic_state == "landed" then
-            self.fall_distance = self.fall_distance + 1
-        else
-            self.fall_distance = 0
-        end
-
-        local pos = self.object:get_pos()
-        local prty = mobkit.get_queue_priority(self)
-        local player = mobkit.get_nearby_player(self)
-
-        get_sounds(self)
-        draconis.fire_vitals(self)
-        draconis.handle_sounds(self)
-
-        if self.shoulder_mounted then
-            draconis.animate(self, "shoulder_idle")
-            self.idle_timer = self.idle_timer + 1
-            return
-        end
-
-        if self.tamed
-        and not self.driver
-        and (self.order == "stand"
-        or (not self.fly_allowed
-        and self.logic_state == "flying")) then
-            if self.order == "stand" then
-                if not self.isonground then
-                    mobkit.clear_queue_high(self)
-                    draconis.hq_land_and_wander(self, 0)
-                else
-                    draconis.hq_sleep(self, 11)
-                    if self.status ~= "sleeping" then
-                        draconis.animate(self, "stand")
-                    end
-                end
-            end
-            if not self.fly_allowed
-            and self.logic_state == "flying" then
-                mobkit.clear_queue_high(self)
-                draconis.hq_land_and_wander(self, 0)
-                self.logic_state = "landed"
-                mobkit.remember(self, "logic", self.logic_state)
-            end
-            self.idle_timer = self.idle_timer + 1
-            return
-        end
-
-        if prty < 20 then
-            if self.driver then
-                draconis.hq_mount_logic(self, 20)
-                return
-            end
-        end
-
-        if prty < 12
-        and self.isinliquid then
-            draconis.hq_aerial_wander(self, 0)
-            return
-        end
-
-        if prty < 10
-        and self.age > 24
-        and self.owner_target
-        and self.stance ~= "passive" then
-            local target = self.owner_target
-            if target
-            and not mob_core.shared_owner(self, target) then
-                if self.logic_state == "landed" then
-                    draconis.hq_landed_attack(self, 10, target)
-                else
-                    draconis.hq_aerial_attack(self, 10, target)
-                end
-            end
-        end
-
-        if prty < 6
-        and self.age > 24 then
-            if not self.tamed
-            or self.stance == "aggressive" then
-                for _, mob in ipairs(draconis.mobkit_mobs) do
-                    local target = mobkit.get_closest_entity(self, mob)
-                    if target
-                    and (draconis.get_line_of_sight(pos, target:get_pos()
-                    or pos.y - target:get_pos() < 10))
-                    and not mob_core.shared_owner(self, target) then
-                        if self.logic_state == "landed" then
-                            draconis.hq_landed_attack(self, 6, target)
-                        else
-                            draconis.hq_aerial_attack(self, 6, target)
-                        end
-                    end
-                end
-            end
-        end
-
-        if prty <= 5
-        and self.order == "follow"
-        and minetest.get_player_by_name(self.owner) then
-            draconis.hq_follow(self, 5, minetest.get_player_by_name(self.owner))
-        end
-
-        if prty < 4
-        and self.age > 24
-        and player then
-            if not self.tamed
-            or (self.stance == "aggressive"
-            and player:get_player_name() ~= self.owner) then
-                if self.logic_state == "landed" then
-                    draconis.hq_landed_attack(self, 4, player)
-                elseif self.logic_state == "flying" then
-                    draconis.hq_aerial_attack(self, 4, player)
-                end
-            end
-        end
-
-        if prty < 3 and self.isinliquid then
-            self.flight_timer = mobkit.remember(self, "flight_timer", 30)
-            mob_core.hq_takeoff_and_soar(self, 3)
-        end
-
-        if prty < 2 then
-            if self.logic_state == "landed"
-            and (math.random(64) == 1
-            or (self.fall_distance > 2))
-            and (not self.tamed or self.fly_allowed) then
-                mob_core.hq_takeoff_and_soar(self, 2)
-                self.logic_state = "flying"
-                return
-            elseif self.logic_state == "flying" and self.flight_timer < 1 then
-                draconis.hq_land_and_wander(self, 2)
-                self.logic_state = "landed"
-            end
-        end
-
-        if prty < 1
-        and self.idle_timer > 30 then
-            draconis.hq_sleep(self, 11)
-        end
-
-        if mobkit.is_queue_empty_high(self) then
-            self.idle_timer = self.idle_timer + 1
-            if self.logic_state == "landed" then
-                draconis.hq_wander(self, 0)
-                if self.fall_distance > 2 then
-                    draconis.hq_aerial_wander(self, 0)
-                    self.logic_state = "flying"
-                    return
-                end
-                if self.flight_timer <= 1 then
-                    self.flight_timer = math.random(30, 60)
-                    mobkit.remember(self, "flight_timer", self.flight_timer)
-                end
-            elseif self.logic_state == "flying" then
-                draconis.hq_aerial_wander(self, 0)
-                self.flight_timer = self.flight_timer - 1
-                mobkit.remember(self, "flight_timer", self.flight_timer)
-            end
-        elseif prty >= 1 then
-            self.idle_timer = 0
-        end
-        mobkit.remember(self, "logic_state", self.logic_state)
-    end
-end
-
-----------------
--- Definition --
-----------------
-
-draconis.register_dragon("fire", {
-    colors = {"black", "bronze", "green", "red", "gold"},
-    logic = fire_dragon_logic
+creatura.register_mob("draconis:fire_dragon", {
+    -- Stats
+    max_health = 1000,
+	max_hunger = 500,
+    armor_groups = {fleshy = 50},
+    damage = 20,
+    speed = 24,
+	tracking_range = 64,
+    despawn_after = false,
+	-- Entity Physics
+	stepheight = 2.51,
+	max_fall = 0,
+    -- Visuals
+    mesh = "draconis_fire_dragon.b3d",
+	hitbox = {
+		width = 2.5,
+		height = 5
+	},
+    visual_size = {x = 30, y = 30},
+	glow = 12,
+	textures = {
+		"draconis_fire_dragon_" .. colors[1] .. ".png^draconis_fire_dragon_head_detail.png^draconis_baked_in_shading.png",
+		"draconis_fire_dragon_" .. colors[2] .. ".png^draconis_fire_dragon_head_detail.png^draconis_baked_in_shading.png",
+		"draconis_fire_dragon_" .. colors[3] .. ".png^draconis_fire_dragon_head_detail.png^draconis_baked_in_shading.png",
+		"draconis_fire_dragon_" .. colors[4] .. ".png^draconis_fire_dragon_head_detail.png^draconis_baked_in_shading.png",
+		"draconis_fire_dragon_" .. colors[5] .. ".png^draconis_fire_dragon_head_detail.png^draconis_baked_in_shading.png"
+	},
+	child_textures = {
+		"draconis_fire_dragon_" .. colors[1] .. ".png^draconis_baked_in_shading.png",
+		"draconis_fire_dragon_" .. colors[2] .. ".png^draconis_baked_in_shading.png",
+		"draconis_fire_dragon_" .. colors[3] .. ".png^draconis_baked_in_shading.png",
+		"draconis_fire_dragon_" .. colors[4] .. ".png^draconis_baked_in_shading.png",
+		"draconis_fire_dragon_" .. colors[5] .. ".png^draconis_baked_in_shading.png"
+	},
+	animations = {
+		stand = {range = {x = 1, y = 60}, speed = 15, frame_blend = 0.3, loop = true},
+		stand_fire = {range = {x = 70, y = 130}, speed = 15, frame_blend = 0.3, loop = true},
+		punch = {range = {x = 140, y = 180}, speed = 30, frame_blend = 0.3, loop = false},
+		wing_beat = {range = {x = 180, y = 220}, speed = 35, frame_blend = 0.3, loop = false},
+		walk = {range = {x = 230, y = 260}, speed = 35, frame_blend = 0.3, loop = true},
+		walk_fire = {range = {x = 270, y = 300}, speed = 35, frame_blend = 0.3, loop = true},
+		sleep = {range = {x = 310, y = 370}, speed = 5, frame_blend = 1, prty = 2, loop = true},
+		death = {range = {x = 380, y = 380}, speed = 1, frame_blend = 2, prty = 3, loop = true},
+		takeoff = {range = {x = 390, y = 440}, speed = 25, frame_blend = 0.3, loop = true},
+		fly_idle = {range = {x = 420, y = 450}, speed = 25, frame_blend = 0.3, loop = true},
+		fly_idle_fire = {range = {x = 460, y = 490}, speed = 25, frame_blend = 0.3, loop = true},
+		fly = {range = {x = 500, y = 530}, speed = 25, frame_blend = 0.3, loop = true},
+		fly_fire = {range = {x = 540, y = 570}, speed = 25, frame_blend = 0.3, loop = true},
+		shoulder_idle = {range = {x = 580, y = 620}, speed = 10, frame_blend = 0.6, loop = true}
+	},
+    -- Misc
+	sounds = {
+        random = {
+			{
+				name = "draconis_fire_dragon_random_1",
+				gain = 1,
+				distance = 64,
+				length = 2
+			},
+			{
+				name = "draconis_fire_dragon_random_2",
+				gain = 1,
+				distance = 64,
+				length = 2.5
+			},
+			{
+				name = "draconis_fire_dragon_random_3",
+				gain = 1,
+				distance = 64,
+				length = 4
+			}
+		}
+	},
+	child_sounds = {
+        random = {
+			{
+				name = "draconis_fire_dragon_child_1",
+				gain = 1,
+				distance = 8,
+				length = 1
+			},
+			{
+				name = "draconis_fire_dragon_child_2",
+				gain = 1,
+				distance = 8,
+				length = 2
+			}
+		}
+	},
+    drops = {}, -- Set in on_activate
+    follow = {
+		"group:food_meat"
+	},
+	dynamic_anim_data = {
+		yaw_factor = 0.15,
+		swing_factor = 0.33,
+		pivot_h = 0.5,
+		pivot_v = 0.75,
+		tail = {
+			{ -- Segment 1
+				pos = {
+					x = 0,
+					y = 0,
+					z = 0
+				},
+				rot = {
+					x = 180,
+					y = 180,
+					z = 1
+				}
+			},
+			{ -- Segment 2
+				pos = {
+					x = 0,
+					y = 1.1,
+					z = 0
+				},
+				rot = {
+					x = 0,
+					y = 0,
+					z = 1
+				}
+			},
+			{ -- Segment 3
+				pos = {
+					x = 0,
+					y = 1.3,
+					z = 0
+				},
+				rot = {
+					x = 0,
+					y = 0,
+					z = 1
+				}
+			}
+		},
+		head = {
+			{ -- Segment 1
+				pitch_offset = 20,
+				bite_angle = -20,
+				pitch_factor = 0.11,
+				pos = {
+					x = 0,
+					y = 0.85,
+					z = 0.036
+				},
+				rot = {
+					x = 0,
+					y = 0,
+					z = 0
+				}
+			},
+			{ -- Segment 2
+				pitch_offset = -5,
+				bite_angle = 10,
+				pitch_factor = 0.33,
+				pos = {
+					x = 0,
+					y = 0.39,
+					z = 0
+				},
+				rot = {
+					x = 0,
+					y = 0,
+					z = 0
+				}
+			},
+			{ -- Head
+				pitch_offset = -20,
+				bite_angle = 5,
+				pitch_factor = 0.44,
+				pos = {
+					x = 0,
+					y = 0.41,
+					z = 0
+				},
+				rot = {
+					x = 0,
+					y = 0,
+					z = 0
+				}
+			}
+		}
+	},
+    -- Function
+	breath_attack = draconis.fire_breath,
+	utility_stack = draconis.dragon_behavior,
+    activate_func = function(self)
+		draconis.activate(self)
+    end,
+    step_func = function(self, dtime, moveresult)
+		draconis.step(self, dtime, moveresult)
+    end,
+    death_func = function(self)
+		self:clear_action()
+		self:animate("death")
+		self:set_gravity(-9.8)
+		local rot = self.object:get_rotation()
+		if rot.x ~= 0
+		or rot.z ~= 0 then
+			self.object:set_rotation({x = 0, y = rot.y, z = 0})
+		end
+    end,
+	on_rightclick = function(self, clicker)
+		draconis.rightclick(self, clicker)
+	end,
+	on_punch = function(self, puncher, time_from_last_punch, tool_capabilities, direction, damage)
+		creatura.basic_punch_func(self, puncher, time_from_last_punch, tool_capabilities, direction, damage)
+		if not self.is_landed then
+			self.flight_stamina = self:memorize("flight_stamina", self.flight_stamina - 10)
+		end
+		self.alert_timer = self:memorize("alert_timer", 15)
+	end,
+	deactivate_func = function(self)
+		if not draconis.dragons[self.dragon_id] then return end
+		local owner = draconis.dragons[self.dragon_id].owner
+		if not owner then return end
+		if not draconis.bonded_dragons then return end
+		if not minetest.get_player_by_name(owner)
+		or (draconis.bonded_dragons[owner]
+		and is_value_in_table(draconis.bonded_dragons[owner], self.dragon_id)) then
+			for i = #draconis.bonded_dragons[owner], 1, -1 do
+				if draconis.bonded_dragons[owner][i] == self.dragon_id then
+					draconis.bonded_dragons[owner][i] = nil
+				end
+			end
+		end
+	end
 })
 
-mob_core.register_spawn_egg("draconis:fire_dragon", "74271acc", "250b06d9")
+creatura.register_spawn_egg("draconis:fire_dragon", "4b0000" ,"340000")
 
 local spawn_egg_def = minetest.registered_items["draconis:spawn_fire_dragon"]
 
@@ -295,19 +262,3 @@ spawn_egg_def.on_place = function(itemstack, _, pointed_thing)
 end
 
 minetest.register_craftitem("draconis:spawn_fire_dragon", spawn_egg_def)
-
-if minetest.settings:get_bool("simple_spawning") then
-    local spawn_rate = tonumber(minetest.settings:get("simple_spawn_rate")) or 512
-    mob_core.register_spawn({
-        name = "draconis:fire_dragon",
-        nodes = draconis.warm_biome_nodes,
-        min_light = 0,
-        max_light = 15,
-        min_height = 1,
-        max_height = 31000,
-        group = 0,
-        optional = {
-            biomes = draconis.warm_biomes,
-        }
-    }, spawn_rate, 4)
-end
