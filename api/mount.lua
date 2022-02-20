@@ -60,10 +60,9 @@ function draconis.set_fake_player(self, player)
     if draconis.mounted_player_data[player_name]
     and draconis.mounted_player_data[player_name].fake_player
     and draconis.mounted_player_data[player_name].fake_player:get_pos() then
-        draconis.unset_fake_player(self, player)
+        draconis.unset_fake_player(player)
         return
     end
-    local pos = self.object:get_pos()
     local player_pos = player:get_pos()
     local fake_player = minetest.add_entity(
         player_pos,
@@ -108,7 +107,7 @@ function draconis.set_fake_player(self, player)
     })
 end
 
-function draconis.unset_fake_player(self, player)
+function draconis.unset_fake_player(player)
     if not player
     or not player:get_look_horizontal()
     or not player:is_player() then
@@ -150,10 +149,6 @@ local function set_hud(player, def)
         offset = {x = 0, y = -5}
     }
     return player:hud_add(hud)
-end
-
-local function update_hud(player, hud, image)
-    return player:hud_change(hud, "text", image)
 end
 
 function draconis.attach_player(self, player)
@@ -212,7 +207,6 @@ function draconis.detach_player(self, player)
         return
     end
     local player_name = player:get_player_name()
-    local scale = self.growth_scale
     local data = draconis.mounted_player_data[player_name]
     -- Attach Player
     player:set_detach()
@@ -223,7 +217,7 @@ function draconis.detach_player(self, player)
     player:hud_remove(data.huds["stamina"])
     player:hud_remove(data.huds["breath"])
     -- Set Fake Player (Using a fake player and changing 1st person eye offset works around the above issue)
-    draconis.unset_fake_player(self, player)
+    draconis.unset_fake_player(player)
     -- Set Dragon Data
     self.rider = nil
 end
@@ -282,7 +276,7 @@ creatura.register_utility("draconis:mount", function(self)
     local jump_held = 0
     local view_held = false
     local view_point = 3
-    local initial_age = self.age
+    --local initial_age = self.age
     self:halt()
     local func = function(self)
         local player = self.rider
@@ -296,9 +290,6 @@ creatura.register_utility("draconis:mount", function(self)
 
         local look_dir = player:get_look_dir()
         local look_yaw = minetest.dir_to_yaw(look_dir)
-
-        local look_to_horz = look_yaw
-        local look_to_vert = look_dir.y
 
         local rot = self.object:get_rotation()
         local scale = self.growth_scale
@@ -322,16 +313,32 @@ creatura.register_utility("draconis:mount", function(self)
         local breath = self.attack_stamina / 100 * 100
         local hud_data = player_data.huds
         if hud_data["health"] then
-            player:hud_change(player_data.huds["health"], "text", "draconis_forms_health_bg.png^[lowpart:" .. health .. ":draconis_forms_health_fg.png")
+            player:hud_change(
+                player_data.huds["health"],
+                "text",
+                "draconis_forms_health_bg.png^[lowpart:" .. health .. ":draconis_forms_health_fg.png"
+            )
         end
         if hud_data["hunger"] then
-            player:hud_change(player_data.huds["hunger"], "text", "draconis_forms_hunger_bg.png^[lowpart:" .. hunger .. ":draconis_forms_hunger_fg.png")
+            player:hud_change(
+                player_data.huds["hunger"],
+                "text",
+                "draconis_forms_hunger_bg.png^[lowpart:" .. hunger .. ":draconis_forms_hunger_fg.png"
+            )
         end
         if hud_data["stamina"] then
-            player:hud_change(player_data.huds["stamina"], "text", "draconis_forms_stamina_bg.png^[lowpart:" .. stamina .. ":draconis_forms_stamina_fg.png")
+            player:hud_change(
+                player_data.huds["stamina"],
+                "text",
+                "draconis_forms_stamina_bg.png^[lowpart:" .. stamina .. ":draconis_forms_stamina_fg.png"
+            )
         end
         if hud_data["breath"] then
-            player:hud_change(player_data.huds["breath"], "text", "draconis_forms_breath_bg.png^[lowpart:" .. breath .. ":draconis_forms_breath_fg.png")
+            player:hud_change(
+                player_data.huds["breath"],
+                "text",
+                "draconis_forms_breath_bg.png^[lowpart:" .. breath .. ":draconis_forms_breath_fg.png"
+            )
         end
 
         draconis.mounted_player_data[player_name].huds = player_data.huds
@@ -470,7 +477,6 @@ creatura.register_utility("draconis:mount", function(self)
         if control.RMB then
             local start = self.object:get_pos()
             local offset = player:get_eye_offset()
-            local dir = look_dir
             local eye_correction = vector.multiply({x = look_dir.x, y = 0, z= look_dir.z}, offset.z * 0.125)
             start = vector.add(start, eye_correction)
             start.y = start.y + (offset.y * 0.125)

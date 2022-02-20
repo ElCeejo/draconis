@@ -31,7 +31,7 @@ local c_air = minetest.get_content_id("air")
 local c_ignore = minetest.get_content_id("ignore")
 
 local c_gold = c_air
-if minetest.registered_nodes[registered_nodes] then
+if minetest.registered_nodes["default:goldblock"] then
     c_gold = minetest.get_content_id("default:goldblock")
 end
 local c_steel = c_air

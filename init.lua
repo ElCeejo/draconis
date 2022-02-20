@@ -6,6 +6,8 @@ draconis = {}
 
 local path = minetest.get_modpath("draconis")
 
+-- Global Tables --
+
 local storage = dofile(path.."/storage.lua")
 
 draconis.dragons = storage.dragons
@@ -31,6 +33,22 @@ if minetest.get_modpath("default") then
     end
 end
 
+draconis.colors_fire = {
+    ["black"] = "393939",
+    ["bronze"] = "ff6d00",
+    ["gold"] = "ffa300",
+    ["green"] = "0abc00",
+    ["red"] = "b10000"
+}
+
+draconis.colors_ice = {
+    ["light_blue"] = "9df8ff",
+    ["sapphire"] = "001fea",
+    ["silver"] = "c5e4ed",
+    ["slate"] = "4c646b",
+    ["white"] = "e4e4e4"
+}
+
 local clear_objects = minetest.clear_objects
 
 function minetest.clear_objects(options)
@@ -38,18 +56,21 @@ function minetest.clear_objects(options)
     draconis.objects_last_cleared = os.time()
 end
 
+-- Load Files --
+
 dofile(path.."/api/api.lua")
 dofile(path.."/api/mount.lua")
 dofile(path.."/api/behaviors.lua")
 dofile(path.."/mobs/ice_dragon.lua")
 dofile(path.."/mobs/fire_dragon.lua")
 dofile(path.."/nodes.lua")
-dofile(path.."/items.lua")
-dofile(path.."/crafting.lua")
+dofile(path.."/craftitems.lua")
 
 if minetest.get_modpath("3d_armor") then
     dofile(path.."/armor.lua")
 end
+
+-- Spawning --
 
 draconis.cold_biomes = {}
 draconis.warm_biomes = {}
@@ -68,7 +89,7 @@ end)
 
 dofile(path.."/mapgen.lua")
 
-local simple_spawning = minetest.settings:get_bool("simple_spawning") or true
+local simple_spawning = minetest.settings:get_bool("simple_spawning") or false
 
 local spawn_rate = tonumber(minetest.settings:get("simple_spawn_rate")) or 512
 
@@ -87,4 +108,17 @@ if simple_spawning then
         biomes = draconis.warm_biomes,
         nodes = {"air"}
     })
+end
+
+-- Aliases --
+
+minetest.register_alias("air", "draconis:dracolily_fire")
+minetest.register_alias("air", "draconis:dracolily_ice")
+
+for color in pairs(draconis.colors_ice) do
+    minetest.register_alias("draconis:egg_ice_" .. color, "draconis:egg_ice_dragon_" .. color)
+end
+
+for color in pairs(draconis.colors_fire) do
+    minetest.register_alias("draconis:egg_fire_" .. color, "draconis:egg_fire_dragon_" .. color)
 end

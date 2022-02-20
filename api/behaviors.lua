@@ -2,39 +2,29 @@
 -- Behavior --
 --------------
 
-local pi = math.pi
 local abs = math.abs
-local min = math.min
 local random = math.random
 local ceil = math.ceil
 local floor = math.floor
 local atan2 = math.atan2
 local sin = math.sin
 local cos = math.cos
-local function round(x) -- Round to nearest multiple of 0.5
-	return x + 0.5 - (x + 0.5) % 1
-end
 local function diff(a, b) -- Get difference between 2 angles
     return atan2(sin(b - a), cos(b - a))
 end
-local function clamp(val, min, max)
-	if val < min then
-		val = min
-	elseif max < val then
-		val = max
+local function clamp(val, _min, _max)
+	if val < _min then
+		val = _min
+	elseif _max < val then
+		val = _max
 	end
 	return val
 end
 
 local vec_dist = vector.distance
 local vec_dir = vector.direction
-local vec_len = vector.length
 local vec_add = vector.add
 local vec_multi = vector.multiply
-local vec_normal = vector.normalize
-local function vec_raise(v, n)
-    return {x = v.x, y = v.y + n, z = v.z}
-end
 
 local is_night = false
 
@@ -181,10 +171,9 @@ local function movement_fly(self, pos2)
     self:set_gravity(0)
     -- Collision Avoidance
     local temp_goal = self._movement_data.temp_goal
-    local obstacle = self._movement_data.obstacle or false
     if not temp_goal
     or self:pos_in_box({x = temp_goal.x, y = pos.y + self.height * 0.5, z = temp_goal.z}, 1) then
-        self._movement_data.temp_goal, self._movement_data.obstacle = creatura.get_next_move_3d(self, pos2)
+        self._movement_data.temp_goal = creatura.get_next_move_3d(self, pos2)
         temp_goal = self._movement_data.temp_goal
     end
     -- Calculate Movement
@@ -211,7 +200,6 @@ local function movement_fly(self, pos2)
     end
     if temp_goal
     and not get_line_of_sight(self, pos, pos2) then
-        local lift = dir.y
         dir = vector.direction(pos, temp_goal)
         tyaw = minetest.dir_to_yaw(dir)
     end
@@ -290,7 +278,7 @@ end
 function draconis.action_ground_attack(self, target)
     local anim = self.animations["punch"]
     local anim_time = (anim.range.y - anim.range.x) / anim.speed
-    timer = anim_time
+    local timer = anim_time
     local damage_init = false
     local function func(self)
         self.head_tracking = target
@@ -305,7 +293,6 @@ function draconis.action_ground_attack(self, target)
             local objects = minetest.get_objects_inside_radius(tgt_pos, 12 * self.growth_scale)
             for i = 1, #objects do
                 local object = objects[i]
-                local tgt_pos
                 if object ~= self.object then
                     if object:get_luaentity() then
                         local ent = object:get_luaentity()
@@ -423,8 +410,6 @@ end)
 creatura.register_utility("draconis:fly_wander", function(self)
     local function func(self)
         local scale = self.growth_scale
-        local width = self.width
-        local pos = self.object:get_pos()
         local dist2floor = creatura.sensor_floor(self, 13, true)
         local dist2ceil = creatura.sensor_ceil(self, 13, true)
         if not self:get_action()
@@ -519,7 +504,7 @@ creatura.register_utility("draconis:aerial_overhead_attack", function(self, targ
     local stage = 1
     local function func(self)
         local pos = self.object:get_pos()
-        local target_alive, line_of_sight, tpos = self:get_target(target)
+        local target_alive, _, tpos = self:get_target(target)
         if not target_alive then
             return true
         end
@@ -543,7 +528,7 @@ creatura.register_utility("draconis:aerial_overhead_attack", function(self, targ
         local yaw = self.object:get_yaw()
         local yaw_to_tgt = minetest.dir_to_yaw(vec_dir(pos, tpos))
         if abs(diff(yaw, yaw_to_tgt)) < 0.5
-        and fast_ray_sight(pos, tpos) 
+        and fast_ray_sight(pos, tpos)
         and stage < 2 then
             self:breath_attack(tpos)
             self:animate("fly_fire")
@@ -649,9 +634,8 @@ draconis.dragon_behavior = {
     [3] = {
         utility = "draconis:terrestrial_attack",
         get_score = function(self)
-            if self.growth_stage < 2 then return 0 end
+            if self.age < 15 then return 0 end
             local stance = self.stance
-            local order = self.order
             local owner
             if self.owner then
                 owner = minetest.get_player_by_name(self.owner)
@@ -685,13 +669,9 @@ draconis.dragon_behavior = {
                 end
             end
 
-            if stance == "passive" then return 0 end
+            if stance ~= "aggressive" then return 0 end
 
             local pos = self.object:get_pos()
-
-            local time = (minetest.get_timeofday() * 24000) or 0
-
-            local is_night = time > 19500 or time < 4500
 
             if is_night
             and vector.distance(pos, target:get_pos()) > 16 * self.growth_scale
@@ -700,6 +680,7 @@ draconis.dragon_behavior = {
             end
 
             if self.is_landed then
+                self.alert_timer = self:memorize("alert_timer", 15)
                 return 0.9, {self, target}
             end
 
@@ -709,6 +690,7 @@ draconis.dragon_behavior = {
     [4] = {
         utility = "draconis:aerial_overhead_attack",
         get_score = function(self)
+            if self.age < 15 then return 0 end
             if self:get_utility() ~= "draconis:terrestrial_attack"
             and self:get_utility() ~= "draconis:aerial_overhead_attack"
             and self:get_utility() ~= "draconis:fly_wander" then
@@ -717,6 +699,7 @@ draconis.dragon_behavior = {
             if not self.is_landed
             and self.flight_stamina >= 100
             and self._util_target then
+                self.alert_timer = self:memorize("alert_timer", 15)
                 return 0.9, {self, self._util_target}
             end
             return 0
@@ -725,8 +708,7 @@ draconis.dragon_behavior = {
     [5] = {
         utility = "draconis:sleep",
         get_score = function(self)
-            local time = (minetest.get_timeofday() * 24000) or 0
-            local is_night = time > 19500 or time < 4500
+            if self.alert_timer > 0 then return 0 end
             if is_night then
                 return 0.8, {self}
             end
@@ -785,7 +767,12 @@ draconis.dragon_behavior = {
                 or (dist2floor > 2
                 and not self.touching_ground) then
                     local score = 0.3
-                    if self.flight_stamina < 15 or (self.owner and not self.rider and not self.fly_allowed) then score = 1 end
+                    if self.flight_stamina < 15
+                    or (self.owner
+                    and not self.rider
+                    and not self.fly_allowed) then
+                        score = 1
+                    end
                     return score, {self}
                 end
             end

@@ -41,22 +41,6 @@ local function register_node(name, def, register_stair)
 	table.insert(stair_queue, name)
 end
 
-local ice_colors = {
-    ["light_blue"] = "9df8ff",
-    ["sapphire"] = "001fea",
-    ["silver"] = "c5e4ed",
-    ["slate"] = "4c646b",
-    ["white"] = "e4e4e4"
-}
-
-local fire_colors = {
-    ["black"] = "393939",
-    ["bronze"] = "ff6d00",
-    ["gold"] = "ffa300",
-    ["green"] = "0abc00",
-    ["red"] = "b10000"
-}
-
 -- Logs --
 
 register_node("draconis:log_scorched", {
@@ -181,9 +165,9 @@ register_node("draconis:stone_bricks_frozen", {
 -- Scale Blocks --
 ------------------
 
-for string, hex in pairs(fire_colors) do
-	register_node("draconis:fire_scale_block_" .. string, {
-		description = "Fire Dragon Scale Block \n" .. infotext(string, true),
+for color, hex in pairs(draconis.colors_fire) do
+	register_node("draconis:fire_scale_block_" .. color, {
+		description = "Fire Dragon Scale Block \n" .. infotext(color, true),
 		tiles = {"draconis_dragon_scale_block.png^[multiply:#" .. hex,},
 		paramtype2 = "facedir",
 		place_param2 = 0,
@@ -193,9 +177,9 @@ for string, hex in pairs(fire_colors) do
 	})
 end
 
-for string, hex in pairs(ice_colors) do
-	register_node("draconis:ice_scale_block_" .. string, {
-		description = "Ice Dragon Scale Block \n" .. infotext(string, true),
+for color, hex in pairs(draconis.colors_ice) do
+	register_node("draconis:ice_scale_block_" .. color, {
+		description = "Ice Dragon Scale Block \n" .. infotext(color, true),
 		tiles = {"draconis_dragon_scale_block.png^[multiply:#" .. hex,},
 		paramtype2 = "facedir",
 		place_param2 = 0,
@@ -672,14 +656,14 @@ end
 -- Aliasing --
 --------------
 
-for string in pairs(ice_colors) do
-	minetest.register_alias_force("draconis:ice_scale_brick_" .. string, "draconis:stone_bricks_frozen")
-	minetest.register_alias_force("draconis:egg_ice_" .. string, "draconis:egg_ice_" .. string)
+for color in pairs(draconis.colors_ice) do
+	minetest.register_alias_force("draconis:ice_scale_brick_" .. color, "draconis:stone_bricks_frozen")
+	minetest.register_alias_force("draconis:egg_ice_" .. color, "draconis:egg_ice_" .. color)
 end
 
-for string in pairs(fire_colors) do
-	minetest.register_alias_force("draconis:fire_scale_brick_" .. string, "draconis:stone_bricks_scorched")
-	minetest.register_alias_force("draconis:egg_fire_" .. string, "draconis:egg_fire_" .. string)
+for color in pairs(draconis.colors_fire) do
+	minetest.register_alias_force("draconis:fire_scale_brick_" .. color, "draconis:stone_bricks_scorched")
+	minetest.register_alias_force("draconis:egg_fire_" .. color, "draconis:egg_fire_" .. color)
 end
 
 minetest.register_alias_force("draconis:dracolily_ice", "")

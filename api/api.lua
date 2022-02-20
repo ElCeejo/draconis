@@ -13,9 +13,6 @@ local floor = math.floor
 local atan2 = math.atan2
 local sin = math.sin
 local cos = math.cos
-local function round(x) -- Round to nearest multiple of 0.5
-	return x + 0.5 - (x + 0.5) % 1
-end
 local function diff(a, b) -- Get difference between 2 angles
     return atan2(sin(b - a), cos(b - a))
 end
@@ -29,11 +26,11 @@ local function lerp(a, b, w) -- Linear Interpolation
     end
     return a + (b - a) * w
 end
-local function clamp(val, min, max)
-	if val < min then
-		val = min
-	elseif max < val then
-		val = max
+local function clamp(val, _min, _max)
+	if val < _min then
+		val = _min
+	elseif _max < val then
+		val = _max
 	end
 	return val
 end
@@ -53,12 +50,11 @@ local function clamp_bone_rot(n) -- Fixes issues with bones jittering when yaw c
 end
 
 local function interp_bone_rot(a, b, w) -- Smoothens bone movement
-    local pi = math.pi
     if math.abs(a - b) > math.deg(pi) then
         if a < b then
             return ((a + (b - a) * w) + (math.deg(pi) * 2))
         elseif a > b then
-            return ((a + (b - a) * w) - (math.deg(pi) * 2)) 
+            return ((a + (b - a) * w) - (math.deg(pi) * 2))
         end
     end
     return a + (b - a) * w
@@ -68,7 +64,6 @@ end
 
 local vec_dir = vector.direction
 local vec_dist = vector.distance
-local vec_new = vector.new
 local vec_sub = vector.subtract
 local vec_add = vector.add
 local vec_multi = vector.multiply
@@ -130,8 +125,8 @@ local function is_node_walkable(pos)
     return def and def.walkable
 end
 
-local function get_line(a, b, radius)
-    local steps = ceil(vector.distance(a, b))
+local function get_line(a, b)
+    local steps = ceil(vec_dist(a, b))
     local line = {}
 
     for i = 1, steps do
@@ -150,7 +145,7 @@ local function get_line(a, b, radius)
             break
         end
         if #line < 1
-        or vector.distance(pos, line[#line]) > 3 then
+        or vec_dist(pos, line[#line]) > 3 then
             table.insert(line, pos)
         end
     end
@@ -158,8 +153,7 @@ local function get_line(a, b, radius)
 end
 
 local function get_pointed_mob(a, b)
-    local steps = ceil(vector.distance(a, b))
-    local line = {}
+    local steps = ceil(vec_dist(a, b))
 
     for i = 1, steps do
         local pos
@@ -176,11 +170,10 @@ local function get_pointed_mob(a, b)
         if is_node_walkable(pos) then
             break
         end
-        local objects = minetest.get_objects_in_area(vector.subtract(pos, 6), vector.add(pos, 6))
-        for i = 1, #objects do
-            if objects[i]
-            and objects[i]:get_luaentity() then
-                local object = objects[i]
+        local objects = minetest.get_objects_in_area(vec_sub(pos, 6), vec_add(pos, 6))
+        for _, object in pairs(objects) do
+            if object
+            and object:get_luaentity() then
                 local ent = object:get_luaentity()
                 if ent.name:match("^draconis:") then
                     return object, ent
@@ -230,22 +223,6 @@ minetest.register_on_mods_loaded(function()
         end
     end
 end)
-
-local ice_colors = {
-    ["light_blue"] = "9df8ff",
-    ["sapphire"] = "001fea",
-    ["silver"] = "c5e4ed",
-    ["slate"] = "4c646b",
-    ["white"] = "e4e4e4"
-}
-
-local fire_colors = {
-    ["black"] = "393939",
-    ["bronze"] = "ff6d00",
-    ["gold"] = "ffa300",
-    ["green"] = "0abc00",
-    ["red"] = "b10000"
-}
 
 local fire_eye_textures = {
     "green",
@@ -316,7 +293,7 @@ local function get_head_pos(self, pos2)
     local pos = self.object:get_pos()
     pos.y = pos.y + 6 * self.growth_scale
     local yaw = self.object:get_yaw()
-    local dir = vector.direction(pos, pos2)
+    local dir = vec_dir(pos, pos2)
     local yaw_diff = diff(yaw, minetest.dir_to_yaw(dir))
     if yaw_diff > 1 then
         local look_dir = minetest.yaw_to_dir(yaw + 1)
@@ -328,7 +305,7 @@ local function get_head_pos(self, pos2)
         dir.z = look_dir.z
     end
     local head_yaw = yaw + (yaw_diff * 0.33)
-    return vector.add(pos, vector.multiply(minetest.yaw_to_dir(head_yaw), (7 - abs(yaw_diff)) * self.growth_scale)), dir
+    return vec_add(pos, vec_multi(minetest.yaw_to_dir(head_yaw), (7 - abs(yaw_diff)) * self.growth_scale)), dir
 end
 
 draconis.get_head_pos = get_head_pos
@@ -381,14 +358,13 @@ local wing_colors = {
 local function generate_texture(self, force)
     draconis.set_color_string(self)
     local def = minetest.registered_entities[self.name]
-    local default_textures = table.copy(def.textures)
     local textures = {
         def.textures[self.texture_no]
     }
     self.wing_overlay = self:recall("wing_overlay") or nil
     if not self.wing_overlay then
-        local colors
-        self.wing_overlay = "(draconis_wing_fade.png^[multiply:" .. wing_colors[self.color][random(#wing_colors[self.color])] .. ")"
+        local color = wing_colors[self.color][random(#wing_colors[self.color])]
+        self.wing_overlay = "(draconis_wing_fade.png^[multiply:" .. color .. ")"
         self:memorize("wing_overlay", self.wing_overlay)
     end
     if self.object:get_properties().textures[1]:find("wing_fade") and not force then return end
@@ -419,7 +395,6 @@ function draconis.activate(self)
     if self.growth_scale then
         self:memorize("growth_scale", self.growth_scale) -- This is for spawning children
     end
-    
     self.growth_scale = self:recall("growth_scale") or 1
     self.growth_timer = self:recall("growth_timer") or 1200
     self.age = self:recall("age") or 100
@@ -452,6 +427,7 @@ function draconis.activate(self)
 	self.fly_allowed = self:recall("fly_allowed") or false
     self.aux_setting = self:recall("aux_setting") or "toggle_view"
     self.pitch_fly = self:recall("pitch_fly") or false
+    self.shoulder_mounted = false
     activate_nametag(self)
     -- Movement Data
 	self.is_landed = self:recall("is_landed") or false
@@ -464,7 +440,7 @@ function draconis.activate(self)
     self.time_from_last_sound = 0
     -- World Data
     self._path = {}
-    self.alert_timer = self:recall("alert_timer") or 10
+    self.alert_timer = self:recall("alert_timer") or 15
     self._remove = self:recall("_remove") or nil
     self.dragon_id = self:recall("dragon_id") or 1
     if self.dragon_id == 1 then
@@ -622,7 +598,7 @@ function draconis.head_tracking(self)
         return
     end
     local pos = self.object:get_pos()
-    local v = vector.add(pos, vector.multiply(yaw2dir(yaw), 8 * self.growth_scale))
+    local v = vec_add(pos, vec_multi(yaw2dir(yaw), 8 * self.growth_scale))
     local head_height = 6 * self.growth_scale
     if self._anim == "fly_idle"
     or self._anim == "fly_idle_fire" then
@@ -635,7 +611,7 @@ function draconis.head_tracking(self)
         local objects = minetest.get_objects_inside_radius(pos, 16)
         for _, object in ipairs(objects) do
             if object:is_player() then
-                local dir_2_plyr = vector.direction(pos, object:get_pos())
+                local dir_2_plyr = vec_dir(pos, object:get_pos())
                 local yaw_2_plyr = dir2yaw(dir_2_plyr)
                 if abs(yaw - yaw_2_plyr) < 1
                 or abs(yaw - yaw_2_plyr) > 5.3 then
@@ -656,7 +632,7 @@ function draconis.head_tracking(self)
         end
         local ppos = self.head_tracking:get_pos()
         ppos.y = ppos.y + 1.4
-        local dir = vector.direction(pos, ppos)
+        local dir = vec_dir(pos, ppos)
         local tyaw = minetest.dir_to_yaw(dir)
         if abs(yaw - tyaw) > 1
         and abs(yaw - tyaw) < 5.3 then
@@ -675,22 +651,23 @@ end
 local last_breath_tick = minetest.get_us_time()
 local last_damage_tick = minetest.get_us_time()
 
-local function damage_objects(self, pos, radius, damage)
+local function damage_objects(self, pos, radius)
     local objects = minetest.get_objects_inside_radius(pos, radius)
     for i = 1, #objects do
         local object = objects[i]
         if object ~= self.object then
-            local damage = object:is_player()
+            local deal_damage = object:is_player()
             if object:get_luaentity() then
                 local ent = object:get_luaentity()
                 local is_mobkit = (ent.logic ~= nil or ent.brainfuc ~= nil)
                 local is_creatura = ent._creatura_mob
                 if is_mobkit
-                or is_creatura then
-                    damage = true
+                or is_creatura
+                or ent._cmi_is_mob then
+                    deal_damage = true
                 end
             end
-            if damage then
+            if deal_damage then
                 self:punch_target(object)
             end
         end
@@ -779,7 +756,7 @@ local function scorch_nodes(pos, radius)
                             minetest.set_node(npos, {name = convert_to})
                         end
                         if is_node_walkable(npos) then
-                            local above = vector.new(npos.x, npos.y + 1, npos.z)
+                            local above = {x = npos.x, y = npos.y + 1, z = npos.z}
                             if not is_node_walkable(above) then
                                 minetest.set_node(above, {name = flame_node})
                             end
@@ -792,7 +769,7 @@ local function scorch_nodes(pos, radius)
 end
 
 local function do_forge(pos, node)
-    local forge = minetest.find_nodes_in_area(vector.subtract(pos, 2), vector.add(pos, 2), node)
+    local forge = minetest.find_nodes_in_area(vec_sub(pos, 2), vec_add(pos, 2), node)
     if forge[1] then
         local func = minetest.registered_nodes[node].on_breath
         func(forge[1])
@@ -826,7 +803,7 @@ function draconis.fire_breath(self, pos2)
     local pos, dir = get_head_pos(self, pos2)
     dir.y = vec_dir(pos, pos2).y
     pos.y = pos.y + self.object:get_rotation().x
-    local dest = vector.add(pos, vector.multiply(dir, 32))
+    local dest = vec_add(pos, vec_multi(dir, 32))
     local nodes = get_line(pos, dest)
     if #nodes < 1 then return end
     local us = minetest.get_us_time()
@@ -836,10 +813,10 @@ function draconis.fire_breath(self, pos2)
         minetest.add_particlespawner({
             amount = 3,
             time = 0.25,
-            minpos = vector.add(nodes[1], vector.multiply(self.object:get_velocity(), 0.22)),
-            maxpos = vector.add(nodes[1], vector.multiply(self.object:get_velocity(), 0.22)),
-            minvel = vector.multiply(dir, 32),
-            maxvel = vector.multiply(dir, 48),
+            minpos = vec_add(nodes[1], vec_multi(self.object:get_velocity(), 0.22)),
+            maxpos = vec_add(nodes[1], vec_multi(self.object:get_velocity(), 0.22)),
+            minvel = vec_multi(dir, 32),
+            maxvel = vec_multi(dir, 48),
             minacc = {x = -4, y = -4, z = -4},
             maxacc = {x = 4, y = 4, z = 4},
             minexptime = 0.02 * 32,
@@ -880,7 +857,7 @@ function draconis.ice_breath(self, pos2)
     local pos, dir = get_head_pos(self, pos2)
     dir.y = vec_dir(pos, pos2).y
     pos.y = pos.y + self.object:get_rotation().x
-    local dest = vector.add(pos, vector.multiply(dir, 32))
+    local dest = vec_add(pos, vec_multi(dir, 32))
     local nodes = get_line(pos, dest)
     if #nodes < 1 then return end
     local us = minetest.get_us_time()
@@ -890,10 +867,10 @@ function draconis.ice_breath(self, pos2)
         minetest.add_particlespawner({
             amount = 4,
             time = 0.25,
-            minpos = vector.add(nodes[1], vector.multiply(self.object:get_velocity(), 0.22)),
-            maxpos = vector.add(nodes[1], vector.multiply(self.object:get_velocity(), 0.22)),
-            minvel = vector.multiply(dir, 32),
-            maxvel = vector.multiply(dir, 48),
+            minpos = vec_add(nodes[1], vec_multi(self.object:get_velocity(), 0.22)),
+            maxpos = vec_add(nodes[1], vec_multi(self.object:get_velocity(), 0.22)),
+            minvel = vec_multi(dir, 32),
+            maxvel = vec_multi(dir, 48),
             minacc = {x = -4, y = -4, z = -4},
             maxacc = {x = 4, y = 4, z = 4},
             minexptime = 0.02 * 32,
@@ -1204,6 +1181,8 @@ end
 -- Initialize API --
 --------------------
 
+local terrain_destruction = minetest.settings:get_bool("terrain_destruction") or false
+
 minetest.register_on_mods_loaded(function()
     -- Misc Methods
     local dragons = {
@@ -1220,7 +1199,6 @@ minetest.register_on_mods_loaded(function()
                     old_anim = self._anim
                 end
                 self._anim = anim
-        
                 local old_prty = 1
                 if old_anim
                 and self.animations[old_anim].prty then
@@ -1230,22 +1208,18 @@ minetest.register_on_mods_loaded(function()
                 if self.animations[anim].prty then
                     prty = self.animations[anim].prty
                 end
-        
                 local aparms
                 if #self.animations[anim] > 0 then
                     aparms = self.animations[anim][random(#self.animations[anim])]
                 else
                     aparms = self.animations[anim]
                 end
-        
                 aparms.frame_blend = aparms.frame_blend or 0
                 if old_prty > prty then
                     aparms.frame_blend = self.animations[old_anim].frame_blend or 0
                 end
-        
                 self.anim_frame = -aparms.frame_blend
                 self.frame_offset = 0
-        
                 self.object:set_animation(aparms.range, aparms.speed, aparms.frame_blend, aparms.loop)
             else
                 self._anim = nil
@@ -1291,13 +1265,9 @@ minetest.register_on_mods_loaded(function()
             }
             if not self.owner then
                 if type == "ice" then
-                    for color in pairs(ice_colors) do
-                        table.insert(drops[4], {name = "draconis:egg_ice_" .. self.color, min = 1, max = 1, chance = 6})
-                    end
+                    table.insert(drops[4], {name = "draconis:egg_ice_" .. self.color, min = 1, max = 1, chance = 6})
                 else
-                    for color in pairs(fire_colors) do
-                        table.insert(drops[4], {name = "draconis:egg_fire_" .. self.color, min = 1, max = 1, chance = 6})
-                    end
+                    table.insert(drops[4], {name = "draconis:egg_fire_" .. self.color, min = 1, max = 1, chance = 6})
                 end
             end
             self.drops = drops[stage]
@@ -1308,10 +1278,8 @@ minetest.register_on_mods_loaded(function()
             if self.age < 15 then
                 sounds = self.child_sounds
             end
-
             local spec = sounds and sounds[sound]
             local parameters = {object = self.object}
-        
             if type(spec) == "table" then
                 local name = spec.name
                 if spec.variations then
@@ -1322,9 +1290,7 @@ minetest.register_on_mods_loaded(function()
                     name = spec.name
                 end
                 local pitch = 1.0
-        
                 pitch = pitch - (random(-10, 10) * 0.005)
-        
                 parameters.gain = spec.gain or 1
                 parameters.max_hear_distance = spec.distance or 8
                 parameters.fade = spec.fade or 1
@@ -1340,6 +1306,31 @@ minetest.register_on_mods_loaded(function()
             minetest.show_formspec(player:get_player_name(), "draconis:dragon_forms", get_dragon_formspec(self))
             dragon_form_obj[player:get_player_name()] = self
         end
+        minetest.registered_entities[dragon].destroy_terrain = function(self, moveresult)
+            if not terrain_destruction
+            or not moveresult
+            or not moveresult.collisions then
+                return
+            end
+            local pos = self.object:get_pos()
+            for _, collision in pairs(moveresult.collisions) do
+                if collision.type == "node" then
+                    local n_pos = collision.node_pos
+                    if n_pos.y - pos.y >= self.stepheight - 0.5 then
+                        local node = minetest.get_node(n_pos)
+                        if (minetest.get_item_group(node.name, "cracky") > 1
+                        or minetest.get_item_group(node.name, "cracky") <= 0)
+                        and minetest.get_item_group(node.name, "unbreakable") < 1 then
+                            if random(6) < 2 then
+                                minetest.dig_node(n_pos)
+                            else
+                                minetest.remove_node(n_pos)
+                            end
+                        end
+                    end
+                end
+            end
+        end
         -- Textures
         minetest.registered_entities[dragon].update_emission = function(self, force)
             local pos = self.object:get_pos()
@@ -1352,7 +1343,6 @@ minetest.register_on_mods_loaded(function()
             or (self._anim == "sleep" and not eyes_open))
             and not force then return end
             local def = minetest.registered_entities[self.name]
-            local default_textures = table.copy(def.textures)
             local textures = {
                 def.textures[self.texture_no]
             }
@@ -1393,21 +1383,13 @@ minetest.register_on_mods_loaded(function()
             local yaw = self.object:get_yaw()
             yaw = yaw + pi
             tyaw = (tyaw + pi) % (pi * 2)
-        
             local step = min(self.dtime * rate, abs(tyaw - yaw) % (pi * 2))
-        
             local dir = abs(tyaw - yaw) > pi and -1 or 1
             dir = tyaw > yaw and dir * 1 or dir * -1
-        
             local nyaw = (yaw + step * dir) % (pi * 2)
-        
-            local nroll =
-                vec_cross(minetest.yaw_to_dir(yaw), minetest.yaw_to_dir(tyaw)).y
-        
+            local nroll = vec_cross(minetest.yaw_to_dir(yaw), minetest.yaw_to_dir(tyaw)).y
             local roll = lerp(rot.z, nroll, 0.1)
-        
             self.object:set_rotation({x = rot.x, y = nyaw - pi, z = roll})
-        
             if nyaw == tyaw then
                 return true, nyaw - pi
             else
@@ -1415,7 +1397,7 @@ minetest.register_on_mods_loaded(function()
             end
         end
         minetest.registered_entities[dragon].set_weighted_velocity = function(self, speed, goal)
-            local speed = speed or self._movement_data.speed
+            speed = speed or self._movement_data.speed
             local current_vel = self.object:get_velocity()
             local goal_vel = vec_multi(vec_normal(goal), speed)
             local vel = current_vel
@@ -1525,8 +1507,8 @@ minetest.register_on_mods_loaded(function()
                     increase_age(self)
                 end
                 local pos = draconis.get_head_pos(self, player:get_pos())
-                local minppos = vector.add(pos, 1 * self.growth_scale)
-                local maxppos = vector.subtract(pos, 1 * self.growth_scale)
+                local minppos = vec_add(pos, 1 * self.growth_scale)
+                local maxppos = vec_sub(pos, 1 * self.growth_scale)
                 local def = minetest.registered_items[item_name]
                 local texture = def.inventory_image
                 if not texture or texture == "" then
@@ -1593,7 +1575,7 @@ minetest.register_chatcommand("tamedragon", {
         local dir = player:get_look_dir()
         local pos = player:get_pos()
         pos.y = pos.y + player:get_properties().eye_height or 1.625
-        local dest = vector.add(pos, vector.multiply(dir, 40))
+        local dest = vec_add(pos, vec_multi(dir, 40))
         local object, ent = get_pointed_mob(pos, dest)
         if object then
             local ent_pos = ent:get_center_pos()
@@ -1645,7 +1627,7 @@ minetest.register_chatcommand("set_dragon_owner", {
         local dir = player:get_look_dir()
         local pos = player:get_pos()
         pos.y = pos.y + player:get_properties().eye_height or 1.625
-        local dest = vector.add(pos, vector.multiply(dir, 40))
+        local dest = vec_add(pos, vec_multi(dir, 40))
         local object, ent = get_pointed_mob(pos, dest)
         if object then
             local ent_pos = ent:get_center_pos()
@@ -1700,8 +1682,8 @@ minetest.register_on_mods_loaded(function()
             if not old_punch then
                 old_punch = function() end
             end
-            local on_punch = function(self, puncher, time_from_last_punch, tool_capabilities, dir)
-                old_punch(self, puncher, time_from_last_punch, tool_capabilities, dir)
+            local on_punch = function(self, puncher, time_from_last_punch, tool_capabilities, direction, damage)
+                old_punch(self, puncher, time_from_last_punch, tool_capabilities, direction, damage)
                 local pos = self.object:get_pos()
                 if not pos then
                     return
@@ -1709,11 +1691,11 @@ minetest.register_on_mods_loaded(function()
                 if not puncher:is_player() then
                     return
                 end
-                local name = puncher:get_player_name()
-                if draconis.bonded_dragons[name]
-                and #draconis.bonded_dragons[name] > 0 then
+                local player_name = puncher:get_player_name()
+                if draconis.bonded_dragons[player_name]
+                and #draconis.bonded_dragons[player_name] > 0 then
                     for i = 1, #draconis.bonded_dragons[name] do
-                        local ent = get_dragon_by_id(draconis.bonded_dragons[name][i])
+                        local ent = get_dragon_by_id(draconis.bonded_dragons[player_name][i])
                         if ent then
                             ent.owner_target = self.object
                         end
@@ -1731,10 +1713,7 @@ end)
 
 function draconis.step(self, dtime, moveresult)
     self:update_emission()
-    if self.hp <= 0 then
-        self.bh_tree = nil
-        return
-    end
+    self:destroy_terrain(moveresult)
     -- Animation tracking
     if self._anim then
         local aparms = self.animations[self._anim]
@@ -1787,8 +1766,18 @@ function draconis.step(self, dtime, moveresult)
             end
         end
     end
+    if self.shoulder_mounted then
+        self:clear_action()
+        self:animate("shoulder_idle")
+        local player = minetest.get_player_by_name(self.owner)
+        if player:get_player_control().sneak == true
+        or self.age > 4 then
+            self.object:set_detach()
+            self.shoulder_mounted = self:memorize("shoulder_mounted", false)
+        end
+    end
     -- Speed/Stamina Tracking
-    if not self.fly_allowed 
+    if not self.fly_allowed
     and self.owner then
         self.is_landed = self:memorize("is_landed", true)
     elseif self:timer(16)
@@ -1836,7 +1825,7 @@ end
 
 function draconis.rightclick(self, clicker)
     local name = clicker:get_player_name()
-    local inv = minetest.get_inventory({type = "player", name = clicker:get_player_name()})
+    local inv = minetest.get_inventory({type = "player", name = name})
     if draconis.contains_libri(inv) then
         local libri, list_i = draconis.get_libri(inv)
         local pages = minetest.deserialize(libri:get_meta():get_string("pages")) or {}
@@ -1871,13 +1860,16 @@ function draconis.rightclick(self, clicker)
     end
     local item_name = clicker:get_wielded_item():get_name() or ""
     if self.owner
-    and clicker:get_player_name() == self.owner
+    and name == self.owner
     and item_name == "" then
         if clicker:get_player_control().sneak then
             self:show_formspec(clicker)
         elseif not self.rider
         and self.age >= 35 then
             draconis.attach_player(self, clicker)
+        elseif self.age < 5 then
+            self.shoulder_mounted = self:memorize("shoulder_mounted", true)
+            self.object:set_attach(clicker, "", {x = 3 - self.growth_scale, y = 11.5,z = -1.5 - (self.growth_scale * 5)}, {x=0,y=0,z=0})
         end
     end
 end
