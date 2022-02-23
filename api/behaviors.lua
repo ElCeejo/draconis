@@ -433,7 +433,6 @@ end)
 
 creatura.register_utility("draconis:land", function(self)
     local function func(self)
-        minetest.chat_send_all("landing")
         if self.touching_ground then return true end
         if self.in_liquid
         and self.flight_allowed then
