@@ -242,7 +242,7 @@ for color, hex in pairs(draconis.colors_fire) do
                     self.hatching = true
                     self.object:set_animation({x = 1, y = 40}, 30, 0)
                 end
-                if self.progress >= 10 then
+                if self.progress >= 1000 then
                     local object = minetest.add_entity(pos, "draconis:fire_dragon")
                     local ent = object:get_luaentity()
                     ent.age = ent:memorize("age", 1)

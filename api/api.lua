@@ -89,6 +89,8 @@ end
 
 local creative = minetest.settings:get_bool("creative_mode")
 
+local terrain_destruction = minetest.settings:get_bool("terrain_destruction") or false
+
 ---------------------
 -- Local Utilities --
 ---------------------
@@ -692,7 +694,7 @@ local function freeze_nodes(pos, radius)
         for y = pos1.y, pos2.y do
             for x = pos1.x, pos2.x do
                 local current_time = minetest.get_us_time()
-                if current_time - start_time > 500 then return end
+                if current_time - start_time > 750 then return end
                 local noise = random(5)
                 if noise < 2 then
                     local npos = {
@@ -736,7 +738,7 @@ local function scorch_nodes(pos, radius)
         for y = pos1.y, pos2.y do
             for x = pos1.x, pos2.x do
                 local current_time = minetest.get_us_time()
-                if current_time - start_time > 500 then return end
+                if current_time - start_time > 750 then return end
                 local noise = random(5)
                 if noise < 2 then
                     local npos = {
@@ -831,9 +833,9 @@ function draconis.fire_breath(self, pos2)
         us = minetest.get_us_time()
         local damage_tick = (us - last_damage_tick) / 100000
         for i = 1, #nodes do
-            scorch_nodes(nodes[i], 2)
+            scorch_nodes(nodes[i], 2.5)
             if damage_tick > 0.5 then
-                damage_objects(self, nodes[i], 5, 5)
+                damage_objects(self, nodes[i], 8, 8)
             end
         end
         do_forge(nodes[#nodes], "draconis:draconic_forge_fire")
@@ -885,9 +887,9 @@ function draconis.ice_breath(self, pos2)
         us = minetest.get_us_time()
         local damage_tick = (us - last_damage_tick) / 100000
         for i = 1, #nodes do
-            freeze_nodes(nodes[i], 2)
+            freeze_nodes(nodes[i], 2.5)
             if damage_tick > 0.5 then
-                damage_objects(self, nodes[i], 5, 5)
+                damage_objects(self, nodes[i], 8, 8)
             end
         end
         do_forge(nodes[#nodes], "draconis:draconic_forge_ice")
@@ -1180,8 +1182,6 @@ end
 --------------------
 -- Initialize API --
 --------------------
-
-local terrain_destruction = minetest.settings:get_bool("terrain_destruction") or false
 
 minetest.register_on_mods_loaded(function()
     -- Misc Methods
@@ -1578,7 +1578,7 @@ minetest.register_chatcommand("tamedragon", {
         local dest = vec_add(pos, vec_multi(dir, 40))
         local object, ent = get_pointed_mob(pos, dest)
         if object then
-            local ent_pos = ent:get_center_pos()
+            local ent_pos = object:get_pos()
             local particle = "creatura_particle_green.png"
             if not ent.owner then
                 ent.owner = name
@@ -1663,6 +1663,56 @@ minetest.register_chatcommand("set_dragon_owner", {
     end
 })
 
+minetest.register_chatcommand("revive_dragon", {
+    description = "Revives pointed Dragon",
+    privs = {draconis_admin = true},
+    func = function(name)
+        local player = minetest.get_player_by_name(name)
+        if not player then return false end
+        local dir = player:get_look_dir()
+        local pos = player:get_pos()
+        pos.y = pos.y + player:get_properties().eye_height or 1.625
+        local dest = vec_add(pos, vec_multi(dir, 40))
+        local object, ent = get_pointed_mob(pos, dest)
+        if object 
+        and ent.hp <= 0 then
+            local ent_pos = ent:get_center_pos()
+            local particle = "creatura_particle_green.png"
+            ent.hp = ent.max_health
+            ent:memorize("hp", ent.hp)
+            minetest.chat_send_player(name, correct_name(ent.name) .. " has been revived!")
+            minetest.add_particlespawner({
+                amount = 16,
+                time = 0.25,
+                minpos = {
+                    x = ent_pos.x - ent.width,
+                    y = ent_pos.y - ent.width,
+                    z = ent_pos.z - ent.width
+                },
+                maxpos = {
+                    x = ent_pos.x + ent.width,
+                    y = ent_pos.y + ent.width,
+                    z = ent_pos.z + ent.width
+                },
+                minacc = {x = 0, y = 0.25, z = 0},
+                maxacc = {x = 0, y = -0.25, z = 0},
+                minexptime = 0.75,
+                maxexptime = 1,
+                minsize = 4,
+                maxsize = 4,
+                texture = particle,
+                glow = 16
+            })
+        else
+            minetest.chat_send_player(name, "You must be pointing at a mob.")
+        end
+    end
+})
+
+----------------------
+-- Target Assigning --
+----------------------
+
 local function get_dragon_by_id(dragon_id)
     for _, ent in pairs(minetest.luaentities) do
         if ent.dragon_id
@@ -1694,7 +1744,7 @@ minetest.register_on_mods_loaded(function()
                 local player_name = puncher:get_player_name()
                 if draconis.bonded_dragons[player_name]
                 and #draconis.bonded_dragons[player_name] > 0 then
-                    for i = 1, #draconis.bonded_dragons[name] do
+                    for i = 1, #draconis.bonded_dragons[player_name] do
                         local ent = get_dragon_by_id(draconis.bonded_dragons[player_name][i])
                         if ent then
                             ent.owner_target = self.object

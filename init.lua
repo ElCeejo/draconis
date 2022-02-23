@@ -12,7 +12,6 @@ local storage = dofile(path.."/storage.lua")
 
 draconis.dragons = storage.dragons
 draconis.bonded_dragons = storage.bonded_dragons
-draconis.objects_last_cleared = storage.objects_last_cleared
 draconis.aux_key_setting = storage.aux_key_setting
 
 draconis.sounds = {
@@ -53,7 +52,8 @@ local clear_objects = minetest.clear_objects
 
 function minetest.clear_objects(options)
     clear_objects(options)
-    draconis.objects_last_cleared = os.time()
+    draconis.dragons = {}
+    draconis.bonded_dragons = {}
 end
 
 -- Load Files --
@@ -122,3 +122,14 @@ end
 for color in pairs(draconis.colors_fire) do
     minetest.register_alias("draconis:egg_fire_" .. color, "draconis:egg_fire_dragon_" .. color)
 end
+
+minetest.register_entity("draconis:ice_eyes", {
+    on_activate = function(self)
+        self.object:remove()
+    end
+})
+minetest.register_entity("draconis:fire_eyes", {
+    on_activate = function(self)
+        self.object:remove()
+    end
+})

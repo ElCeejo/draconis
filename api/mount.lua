@@ -267,6 +267,14 @@ minetest.register_on_joinplayer(function(player)
     end
 end)
 
+-------------------
+-- Data Handling --
+-------------------
+
+minetest.register_on_leaveplayer(function(player)
+    draconis.unset_fake_player(player)
+end)
+
 --------------
 -- Behavior --
 --------------
@@ -295,7 +303,7 @@ creatura.register_utility("draconis:mount", function(self)
         local scale = self.growth_scale
         local player_data = draconis.mounted_player_data[player_name]
 
-        if not player_data then return end
+        if not player_data then return true end
 
         --[[if self.age ~= initial_age then
             local fake_props = player_data.fake_player:get_properties()
@@ -305,8 +313,8 @@ creatura.register_utility("draconis:mount", function(self)
                 y = fake_props.visual_size.y / dragon_size.y
             }
             player_data.fake_player:set_properties(fake_props)
-        end
-]]
+        end]]
+
         local health = self.hp / math.ceil(self.max_health * self.growth_scale) * 100
         local hunger = self.hunger / math.ceil(self.max_hunger * self.growth_scale) * 100
         local stamina = self.flight_stamina / 900 * 100
@@ -493,8 +501,10 @@ creatura.register_utility("draconis:mount", function(self)
             self:animate(anim)
         end
 
-        if control.sneak then
+        if control.sneak
+        or player:get_player_name() ~= self.owner then
             draconis.detach_player(self, player)
+            return true
         end
     end
     self:set_utility(func)

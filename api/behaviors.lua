@@ -433,28 +433,22 @@ end)
 
 creatura.register_utility("draconis:land", function(self)
     local function func(self)
+        minetest.chat_send_all("landing")
         if self.touching_ground then return true end
+        if self.in_liquid
+        and self.flight_allowed then
+            self.flight_stamina = self.flight_stamina + 200
+            self.is_landed = false
+            return true
+        end
         local scale = self.growth_scale
         local width = self.width
         local pos = self.object:get_pos()
-        local pos2
-        if self:timer(1) then
-            local offset = random(width + 10 * scale, width + 20 * scale)
-            if random(2) < 2 then
-                offset = offset * -1
-            end
-            pos2 = {
-                x = pos.x + offset,
-                y = pos.y,
-                z = pos.z + offset
-            }
-            pos2.y = pos2.y - (12 * scale)
-        end
-        if not self:get_action()
-        and pos2 then
+        if not self:get_action() then
+            local pos2 = self:get_wander_pos_3d(width + 10 * scale, width + 20 * scale, nil, random(-1, -10) * 0.1)
             self.turn_rate = 4
             self:animate("fly")
-            creatura.action_walk(self, pos2, 2, "draconis:fly_path", 1)
+            creatura.action_walk(self, pos2, 3, "draconis:fly_path", 1)
         end
     end
     self:set_utility(func)
@@ -750,7 +744,8 @@ draconis.dragon_behavior = {
         utility = "draconis:mount",
         get_score = function(self)
             if not self.owner
-            or not self.rider then return 0 end
+            or not self.rider
+            or not self.rider:get_look_horizontal() then return 0 end
             return 1, {self}
         end
     },

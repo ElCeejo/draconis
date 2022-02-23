@@ -233,9 +233,8 @@ creatura.register_mob("draconis:ice_dragon", {
 		local owner = draconis.dragons[self.dragon_id].owner
 		if not owner then return end
 		if not draconis.bonded_dragons then return end
-		if not minetest.get_player_by_name(owner)
-		or (draconis.bonded_dragons[owner]
-		and is_value_in_table(draconis.bonded_dragons[owner], self.dragon_id)) then
+		if draconis.bonded_dragons[owner]
+		and is_value_in_table(draconis.bonded_dragons[owner], self.dragon_id) then
 			for i = #draconis.bonded_dragons[owner], 1, -1 do
 				if draconis.bonded_dragons[owner][i] == self.dragon_id then
 					draconis.bonded_dragons[owner][i] = nil
