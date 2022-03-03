@@ -194,13 +194,13 @@ local walkable_nodes = {}
 local scorched_conversions = {}
 local frozen_conversions = {}
 
-local flame_node = "fire:basic_flame"
-local flame_texture = "fire_basic_flame.png"
+local flame_node
+local flame_texture
 
 minetest.register_on_mods_loaded(function()
     for name, def in pairs(minetest.registered_nodes) do
         if name ~= "air" and name ~= "ignore" then
-            if minetest.registered_nodes[name].walkable then
+            if def.walkable then
                 table.insert(walkable_nodes, name)
                 if minetest.get_item_group(name, "stone") > 0 then
                     scorched_conversions[name] = "draconis:stone_scorched" -- Scorched Stone
@@ -216,14 +216,17 @@ minetest.register_on_mods_loaded(function()
                 or minetest.get_item_group(name, "snowy") > 0 then
                     scorched_conversions[name] = "air"
                 end
-            elseif (name:find("flame") or name:find("fire"))
-            and def.drawtype == "firelike"
-            and minetest.get_item_group(name, "igniter") > 0 then
-                flame_node = name
-                flame_texture = def.inventory_image
+            elseif def.drawtype == "liquid"
+            and minetest.get_item_group(name, "water") > 0 then
+                frozen_conversions[name] = draconis.global_nodes["ice"]
             end
         end
     end
+end)
+
+minetest.after(0.1, function()
+    flame_node = draconis.global_nodes["flame"]
+    flame_texture = minetest.registered_nodes[flame_node].inventory_image
 end)
 
 local fire_eye_textures = {
@@ -710,7 +713,9 @@ local function freeze_nodes(pos, radius)
                     and name ~= "air"
                     and name ~= "ignore" then
                         local convert_to = frozen_conversions[name]
-                        if convert_to then
+                        if convert_to
+                        and (convert_to ~= draconis.global_nodes["ice"]
+                        or minetest.get_node({x = x, y = y + 1, z = z}).name == "air") then
                             minetest.set_node(npos, {name = convert_to})
                         end
                     end

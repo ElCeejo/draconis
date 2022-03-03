@@ -48,6 +48,23 @@ draconis.colors_ice = {
     ["white"] = "e4e4e4"
 }
 
+draconis.global_nodes = {}
+
+minetest.register_on_mods_loaded(function()
+    for name, def in pairs(minetest.registered_nodes) do
+        if not draconis.global_nodes["flame"]
+        and (name:find("flame") or name:find("fire"))
+        and def.drawtype == "firelike"
+        and minetest.get_item_group(name, "igniter") > 0 then
+            draconis.global_nodes["flame"] = name
+        elseif not draconis.global_nodes["ice"]
+        and name:find(":ice")
+        and minetest.get_item_group(name, "slippery") > 0 then
+            draconis.global_nodes["ice"] = name
+        end
+    end
+end)
+
 local clear_objects = minetest.clear_objects
 
 function minetest.clear_objects(options)

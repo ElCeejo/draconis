@@ -136,6 +136,8 @@ for color, hex in pairs(draconis.colors_fire) do
     minetest.register_node("draconis:egg_fire_" .. color, {
         description = "Fire Dragon Egg \n" .. infotext(color, true),
         drawtype = "mesh",
+        paramtype = "light",
+        sunlight_propagates = true,
         mesh = "draconis_egg.obj",
         inventory_image = "draconis_dragon_egg.png^[multiply:#" .. hex,
         tiles = {"draconis_dragon_egg_mesh.png^[multiply:#" .. hex},
@@ -202,7 +204,7 @@ for color, hex in pairs(draconis.colors_fire) do
             height = 0.6
         },
         visual_size = {x = 10, y = 10},
-        textures = {"draconis_dragon_egg_mesh.png^[multiply:#" .. hex},
+        textures = {"draconis_fire_dragon_egg_mesh_" .. color .. ".png"},
         animations = {
             idle = {range = {x = 0, y = 0}, speed = 1, frame_blend = 0.3, loop = false},
             hatching = {range = {x = 70, y = 130}, speed = 15, frame_blend = 0.3, loop = true},
@@ -274,9 +276,11 @@ for color, hex in pairs(draconis.colors_ice) do
     minetest.register_node("draconis:egg_ice_" .. color, {
         description = "Ice Dragon Egg \n" .. infotext(color, true),
         drawtype = "mesh",
+        paramtype = "light",
+        sunlight_propagates = true,
         mesh = "draconis_egg.obj",
-        inventory_image = "(draconis_ice_dragon_egg.png^[multiply:#ffffff)^[multiply:#" .. hex,
-        tiles = {"(draconis_ice_dragon_egg_mesh.png^[multiply:#ffffff)^[multiply:#" .. hex},
+        inventory_image = "draconis_ice_dragon_egg.png^[multiply:#" .. hex,
+        tiles = {"draconis_ice_dragon_egg_mesh.png^[multiply:#" .. hex},
         collision_box = {
             type = "fixed",
             fixed = {
@@ -475,8 +479,8 @@ local function capture(player, ent, type)
 	end
 	local stack = player:get_wielded_item()
 	local meta = stack:get_meta()
-	if not meta:get_string("mob")
-	or meta:get_string("mob") == "" then
+	if not meta:get_string("staticdata")
+	or meta:get_string("staticdata") == "" then
         if not ent.dragon_id then return end
 		draconis.set_color_string(ent)
 		meta:set_string("mob", ent.name)
@@ -495,9 +499,18 @@ local function capture(player, ent, type)
 		ent.object:remove()
 		return stack
 	else
-		minetest.chat_send_player(player, "This Dragon ".. correct_name(type)  " already contains a Dragon")
+		minetest.chat_send_player(player:get_player_name(), "This Dragon ".. correct_name(type)  " already contains a Dragon")
 		return false
 	end
+end
+
+local function get_dragon_by_id(dragon_id)
+    for _, ent in pairs(minetest.luaentities) do
+        if ent.dragon_id
+        and ent.dragon_id == dragon_id then
+            return ent
+        end
+    end
 end
 
 -- Items --
@@ -525,8 +538,6 @@ minetest.register_craftitem("draconis:dragon_horn", {
                 and draconis.dragons[meta:get_string("dragon_id")] then
                     draconis.dragons[meta:get_string("dragon_id")].stored_in_item = false
                 end
-				meta:set_string("mob", nil)
-                meta:set_string("dragon_id", nil)
 				meta:set_string("staticdata", nil)
 				meta:set_string("description", "Dragon Horn")
 				if meta:get_int("timestamp") then
@@ -535,16 +546,36 @@ minetest.register_craftitem("draconis:dragon_horn", {
 					ent:get_luaentity().time_in_horn = diff
 					meta:set_int("timestamp", os.time())
 				end
+                return itemstack
 			end
 		end
-		return itemstack
 	end,
     on_secondary_use = function(itemstack, player)
 		local meta = itemstack:get_meta()
 		local mob = meta:get_string("mob")
-		if mob ~= "" then return end
+        local id = meta:get_string("dragon_id")
+        local staticdata = meta:get_string("staticdata")
+		if staticdata == "" 
+        and id ~= "" then
+            if mob ~= "" then
+                local last_pos = draconis.dragons[id].last_pos
+                local ent = get_dragon_by_id(id)
+                if draconis.dragons[id].stored_in_item then return end
+                if not ent then
+                    table.insert(draconis.dragons[id].removal_queue, last_pos)
+                    minetest.add_entity(player:get_pos(), mob, draconis.dragons[id].staticdata)
+                else
+                    ent.object:set_pos(player:get_pos())
+                end
+                minetest.chat_send_player(player:get_player_name(), "Teleporting Dragon")
+            end
+            return
+        end
 		local ent = get_pointed_dragon(player, 80)
-		if not ent then
+		if not ent
+        or not ent.dragon_id
+        or (id ~= ""
+        and id ~= ent.dragon_id) then
 			return
 		end
 		if vector.distance(player:get_pos(), ent.object:get_pos()) < 14 then
@@ -584,9 +615,9 @@ minetest.register_craftitem("draconis:dragon_flute", {
                 meta:set_string("dragon_id", nil)
 				meta:set_string("staticdata", nil)
 				meta:set_string("description", "Dragon Flute")
+                return itemstack
 			end
 		end
-		return itemstack
 	end,
     on_secondary_use = function(itemstack, player)
 		local meta = itemstack:get_meta()
@@ -602,131 +633,6 @@ minetest.register_craftitem("draconis:dragon_flute", {
 			if not ent.touching_ground then
 				ent.order = ent:memorize("order", "follow")
 			end
-		end
-	end
-})
-
--------------------
--- Summoning Gem --
--------------------
-
-local function teleport_stored_dragon(dragon_id, pos2)
-    local pos1 = draconis.dragons[dragon_id].last_pos
-    local node = minetest.get_node_or_nil(pos1)
-    if not node then
-        minetest.load_area(pos1)
-        minetest.after(0.5, function()
-            node = minetest.get_node_or_nil(pos1)
-            if not node then
-                teleport_stored_dragon(dragon_id, pos2)
-            else
-                local meta = minetest.get_meta(pos1)
-                local name = meta:get_string("mob")
-                if name == "draconis:fire_dragon"
-                or name == "draconis:ice_dragon" then
-                    local static = meta:get_string("static")
-                    minetest.add_entity(pos2, name, static)
-                end
-                minetest.remove_node(pos1)
-            end
-        end)
-    else
-        local meta = minetest.get_meta(pos1)
-        local name = meta:get_string("mob")
-        if name == "draconis:fire_dragon"
-        or name == "draconis:ice_dragon" then
-            local static = meta:get_string("static")
-            minetest.add_entity(pos2, name, static)
-        end
-        minetest.remove_node(pos1)
-    end
-end
-
-local function get_dragon_by_id(dragon_id)
-    for _, ent in pairs(minetest.luaentities) do
-        if ent.dragon_id
-        and ent.dragon_id == dragon_id then
-            return ent
-        end
-    end
-end
-
-minetest.register_craftitem("draconis:summoning_gem", {
-	description = "Dragon Summoning Gem",
-	inventory_image = "draconis_summoning_gem.png",
-	stack_max = 1,
-	on_secondary_use = function(itemstack, player, pointed_thing)
-		local meta = itemstack:get_meta()
-		local name = player:get_player_name()
-		if pointed_thing.type == "object"
-		and meta:get_string("id") == "" then
-			local ent = pointed_thing.ref:get_luaentity()
-			if ent.name
-			and (ent.name == "draconis:fire_dragon"
-			or ent.name == "draconis:ice_dragon") then
-				if not creatura.is_valid(ent) then return end
-				local owner = ent.owner
-				local dragon_id = ent.dragon_id
-				if owner
-				and owner == name
-				and dragon_id then
-                    meta:set_string("name", ent.name)
-					meta:set_string("id", dragon_id)
-					local info = get_info_gem(ent)
-					meta:set_string("description", info)
-					return itemstack
-				end
-			end
-		elseif meta:get_string("id") ~= "" then
-			local id = meta:get_string("id")
-            local name = meta:get_string("name")
-			local last_pos = draconis.dragons[id].last_pos
-            local ent = get_dragon_by_id(id)
-            if draconis.dragons[id].stored_in_item then return end
-            if not ent then
-                table.insert(draconis.dragons[id].removal_queue, last_pos)
-                minetest.add_entity(player:get_pos(), name, draconis.dragons[id].staticdata)
-            else
-                ent.object:set_pos(player:get_pos())
-            end
-            minetest.chat_send_player(name, "Teleporting Dragon")
-		end
-	end,
-	on_place = function(itemstack, player, pointed_thing)
-		local meta = itemstack:get_meta()
-		local name = player:get_player_name()
-		if pointed_thing.type == "object"
-		and meta:get_string("id") == "" then
-			local ent = pointed_thing.ref:get_luaentity()
-			if ent.name
-			and (ent.name == "draconis:fire_dragon"
-			or ent.name == "draconis:ice_dragon") then
-				if not creatura.is_valid(ent) then return end
-				local owner = ent.owner
-				local dragon_id = ent.dragon_id
-				if owner
-				and owner == name
-				and dragon_id then
-                    meta:set_string("name", ent.name)
-					meta:set_string("id", dragon_id)
-					local info = get_info_gem(ent)
-					meta:set_string("description", info)
-					return itemstack
-				end
-			end
-		elseif meta:get_string("id") ~= "" then
-			local id = meta:get_string("id")
-            local name = meta:get_string("name")
-			local last_pos = draconis.dragons[id].last_pos
-            local ent = get_dragon_by_id(id)
-            if draconis.dragons[id].stored_in_item then return end
-            if not ent then
-                table.insert(draconis.dragons[id].removal_queue, last_pos)
-                minetest.add_entity(player:get_pos(), name, draconis.dragons[id].staticdata)
-            else
-                ent.object:set_pos(player:get_pos())
-            end
-            minetest.chat_send_player(name, "Teleporting Dragon")
 		end
 	end
 })
