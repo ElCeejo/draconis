@@ -532,7 +532,7 @@ minetest.register_craftitem("draconis:dragon_horn", {
 			pos.y = pos.y + 3
 			local mob = meta:get_string("mob")
 			local staticdata = meta:get_string("staticdata")
-			if mob ~= "" then
+			if staticdata ~= "" then
 				local ent = minetest.add_entity(pos, mob, staticdata)
                 if meta:get_string("dragon_id")
                 and draconis.dragons[meta:get_string("dragon_id")] then
@@ -555,8 +555,28 @@ minetest.register_craftitem("draconis:dragon_horn", {
 		local mob = meta:get_string("mob")
         local id = meta:get_string("dragon_id")
         local staticdata = meta:get_string("staticdata")
+        local ent = get_pointed_dragon(player, 80)
+        if (ent
+        and ent.dragon_id)
+        or id == "" then
+            if vector.distance(player:get_pos(), ent.object:get_pos()) < 14 then
+                return capture(player, ent, "dragon_horn")
+            else
+                if not ent.touching_ground then
+                    ent.order = ent:memorize("order", "follow")
+                end
+            end
+            return
+        end
 		if staticdata == "" 
         and id ~= "" then
+            if not draconis.dragons[id] then
+                meta:set_string("mob", nil)
+				meta:set_string("dragon_id", nil)
+                meta:set_string("staticdata", nil)
+				meta:set_string("description", "Dragon Horn")
+                return itemstack
+            end
             if mob ~= "" then
                 local last_pos = draconis.dragons[id].last_pos
                 local ent = get_dragon_by_id(id)
@@ -571,20 +591,6 @@ minetest.register_craftitem("draconis:dragon_horn", {
             end
             return
         end
-		local ent = get_pointed_dragon(player, 80)
-		if not ent
-        or not ent.dragon_id
-        or (id ~= ""
-        and id ~= ent.dragon_id) then
-			return
-		end
-		if vector.distance(player:get_pos(), ent.object:get_pos()) < 14 then
-			return capture(player, ent, "dragon_horn")
-		else
-			if not ent.touching_ground then
-				ent.order = ent:memorize("order", "follow")
-			end
-		end
 	end
 })
 
