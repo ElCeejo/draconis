@@ -666,8 +666,6 @@ for color in pairs(draconis.colors_fire) do
 	minetest.register_alias_force("draconis:egg_fire_" .. color, "draconis:egg_fire_" .. color)
 end
 
-minetest.register_alias_force("draconis:dracolily_ice", "")
-minetest.register_alias_force("draconis:dracolily_fire", "")
 minetest.register_alias_force("draconis:growth_essence_ice", "")
 minetest.register_alias_force("draconis:growth_essence_fire", "")
 minetest.register_alias_force("draconis:blood_ice_dragon", "")
