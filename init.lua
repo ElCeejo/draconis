@@ -130,8 +130,6 @@ end
 
 -- Aliases --
 
-minetest.register_alias("draconis:spawn_node", "creatura:spawn_node")
-
 minetest.register_alias("draconis:dracolily_fire", "air")
 minetest.register_alias("draconis:dracolily_ice", "air")
 
@@ -153,8 +151,23 @@ minetest.register_entity("draconis:ice_eyes", {
         self.object:remove()
     end
 })
+
 minetest.register_entity("draconis:fire_eyes", {
     on_activate = function(self)
         self.object:remove()
     end
+})
+
+minetest.register_node("draconis:spawn_node", {
+    drawtype = "airlike"
+})
+
+minetest.register_abm({
+    label = "Fix Spawn Nodes",
+    nodenames = {"draconis:spawn_node"},
+    interval = spawn_interval,
+    chance = 1,
+    action = function(pos)
+        minetest.swap_node(pos, {name = "creatura:spawn_node"})
+    end,
 })
