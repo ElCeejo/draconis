@@ -13,6 +13,7 @@ local storage = dofile(path.."/storage.lua")
 draconis.dragons = storage.dragons
 draconis.bonded_dragons = storage.bonded_dragons
 draconis.aux_key_setting = storage.aux_key_setting
+draconis.attack_blacklist = storage.attack_blacklist
 
 draconis.sounds = {
     wood = {},
@@ -129,8 +130,15 @@ end
 
 -- Aliases --
 
+minetest.register_alias("draconis:spawn_node", "creatura:spawn_node")
+
 minetest.register_alias("draconis:dracolily_fire", "air")
 minetest.register_alias("draconis:dracolily_ice", "air")
+
+minetest.register_alias("draconis:blood_fire_dragon", "")
+minetest.register_alias("draconis:blood_ice_dragon", "")
+
+minetest.register_alias("draconis:manuscript", "")
 
 for color in pairs(draconis.colors_ice) do
     minetest.register_alias("draconis:egg_ice_dragon_" .. color, "draconis:egg_ice_" .. color)

@@ -481,6 +481,7 @@ function draconis.activate(self)
 end
 
 function draconis.drop_items(self)
+    if not creatura.is_valid(self) then return end
     if not self.drop_queue then
         self.drop_queue = {}
         for i = 1, #self.drops do
@@ -1711,6 +1712,40 @@ minetest.register_chatcommand("revive_dragon", {
         else
             minetest.chat_send_player(name, "You must be pointing at a mob.")
         end
+    end
+})
+
+minetest.register_chatcommand("dragon_attack_blacklist_add", {
+    description = "Adds player to attack blacklist",
+    params = "<name>",
+    privs = {draconis_admin = true},
+    func = function(name, params)
+        local player = minetest.get_player_by_name(name)
+        local param_name = params:match("%S+")
+        if not player or not param_name then return false end
+        if draconis.attack_blacklist[param_name] then
+            minetest.chat_send_player(name, param_name .. " is already on the Dragon attack blacklist.")
+            return false
+        end
+        draconis.attack_blacklist[param_name] = true
+        minetest.chat_send_player(name, param_name .. " has been added to the Dragon attack blacklist.")
+    end
+})
+
+minetest.register_chatcommand("dragon_attack_blacklist_remove", {
+    description = "Removes player to attack blacklist",
+    params = "<name>",
+    privs = {draconis_admin = true},
+    func = function(name, params)
+        local player = minetest.get_player_by_name(name)
+        local param_name = params:match("%S+")
+        if not player or not param_name then return false end
+        if not draconis.attack_blacklist[param_name] then
+            minetest.chat_send_player(name, param_name .. " isn't on the Dragon attack blacklist.")
+            return false
+        end
+        draconis.attack_blacklist[param_name] = nil
+        minetest.chat_send_player(name, param_name .. " has been removed from the Dragon attack blacklist.")
     end
 })
 
