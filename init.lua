@@ -165,7 +165,7 @@ minetest.register_node("draconis:spawn_node", {
 minetest.register_abm({
     label = "Fix Spawn Nodes",
     nodenames = {"draconis:spawn_node"},
-    interval = spawn_interval,
+    interval = 10,
     chance = 1,
     action = function(pos)
         minetest.swap_node(pos, {name = "creatura:spawn_node"})
