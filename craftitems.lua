@@ -646,7 +646,7 @@ minetest.register_craftitem("draconis:dragon_flute", {
 			end
 		end
 	end,
-    on_secondary_use = function(itemstack, player)
+    on_secondary_use = function(itemstack, player, pointed_thing)
 		local meta = itemstack:get_meta()
 		local mob = meta:get_string("mob")
 		if mob ~= "" then return end
