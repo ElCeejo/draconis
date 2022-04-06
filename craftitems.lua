@@ -116,7 +116,7 @@ end
 
 minetest.register_craftitem("draconis:draconic_steel_ingot_fire", {
 	description = "Fire-Forged Draconic Steel Ingot",
-	inventory_image = "draconis_draconic_steel_ingot.png",
+	inventory_image = "draconis_draconic_steel_ingot_fire.png",
 	stack_max = 8,
 })
 
@@ -472,7 +472,7 @@ local function get_pointed_dragon(player, range)
 	return ent
 end
 
-local function capture(player, ent, type)
+local function capture(player, ent, tool_name)
 	if not player:is_player()
 	or not player:get_inventory() then
 		return false
@@ -487,7 +487,7 @@ local function capture(player, ent, type)
         meta:set_string("dragon_id", ent.dragon_id)
 		meta:set_string("staticdata", ent:get_staticdata())
 		local info
-		if type == "dragon_horn" then
+		if tool_name == "dragon_horn" then
 			meta:set_int("timestamp", os.time())
 			info = set_dragon_horn_info(ent)
 		else
@@ -499,7 +499,7 @@ local function capture(player, ent, type)
 		ent.object:remove()
 		return stack
 	else
-		minetest.chat_send_player(player:get_player_name(), "This Dragon ".. correct_name(type)  " already contains a Dragon")
+		minetest.chat_send_player(player:get_player_name(), "This Dragon " .. correct_name(tool_name) .. " already contains a Dragon")
 		return false
 	end
 end
@@ -550,23 +550,31 @@ minetest.register_craftitem("draconis:dragon_horn", {
 			end
 		end
 	end,
-    on_secondary_use = function(itemstack, player)
+    on_secondary_use = function(itemstack, player, pointed_thing)
 		local meta = itemstack:get_meta()
 		local mob = meta:get_string("mob")
         local id = meta:get_string("dragon_id")
         local staticdata = meta:get_string("staticdata")
         local ent = get_pointed_dragon(player, 80)
+        if pointed_thing
+        and pointed_thing.ref then
+            ent = pointed_thing.ref:get_luaentity()
+            if not ent.name:match("^draconis:") then
+                ent = nil
+            end
+        end
         if (ent
-        and ent.dragon_id)
+        and ent.dragon_id
+        and ent.dragon_id == id)
         or id == "" then
-            if vector.distance(player:get_pos(), ent.object:get_pos()) < 14 then
+            if vector.distance(player:get_pos(), ent.object:get_pos()) < 7 then
                 return capture(player, ent, "dragon_horn")
             else
                 if not ent.touching_ground then
                     ent.order = ent:memorize("order", "follow")
                 end
             end
-            return
+            return itemstack
         end
 		if staticdata == "" 
         and id ~= "" then
@@ -580,7 +588,7 @@ minetest.register_craftitem("draconis:dragon_horn", {
             if mob ~= "" then
                 local last_pos = draconis.dragons[id].last_pos
                 local ent = get_dragon_by_id(id)
-                if draconis.dragons[id].stored_in_item then return end
+                if draconis.dragons[id].stored_in_item then return itemstack end
                 if not ent then
                     table.insert(draconis.dragons[id].removal_queue, last_pos)
                     minetest.add_entity(player:get_pos(), mob, draconis.dragons[id].staticdata)
@@ -589,8 +597,9 @@ minetest.register_craftitem("draconis:dragon_horn", {
                 end
                 minetest.chat_send_player(player:get_player_name(), "Teleporting Dragon")
             end
-            return
+            return itemstack
         end
+        return itemstack
 	end
 })
 
@@ -630,6 +639,13 @@ minetest.register_craftitem("draconis:dragon_flute", {
 		local mob = meta:get_string("mob")
 		if mob ~= "" then return end
 		local ent = get_pointed_dragon(player, 40)
+        if pointed_thing
+        and pointed_thing.ref then
+            ent = pointed_thing.ref:get_luaentity()
+            if not ent.name:match("^draconis:") then
+                ent = nil
+            end
+        end
 		if not ent then
 			return
 		end

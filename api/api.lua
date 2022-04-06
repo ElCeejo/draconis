@@ -1503,6 +1503,7 @@ minetest.register_on_mods_loaded(function()
                 end
                 if self.hunger < (self.max_health * 0.5) * self.growth_scale then
                     self.hunger = self.hunger + 5
+                    self:memorize("hunger", self.hunger)
                 end
                 if item_name:find("cooked") then
                     self.food = (self.food or 0) + 1
