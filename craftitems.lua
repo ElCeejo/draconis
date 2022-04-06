@@ -264,8 +264,14 @@ for color, hex in pairs(draconis.colors_fire) do
             end
         end,
         on_rightclick = function(self, clicker)
-        end,
-        on_punch = function(self, puncher, time_from_last_punch, tool_capabilities, direction, damage)
+            local inv = clicker:get_inventory()
+			if inv:room_for_item("main", {name = "draconis:egg_fire_" .. color}) then
+				clicker:get_inventory():add_item("main", "draconis:egg_fire_" .. color)
+			else
+				local pos = self:get_pos("floor")
+				pos.y = pos.y + 0.5
+				minetest.add_item(pos, {name = "draconis:egg_fire_" .. color})
+			end
         end
     })
 end
@@ -407,8 +413,14 @@ for color, hex in pairs(draconis.colors_ice) do
             end
         end,
         on_rightclick = function(self, clicker)
-        end,
-        on_punch = function(self, puncher, time_from_last_punch, tool_capabilities, direction, damage)
+            local inv = clicker:get_inventory()
+			if inv:room_for_item("main", {name = "draconis:egg_fire_" .. color}) then
+				clicker:get_inventory():add_item("main", "draconis:egg_fire_" .. color)
+			else
+				local pos = self:get_pos("floor")
+				pos.y = pos.y + 0.5
+				minetest.add_item(pos, {name = "draconis:egg_fire_" .. color})
+			end
         end
     })
 end
