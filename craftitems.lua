@@ -414,12 +414,12 @@ for color, hex in pairs(draconis.colors_ice) do
         end,
         on_rightclick = function(self, clicker)
             local inv = clicker:get_inventory()
-			if inv:room_for_item("main", {name = "draconis:egg_fire_" .. color}) then
-				clicker:get_inventory():add_item("main", "draconis:egg_fire_" .. color)
+			if inv:room_for_item("main", {name = "draconis:egg_ice_" .. color}) then
+				clicker:get_inventory():add_item("main", "draconis:egg_ice_" .. color)
 			else
 				local pos = self:get_pos("floor")
 				pos.y = pos.y + 0.5
-				minetest.add_item(pos, {name = "draconis:egg_fire_" .. color})
+				minetest.add_item(pos, {name = "draconis:egg_ice_" .. color})
 			end
         end
     })
