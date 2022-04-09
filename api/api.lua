@@ -481,7 +481,8 @@ function draconis.activate(self)
 end
 
 function draconis.drop_items(self)
-    if not creatura.is_valid(self) then return end
+    if not creatura.is_valid(self)
+    or not self.object:get_pos() then return end
     if not self.drop_queue then
         self.drop_queue = {}
         for i = 1, #self.drops do
