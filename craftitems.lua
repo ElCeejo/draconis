@@ -575,10 +575,10 @@ minetest.register_craftitem("draconis:dragon_horn", {
                 ent = nil
             end
         end
-        if (ent
-        and ent.dragon_id
+        if ent
+        and ((ent.dragon_id
         and ent.dragon_id == id)
-        or id == "" then
+        or id == "") then
             if vector.distance(player:get_pos(), ent.object:get_pos()) < 7 then
                 return capture(player, ent, "dragon_horn")
             else
