@@ -204,7 +204,7 @@ for color, hex in pairs(draconis.colors_fire) do
             height = 0.6
         },
         visual_size = {x = 10, y = 10},
-        textures = {"draconis_fire_dragon_egg_mesh_" .. color .. ".png"},
+        textures = {"draconis_dragon_egg_mesh.png^[multiply:#" .. hex},
         animations = {
             idle = {range = {x = 0, y = 0}, speed = 1, frame_blend = 0.3, loop = false},
             hatching = {range = {x = 70, y = 130}, speed = 15, frame_blend = 0.3, loop = true},
@@ -272,6 +272,7 @@ for color, hex in pairs(draconis.colors_fire) do
 				pos.y = pos.y + 0.5
 				minetest.add_item(pos, {name = "draconis:egg_fire_" .. color})
 			end
+            self.object:remove()
         end
     })
 end
@@ -421,6 +422,7 @@ for color, hex in pairs(draconis.colors_ice) do
 				pos.y = pos.y + 0.5
 				minetest.add_item(pos, {name = "draconis:egg_ice_" .. color})
 			end
+            self.object:remove()
         end
     })
 end
