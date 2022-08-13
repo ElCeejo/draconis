@@ -231,7 +231,7 @@ register_node("draconis:bone_pile_scorched", {
 	paramtype2 = "facedir",
 	place_param2 = 0,
 	is_ground_content = false,
-	groups = {cracky = 3, level = 1},
+	groups = {cracky = 3, level = 1, flammable = 1},
 	sounds = draconis.sounds.wood
 })
 
