@@ -426,9 +426,9 @@ end
 -- Dynamic Animation --
 -----------------------
 
-function draconis.rotate_to_pitch(self)
+function draconis.rotate_to_pitch(self, flying)
 	local rot = self.object:get_rotation()
-	if self._anim == "fly" then
+	if flying then
 		local vel = vec_normal(self.object:get_velocity())
 		local step = min(self.dtime * 4, abs(diff(rot.x, vel.y)) % (pi2))
 		local n_rot = interp_angle(rot.x, vel.y, step)
@@ -1947,7 +1947,7 @@ function draconis.dragon_step(self, dtime)
 	draconis.head_tracking(self)
 	self:open_jaw()
 	self:move_tail()
-	draconis.rotate_to_pitch(self)
+	draconis.rotate_to_pitch(self, is_flying)
 	-- Shoulder Mounting
 	if self.shoulder_mounted then
 		self:clear_action()
@@ -2067,7 +2067,7 @@ function draconis.wyvern_step(self, dtime)
 	draconis.head_tracking(self)
 	self:open_jaw()
 	self:move_tail()
-	draconis.rotate_to_pitch(self)
+	draconis.rotate_to_pitch(self, is_flying)
 	-- Timers
 	if self:timer(1) then
 		if random(16) < 2 then
