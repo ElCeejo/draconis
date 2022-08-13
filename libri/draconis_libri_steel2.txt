@@ -1,0 +1,13 @@
+Building a Forge requires a 
+material hardened against the 
+strength of a Dragon's 
+powerful breath attacks. The 
+go-to blueprint requires 
+Dragonstone Blocks for the 
+frame and core, as well as 
+Dragonstone Bricks for the 
+outer shell. Dragonstone 
+Blocks are created by dropping 
+a stack of stone on the ground 
+and using your Dragon's breath 
+on it.

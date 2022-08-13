@@ -2,7 +2,10 @@
 -- Draconis --
 --------------
 
-draconis = {}
+draconis = {
+	wyverns = {},
+	force_storage_save = false
+}
 
 local path = minetest.get_modpath("draconis")
 
@@ -51,17 +54,33 @@ draconis.colors_ice = {
 
 draconis.global_nodes = {}
 
+draconis.global_nodes["flame"] = "fire:basic_flame"
+draconis.global_nodes["ice"] = "default:ice"
+draconis.global_nodes["steel_blockj"] = "default:steelblock"
+
 minetest.register_on_mods_loaded(function()
     for name, def in pairs(minetest.registered_nodes) do
-        if not draconis.global_nodes["flame"]
+        -- Flame
+        if not (draconis.global_nodes["flame"]
+        or not minetest.registered_nodes[draconis.global_nodes["flame"]])
         and (name:find("flame") or name:find("fire"))
-        and def.drawtype == "firelike"
-        and minetest.get_item_group(name, "igniter") > 0 then
+        and def.drawtype == "firelike" then
             draconis.global_nodes["flame"] = name
-        elseif not draconis.global_nodes["ice"]
+        end
+        -- Ice
+        if not (draconis.global_nodes["ice"]
+        or not minetest.registered_nodes[draconis.global_nodes["ice"]])
         and name:find(":ice")
         and minetest.get_item_group(name, "slippery") > 0 then
             draconis.global_nodes["ice"] = name
+        end
+        -- Steel Block
+        if not (draconis.global_nodes["steel_blockj"]
+        or not minetest.registered_nodes[draconis.global_nodes["steel_blockj"]])
+        and (name:find(":steel")
+        or name:find(":iron"))
+        and name:find("block") then
+            draconis.global_nodes["steel_blockj"] = name
         end
     end
 end)
@@ -70,8 +89,14 @@ local clear_objects = minetest.clear_objects
 
 function minetest.clear_objects(options)
     clear_objects(options)
-    draconis.dragons = {}
-    draconis.bonded_dragons = {}
+    for id, dragon in pairs(draconis.dragons) do
+        if not dragon.stored_in_item then
+            draconis.dragons[id] = nil
+            if draconis.bonded_dragons[id] then
+                draconis.bonded_dragons[id] = nil
+            end
+        end
+    end
 end
 
 -- Load Files --
@@ -81,8 +106,10 @@ dofile(path.."/api/mount.lua")
 dofile(path.."/api/behaviors.lua")
 dofile(path.."/mobs/ice_dragon.lua")
 dofile(path.."/mobs/fire_dragon.lua")
+dofile(path.."/mobs/jungle_wyvern.lua")
 dofile(path.."/nodes.lua")
 dofile(path.."/craftitems.lua")
+dofile(path.."/libri/libri.lua")
 
 if minetest.get_modpath("3d_armor") then
     dofile(path.."/armor.lua")
