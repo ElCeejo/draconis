@@ -620,6 +620,9 @@ local function cool_crucible(pos, ingot)
 		minetest.get_node_timer(pos):stop()
 	else
 		local dragon_id = crucible:get_meta():get_string("dragon_id")
+		if name:find("ice") then
+			dragon_id = meta:get_string("dragon_id")
+		end
 		inv:set_stack("crucible", 1, "draconis:dragonstone_crucible")
 		local draconic_ingot = ItemStack(ingot)
 		local ingot_meta = draconic_ingot:get_meta()
@@ -1001,7 +1004,7 @@ minetest.register_node("draconis:draconic_forge_ice", {
 		end
 	end,
 
-	on_breath = function(pos)
+	on_breath = function(pos, id)
 		if not get_forge_structure(pos) then return end
 		local meta = minetest.get_meta(pos)
 		local inv = meta:get_inventory()
@@ -1025,6 +1028,7 @@ minetest.register_node("draconis:draconic_forge_ice", {
 		end
 
 		meta:set_string("cooling_init", "true")
+		meta:set_string("dragon_id", id)
 
 		forge_particle(pos, "draconis_ice_particle_1.png")
 	end
