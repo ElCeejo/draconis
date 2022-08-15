@@ -720,7 +720,6 @@ local function damage_objects(self, pos, radius)
 	end
 end
 
-
 local function freeze_nodes(pos, radius)
 	local h_stride = radius
 	local v_stride = math.ceil(radius * 0.5)
@@ -858,22 +857,44 @@ function draconis.fire_breath(self, pos2)
 			z = pos.z + vel.z * 0.25
 		}
 		local scale = self.growth_scale
-		minetest.add_particlespawner({
-			amount = 3,
-			time = 0.25,
-			collisiondetection = true,
-			collision_removal = true,
-			pos = particle_origin,
-			vel = {min = vec_multi(dir, 32), max = vec_multi(dir, 48)},
-			acc = {min = vec_new(-4, -4, -4), max = vec_new(4, 4, 4)},
-			size = {min = 8 * scale, max = 12 * scale},
-			glow = 16,
-			texture = {
-				name = "draconis_fire_particle.png",
-				alpha_tween = {0.75, 0.25},
-				blend = "alpha"
-			}
-		})
+		if minetest.has_feature("particlespawner_tweenable") then
+			minetest.add_particlespawner({
+				amount = 3,
+				time = 0.25,
+				collisiondetection = true,
+				collision_removal = true,
+				pos = particle_origin,
+				vel = {min = vec_multi(dir, 32), max = vec_multi(dir, 48)},
+				acc = {min = vec_new(-4, -4, -4), max = vec_new(4, 4, 4)},
+				size = {min = 8 * scale, max = 12 * scale},
+				glow = 16,
+				texture = {
+					name = "draconis_fire_particle.png",
+					alpha_tween = {0.75, 0.25},
+					blend = "alpha"
+				}
+			})
+		else
+			minetest.add_particlespawner({
+				amount = 3,
+				time = 0.25,
+				minpos = particle_origin,
+				maxpos = particle_origin,
+				minvel = vec_multi(dir, 32),
+				maxvel = vec_multi(dir, 48),
+				minacc = {x = -4, y = -4, z = -4},
+				maxacc = {x = 4, y = 4, z = 4},
+				minexptime = 0.02 * 32,
+				maxexptime = 0.04 * 32,
+				minsize = 8 * scale,
+				maxsize = 12 * scale,
+				collisiondetection = true,
+				collision_removal = true,
+				vertical = false,
+				glow = 16,
+				texture = "draconis_fire_particle.png"
+			})
+		end
 		local spread = clamp(3 * scale, 1, 5)
 		local breath_end = vec_add(pos, vec_multi(dir, 32))
 		for i = 1, 32, floor(spread) do
@@ -922,22 +943,44 @@ function draconis.ice_breath(self, pos2)
 			z = pos.z + vel.z * 0.25
 		}
 		local scale = self.growth_scale
-		minetest.add_particlespawner({
-			amount = 3,
-			time = 0.25,
-			collisiondetection = true,
-			collision_removal = true,
-			pos = particle_origin,
-			vel = {min = vec_multi(dir, 32), max = vec_multi(dir, 48)},
-			acc = {min = vec_new(-4, -4, -4), max = vec_new(4, 4, 4)},
-			size = {min = 6 * scale, max = 8 * scale},
-			glow = 16,
-			texpool = {
-				{name = "draconis_ice_particle_1.png", alpha_tween = {1, 0}, blend = "alpha"},
-				{name = "draconis_ice_particle_2.png", alpha_tween = {1, 0}, blend = "alpha"},
-				{name = "draconis_ice_particle_3.png", alpha_tween = {1, 0}, blend = "alpha"},
-			}
-		})
+		if minetest.has_feature("particlespawner_tweenable") then
+			minetest.add_particlespawner({
+				amount = 3,
+				time = 0.25,
+				collisiondetection = true,
+				collision_removal = true,
+				pos = particle_origin,
+				vel = {min = vec_multi(dir, 32), max = vec_multi(dir, 48)},
+				acc = {min = vec_new(-4, -4, -4), max = vec_new(4, 4, 4)},
+				size = {min = 6 * scale, max = 8 * scale},
+				glow = 16,
+				texpool = {
+					{name = "draconis_ice_particle_1.png", alpha_tween = {1, 0}, blend = "alpha"},
+					{name = "draconis_ice_particle_2.png", alpha_tween = {1, 0}, blend = "alpha"},
+					{name = "draconis_ice_particle_3.png", alpha_tween = {1, 0}, blend = "alpha"},
+				}
+			})
+		else
+			minetest.add_particlespawner({
+				amount = 3,
+				time = 0.25,
+				minpos = particle_origin,
+				maxpos = particle_origin,
+				minvel = vec_multi(dir, 32),
+				maxvel = vec_multi(dir, 48),
+				minacc = {x = -4, y = -4, z = -4},
+				maxacc = {x = 4, y = 4, z = 4},
+				minexptime = 0.02 * 32,
+				maxexptime = 0.04 * 32,
+				minsize = 6 * scale,
+				maxsize = 8 * scale,
+				collisiondetection = true,
+				collision_removal = true,
+				vertical = false,
+				glow = 16,
+				texture = "draconis_ice_particle_" .. random(3) .. ".png"
+			})
+		end
 		local spread = floor(clamp(2.5 * scale, 1, 4))
 		local breath_end = vec_add(pos, vec_multi(dir, 32))
 		for i = 1, 32, spread do
