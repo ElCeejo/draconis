@@ -108,14 +108,16 @@ minetest.register_craftitem("draconis:draconic_steel_ingot_ice", {
 ----------
 
 local function egg_rightclick(self, clicker, item)
-	local inv = clicker:get_inventory()
-	if inv:room_for_item("main", {name = item}) then
-		clicker:get_inventory():add_item("main", item)
-	else
-		local pos = self.object:get_pos()
-		if not pos then return end
-		pos.y = pos.y + 0.5
-		minetest.add_item(pos, {name = item})
+	if not minetest.is_creative_enabled(clicker) then
+		local inv = clicker:get_inventory()
+		if inv:room_for_item("main", {name = item}) then
+			clicker:get_inventory():add_item("main", item)
+		else
+			local pos = self.object:get_pos()
+			if not pos then return end
+			pos.y = pos.y + 0.5
+			minetest.add_item(pos, {name = item})
+		end
 	end
 	self.object:remove()
 end

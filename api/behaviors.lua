@@ -355,6 +355,32 @@ end)
 
 -- Actions --
 
+function draconis.action_flight_fire(self, target, timeout)
+	local timer = timeout or 12
+	local goal
+	local function func(_self)
+		local pos = _self.stand_pos
+		if timer <= 0 then return true end
+		local target_alive, los, tgt_pos = _self:get_target(target)
+		if not target_alive then return true end
+		self.head_tracking = target
+		if not goal or _self:timer(4) then
+			goal = _self:get_wander_pos_3d(6, 8, vec_dir(pos, tgt_pos))
+		end
+		if _self:move_to(goal, "draconis:fly_obstacle_avoidance", 0.5) then
+			goal = nil
+		end
+		if los then
+			_self:breath_attack(tgt_pos)
+			_self:animate("fly_fire")
+		else
+			_self:animate("fly")
+		end
+		timer = timer - _self.dtime
+	end
+	self:set_action(func)
+end
+
 function draconis.action_pursue(self, target, timeout, method, speed_factor, anim)
 	local timer = timeout or 4
 	local goal
@@ -363,6 +389,7 @@ function draconis.action_pursue(self, target, timeout, method, speed_factor, ani
 		if not target_alive then
 			return true
 		end
+		self.head_tracking = target
 		local pos = _self.object:get_pos()
 		if not pos then return end
 		timer = timer - _self.dtime
@@ -372,7 +399,6 @@ function draconis.action_pursue(self, target, timeout, method, speed_factor, ani
 		and vec_dist(goal, tgt_pos) > 3) then
 			goal = tgt_pos
 		end
-		goal.y = creatura.get_ground_level(pos, 3).y
 		if timer <= 0
 		or _self:move_to(goal, method or "creatura:obstacle_avoidance", speed_factor or 0.5) then
 			_self:halt()
@@ -512,6 +538,8 @@ function draconis.action_land(self)
 	self:set_action(func)
 end
 
+-- Close-range Attacks
+
 function draconis.action_slam(self)
 	local anim = self.animations["slam"]
 	local anim_time = (anim.range.y - anim.range.x) / anim.speed
@@ -530,7 +558,7 @@ function draconis.action_slam(self)
 		and not damage_init then
 			local terrain_dir
 			local aoe_center = vec_add(pos, vec_multi(yaw2dir(yaw), _self.width))
-			local affected_objs = minetest.get_objects_inside_radius(aoe_center, 5 * scale)
+			local affected_objs = minetest.get_objects_inside_radius(aoe_center, 8 * scale)
 			for _, object in ipairs(affected_objs) do
 				local tgt_pos = object and object ~= self.object and object:get_pos()
 				if tgt_pos then
@@ -590,7 +618,7 @@ function draconis.action_repel(self)
 		if timeout < anim_time * 0.5
 		and not damage_init then
 			local aoe_center = vec_add(pos, vec_multi(yaw2dir(yaw), _self.width))
-			local affected_objs = minetest.get_objects_inside_radius(aoe_center, 5 * scale)
+			local affected_objs = minetest.get_objects_inside_radius(aoe_center, 8 * scale)
 			for _, object in ipairs(affected_objs) do
 				local tgt_pos = object and object ~= self.object and object:get_pos()
 				if tgt_pos then
@@ -938,116 +966,86 @@ end)
 
 -- Attack
 
-creatura.register_utility("draconis:flight_attack", function(self, target)
-	local do_fire = random(3) < 2
-	local fly_init = false
+creatura.register_utility("draconis:attack", function(self, target)
+	local is_landed = true
+	local takeoff_init = false
 	local land_init = false
-	local landed = false
-	hidden_timer = 0
+	local hidden_timer = 0
+	local fov_timer = 0
+	local switch_timer = 20
 	local function func(_self)
-		local target_alive, _, tgt_pos = _self:get_target(target)
-		if not target_alive then
-			_self._target = nil
-			return true
-		end
+		local target_alive, los, tgt_pos = _self:get_target(target)
+		if not target_alive then _self._target = nil return true end
 		local pos = _self.object:get_pos()
+		local yaw = _self.object:get_yaw()
 		if not pos then return end
-		if not line_of_sight then
-			hidden_timer = hidden_timer + _self.dtime
-			if hidden_timer > 10 then
-				_self._ignore_obj[target] = true
-				local group = get_target_group(target)
-				if #group > 0 then
-					for _, v in pairs(group) do
-						_self._ignore_obj[v] = true
-					end
+		local yaw2tgt = dir2yaw(vec_dir(pos, tgt_pos))
+		if abs(diff(yaw, yaw2tgt)) > 0.3 then
+			fov_timer = fov_timer + _self.dtime
+		end
+		switch_timer = switch_timer - _self.dtime
+		if not self:get_action() then
+			-- Decide to attack from ground or air
+			if init then
+				local dist2floor = creatura.sensor_floor(_self, 7, true)
+				if dist2floor > 6
+				or is_target_flying(target) then -- Fly if too far from ground
+					is_landed = false
 				end
-				_self._target = nil
-				return true
+			elseif switch_timer <= 0 then
+				local switch_chance = (is_landed and 6) or 3
+				is_landed = random(switch_chance) > 1
+				takeoff_init = not is_landed
+				land_init = is_landed
+				switch_timer = 20
 			end
-			_self.head_tracking = nil
-		else
-					hidden_timer = 0
-			_self.head_tracking = target
-		end
-		if _self._anim == "fly_fire" then
-			_self:breath_attack(tgt_pos)
-			_self.head_tracking = target
-		else
-			_self.head_tracking = nil
-		end
-		if vec_dist(pos, {x = tgt_pos.x, y = pos.y, z = tgt_pos.z}) < 4
-		and not is_target_flying(target) then
-			land_init = true
-		end
-		if land_init
-		and not landed
-		and _self.touching_ground then
-			draconis.action_land(_self)
-			landed = true
-		end
-		if not _self:get_action() then
-			if landed then return true end
-			-- Land
+			local current_anim = self._anim or ""
+			-- Land if flying while in landed state
 			if land_init then
-				local dist2floor, _, floor_node = creatura.sensor_floor(_self, 10, true)
-				if floor_node
-				and minetest.get_item_group(floor_node.name, "liquid") > 0 then
-					land_init = false
+				if not self.touching_ground then
+					pos2 = tgt_pos
+					if is_target_flying(target) then
+						pos2 = {x = pos.x, y = pos.y - 7, z = pos.z}
+					end
+					creatura.action_move(_self, pos2, 3, "draconis:fly_obstacle_avoidance", 1, "fly")
 				else
-					local pos2 = _self:get_wander_pos_3d(3, 6)
-					pos2.y = pos2.y - (dist2floor + 2)
-					creatura.action_move(_self, pos2, 3, "draconis:fly_obstacle_avoidance", 0.6, "fly")
+					draconis.action_land(self)
+					land_init = false
 				end
+				return
 			end
-			-- Takeoff if landed
-			if not fly_init then
-				if _self.touching_ground then
-					draconis.action_takeoff(_self, 12)
-				end
-				fly_init = true
-			elseif not land_init then -- Fly over player
-				do_fire = random(3) < 2
-				local anim = "fly"
-				if do_fire then
-					anim = "fly_fire"
-				end
-				local above_tgt = {x = tgt_pos.x, y = tgt_pos.y + 12, z = tgt_pos.z}
-				creatura.action_move(_self, above_tgt, 3, "draconis:fly_obstacle_avoidance", 1, anim)
+			-- Takeoff if walking while in flying state
+			if takeoff_init
+			and self.touching_ground then
+				draconis.action_takeoff(self)
+				takeoff_init = false
+				return
 			end
-		end
-	end
-	self:set_utility(func)
-end)
-
-creatura.register_utility("draconis:hover_attack", function(self, target)
-	local attack_init = false
-	local function func(_self)
-		local target_alive = _self:get_target(target)
-		if not target_alive then
-			_self._target = nil
-			return true
-		end
-		if not _self:get_action() then
-			if not attack_init then
-				if _self.touching_ground then
-					local pos = _self.object:get_pos()
-					if not can_takeoff(_self, pos) then
-						local pos2 = _self:get_wander_pos_3d(4, 8)
-						creatura.action_move(_self, pos2, 2, "creatura:obstacle_avoidance", 1)
+			-- Choose Attack
+			local dist = vec_dist(pos, tgt_pos)
+			local attack_range = (is_landed and 8) or 16
+			if dist <= attack_range then -- Close-range Attacks
+				if is_landed then
+					if fov_timer < 1 then
+						draconis.action_repel(_self, target)
 					else
-						draconis.action_takeoff(_self)
+						draconis.action_slam(_self, target)
+						is_landed = false
+						fov_timer = 0
 					end
 				else
-					draconis.action_hover_fire(_self, target, 3)
-					attack_init = true
+					if random(3) < 2 then
+						draconis.action_flight_fire(_self, target, 12)
+					else
+						draconis.action_hover_fire(_self, target, 3)
+					end
 				end
 			else
-				if not _self.touching_ground then
-					draconis.action_land(_self)
+				if is_landed then
+					draconis.action_pursue(_self, target, 2, "creatura:obstacle_avoidance", 0.5, "walk_slow")
 				else
-					_self:initiate_utility("draconis:attack", _self, target)
-					_self:set_utility_score(1)
+					tgt_pos.y = tgt_pos.y + 14
+					creatura.action_move(_self, tgt_pos, 5, "draconis:fly_obstacle_avoidance", 1, "fly")
 				end
 			end
 		end
@@ -1055,7 +1053,7 @@ creatura.register_utility("draconis:hover_attack", function(self, target)
 	self:set_utility(func)
 end)
 
-creatura.register_utility("draconis:attack", function(self, target)
+--[[creatura.register_utility("draconis:attack", function(self, target)
 	local do_fly = false
 	local hidden_timer = 0
 	local fov_timer = 0
@@ -1137,7 +1135,7 @@ creatura.register_utility("draconis:attack", function(self, target)
 		end
 	end
 	self:set_utility(func)
-end)
+end)]]
 
 creatura.register_utility("draconis:wyvern_attack", function(self, target)
 	local hidden_timer = 10

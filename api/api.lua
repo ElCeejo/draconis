@@ -42,6 +42,7 @@ local vec_dist = vector.distance
 local vec_sub = vector.subtract
 local vec_add = vector.add
 local vec_multi = vector.multiply
+local vec_new = vector.new
 local vec_normal = vector.normalize
 local vec_round = vector.round
 
@@ -850,26 +851,30 @@ function draconis.fire_breath(self, pos2)
 	pos.y = pos.y + self.object:get_rotation().x
 	local breath_delay = (self.breath_delay or 0) - 1
 	if breath_delay <= 0 then
+		local vel = self.object:get_velocity()
+		local particle_origin = {
+			x = pos.x + vel.x * 0.25,
+			y = pos.y + vel.y * 0.25,
+			z = pos.z + vel.z * 0.25
+		}
+		local scale = self.growth_scale
 		minetest.add_particlespawner({
 			amount = 3,
 			time = 0.25,
-			minpos = vec_add(pos, vec_multi(self.object:get_velocity(), 0.22)),
-			maxpos = vec_add(pos, vec_multi(self.object:get_velocity(), 0.22)),
-			minvel = vec_multi(dir, 32),
-			maxvel = vec_multi(dir, 48),
-			minacc = {x = -4, y = -4, z = -4},
-			maxacc = {x = 4, y = 4, z = 4},
-			minexptime = 0.02 * 32,
-			maxexptime = 0.04 * 32,
-			minsize = 12 * self.growth_scale,
-			maxsize = 16 * self.growth_scale,
 			collisiondetection = true,
 			collision_removal = true,
-			vertical = false,
+			pos = particle_origin,
+			vel = {min = vec_multi(dir, 32), max = vec_multi(dir, 48)},
+			acc = {min = vec_new(-4, -4, -4), max = vec_new(4, 4, 4)},
+			size = {min = 8 * scale, max = 12 * scale},
 			glow = 16,
-			texture = "draconis_fire_particle.png"
+			texture = {
+				name = "draconis_fire_particle.png",
+				alpha_tween = {0.75, 0.25},
+				blend = "alpha"
+			}
 		})
-		local spread = clamp(3 * self.growth_scale, 1, 5)
+		local spread = clamp(3 * scale, 1, 5)
 		local breath_end = vec_add(pos, vec_multi(dir, 32))
 		for i = 1, 32, floor(spread) do
 			local fire_pos = vec_add(pos, vec_multi(dir, i))
@@ -888,7 +893,9 @@ function draconis.fire_breath(self, pos2)
 		breath_delay = 4
 	end
 	self.breath_delay = breath_delay
-	self.attack_stamina = self.attack_stamina - self.dtime * 4
+	if self.owner then
+		self.attack_stamina = self.attack_stamina - self.dtime * 4
+	end
 	self:memorize("attack_stamina", self.attack_stamina)
 end
 
@@ -908,26 +915,30 @@ function draconis.ice_breath(self, pos2)
 	pos.y = pos.y + self.object:get_rotation().x
 	local breath_delay = (self.breath_delay or 0) - 1
 	if breath_delay <= 0 then
+		local vel = self.object:get_velocity()
+		local particle_origin = {
+			x = pos.x + vel.x * 0.25,
+			y = pos.y + vel.y * 0.25,
+			z = pos.z + vel.z * 0.25
+		}
+		local scale = self.growth_scale
 		minetest.add_particlespawner({
-			amount = 4,
+			amount = 3,
 			time = 0.25,
-			minpos = vec_add(pos, vec_multi(self.object:get_velocity(), 0.22)),
-			maxpos = vec_add(pos, vec_multi(self.object:get_velocity(), 0.22)),
-			minvel = vec_multi(dir, 32),
-			maxvel = vec_multi(dir, 48),
-			minacc = {x = -4, y = -4, z = -4},
-			maxacc = {x = 4, y = 4, z = 4},
-			minexptime = 0.02 * 32,
-			maxexptime = 0.04 * 32,
-			minsize = 6 * self.growth_scale,
-			maxsize = 12 * self.growth_scale,
 			collisiondetection = true,
 			collision_removal = true,
-			vertical = false,
+			pos = particle_origin,
+			vel = {min = vec_multi(dir, 32), max = vec_multi(dir, 48)},
+			acc = {min = vec_new(-4, -4, -4), max = vec_new(4, 4, 4)},
+			size = {min = 6 * scale, max = 8 * scale},
 			glow = 16,
-			texture = "draconis_ice_particle_" .. random(1, 3) .. ".png"
+			texpool = {
+				{name = "draconis_ice_particle_1.png", alpha_tween = {1, 0}, blend = "alpha"},
+				{name = "draconis_ice_particle_2.png", alpha_tween = {1, 0}, blend = "alpha"},
+				{name = "draconis_ice_particle_3.png", alpha_tween = {1, 0}, blend = "alpha"},
+			}
 		})
-		local spread = floor(clamp(2.5 * self.growth_scale, 1, 4))
+		local spread = floor(clamp(2.5 * scale, 1, 4))
 		local breath_end = vec_add(pos, vec_multi(dir, 32))
 		for i = 1, 32, spread do
 			local ice_pos = vec_add(pos, vec_multi(dir, i))
@@ -945,7 +956,9 @@ function draconis.ice_breath(self, pos2)
 		breath_delay = 4
 	end
 	self.breath_delay = breath_delay
-	self.attack_stamina = self.attack_stamina - self.dtime * 2
+	if self.owner then
+		self.attack_stamina = self.attack_stamina - self.dtime * 4
+	end
 	self:memorize("attack_stamina", self.attack_stamina)
 end
 
@@ -1280,7 +1293,7 @@ draconis.dragon_api = {
 		end
 		local item, item_name = self:follow_wielded_item(player)
 		if item_name then
-			if not creative then
+			if not minetest.is_creative_enabled(player) then
 				item:take_item()
 				player:set_wielded_item(item)
 			end
@@ -1460,7 +1473,7 @@ draconis.wyvern_api = {
 		end
 		local item, item_name = self:follow_wielded_item(player)
 		if item_name then
-			if not creative then
+			if not minetest.is_creative_enabled(player) then
 				item:take_item()
 				player:set_wielded_item(item)
 			end
