@@ -204,3 +204,5 @@ minetest.register_abm({
         end
     end,
 })
+
+minetest.log("action", "[MOD] Draconis [2.0] loaded")

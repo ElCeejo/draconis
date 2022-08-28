@@ -12,10 +12,6 @@ local libri_bg = {
 	"background[-0.7,-0.5;17.5,11.5;draconis_libri_bg.png]",
 }
 
-local libri_btn_next = "image_button[15,9;1,1;draconis_libri_icon_next.png;btn_next;;true;false]"
-
-local libri_btn_last = "image_button[1,9;1,1;draconis_libri_icon_last.png;btn_last;;true;false]"
-
 local libri_drp_font_scale = "dropdown[17,0;0.75,0.5;drp_font_scale;0.25,0.5,0.75,1;1]"
 
 local pages = {
@@ -23,7 +19,7 @@ local pages = {
 		{ -- Main Page
 			element_type = "label",
 			font_size = 24,
-			offset = {x = 0.5, y = 1.5},
+			offset = {x = 1.5, y = 1.5},
 			file = "draconis_libri_home.txt"
 		},
 		{ -- Next Page
@@ -64,7 +60,7 @@ local pages = {
 		{ -- Main Page
 			element_type = "label",
 			font_size = 24,
-			offset = {x = 0.5, y = 1.5},
+			offset = {x = 1.5, y = 1.5},
 			file = "draconis_libri_dragon1.txt"
 		},
 		{ -- Next Page
@@ -120,13 +116,13 @@ local pages = {
 		{ -- Ice Dragon Text
 			element_type = "label",
 			font_size = 24,
-			offset = {x = 0.5, y = 5},
+			offset = {x = 1.5, y = 5},
 			file = "draconis_libri_dragon3.txt"
 		},
 		{ -- Combat Text
 			element_type = "label",
 			font_size = 24,
-			offset = {x = 9, y = 1.5},
+			offset = {x = 10, y = 1.5},
 			file = "draconis_libri_dragon4.txt"
 		}
 	},
@@ -149,13 +145,13 @@ local pages = {
 		{ -- Hatching Text
 			element_type = "label",
 			font_size = 24,
-			offset = {x = 0.5, y = 1.5},
+			offset = {x = 1.5, y = 1.5},
 			file = "draconis_libri_dragon5.txt"
 		},
 		{ -- Raising Text
 			element_type = "label",
 			font_size = 24,
-			offset = {x = 9, y = 1.5},
+			offset = {x = 10, y = 1.5},
 			file = "draconis_libri_dragon6.txt"
 		}
 	},
@@ -187,13 +183,13 @@ local pages = {
 		{ -- Wyvern Text 1
 			element_type = "label",
 			font_size = 24,
-			offset = {x = 2.5, y = 1.5},
+			offset = {x = 3.5, y = 1.5},
 			file = "draconis_libri_wyvern1.txt"
 		},
 		{ -- Wyvern Text 2
 			element_type = "label",
 			font_size = 24,
-			offset = {x = 9, y = 5},
+			offset = {x = 10, y = 5},
 			file = "draconis_libri_wyvern2.txt"
 		}
 	},
@@ -202,13 +198,13 @@ local pages = {
 		{ -- Main Page
 			element_type = "label",
 			font_size = 24,
-			offset = {x = 0.5, y = 1.5},
+			offset = {x = 1.5, y = 1.5},
 			file = "draconis_libri_steel1.txt"
 		},
 		{ -- Page 2
 			element_type = "label",
 			font_size = 24,
-			offset = {x = 9, y = 1.5},
+			offset = {x = 10, y = 1.5},
 			file = "draconis_libri_steel2.txt"
 		},
 		{ -- Next Page
@@ -241,7 +237,7 @@ local pages = {
 		{ -- Page 2
 			element_type = "label",
 			font_size = 24,
-			offset = {x = 9, y = 0.5},
+			offset = {x = 10, y = 0.5},
 			file = "draconis_libri_steel3.txt"
 		},
 		{ -- Crucible Instructions
@@ -267,7 +263,7 @@ local pages = {
 		{ -- Main Page
 			element_type = "label",
 			font_size = 24,
-			offset = {x = 0.5, y = 1},
+			offset = {x = 1.5, y = 1},
 			file = "draconis_libri_steel4.txt"
 		},
 		{ -- Forge Label
@@ -293,6 +289,12 @@ local pages = {
 			offset = {x = 10.5, y = 2.5},
 			size = {x = 4.5, y = 2.5},
 			text = "draconis_libri_img_ice_forge_demo.png"
+		},
+		{ -- Next Page
+			element_type = "image_button",
+			offset = {x = 15, y = 9},
+			size = {x = 1, y = 1},
+			text = "draconis_libri_icon_next.png;btn_next;;true;false"
 		},
 		{ -- Last Page
 			element_type = "image_button",
@@ -364,16 +366,17 @@ local function render_element(def, meta, playername)
 				for line in file:lines() do
 					i = i + 1
 					local center_offset = 0
-					local max_length = (def.max_line or 48)
+					local max_length = 42
 					local line_length = line:len()
+					if line_length > max_length then line_length = max_length end
 					local total_line_area = font_size * line_length
 					local total_max_area = font_size * max_length
-					if line_length < max_length then
-						center_offset = ((total_max_area - total_line_area) / 100) * 0.25
+					if def.center_text then
+						center_offset = ((total_max_area - total_line_area) / 100) * 0.3
 					end
 					local line_unit = (max_length * 0.075)
 					local align_x = (offset_x + line_unit - (line_unit * font_size_x)) + center_offset
-					local align_y = offset_y + (spacing * font_size_x) * i
+					local align_y = offset_y + (page_spacing * font_size_x) * i
 					form = form .. "label[" .. align_x .. "," .. align_y .. ";" .. color("#000000", line .. "\n") .. "]"
 				end
 				file:close()
@@ -382,10 +385,6 @@ local function render_element(def, meta, playername)
 			local line = def.text
 			form = form .. "label[" .. offset_x .. "," .. offset_y .. ";" .. color("#000000", line .. "\n") .. "]"
 		end
-	elseif def.element_type == "mobs" then
-		form = form .. libri.generate_list(meta, def.offset, def.start_iter)
-		if chap_no > def.start_iter + 4 then form = form .. libri_btn_next end
-		if def.start_iter > 3 then form = form .. libri_btn_last end
 	else
 		-- Add Images/Interaction
 		local render_element = false
