@@ -376,7 +376,7 @@ local function render_element(def, meta, playername)
 					end
 					local line_unit = (max_length * 0.075)
 					local align_x = (offset_x + line_unit - (line_unit * font_size_x)) + center_offset
-					local align_y = offset_y + (page_spacing * font_size_x) * i
+					local align_y = offset_y + (spacing * font_size_x) * i
 					form = form .. "label[" .. align_x .. "," .. align_y .. ";" .. color("#000000", line .. "\n") .. "]"
 				end
 				file:close()
