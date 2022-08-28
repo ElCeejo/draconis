@@ -79,13 +79,6 @@ local function get_nearest_player(pos)
 	return dist or 100, closest_player
 end
 
-local function get_terrain_flatness(pos)
-	local pos1 = vector.new(pos.x - 40, pos.y, pos.z - 40)
-	local pos2 = vector.new(pos.x + 40, pos.y, pos.z + 40)
-	local ground = minetest.find_nodes_in_area(pos1, pos2, walkable_nodes)
-	return #ground
-end
-
 local function is_cold_biome(pos)
 	local data = minetest.get_biome_data(pos)
 	return data.heat < 45 and data.humidity < 75
@@ -102,7 +95,7 @@ end
 
 -- Nests --
 
-local function generate_fire_dragon_nest(minp, maxp)
+local function generate_fire_dragon_nest(minp, maxp, vm, area, data)
 	local gender = "male"
 
 	if random(2) < 2 then
@@ -125,10 +118,6 @@ local function generate_fire_dragon_nest(minp, maxp)
 		y = center_y,
 		z = center_z
 	}
-
-	local vm, emin, emax = minetest.get_mapgen_object("voxelmanip")
-	local area = VoxelArea:new{MinEdge = emin, MaxEdge = emax}
-	local data = vm:get_data()
 
 	local surface = false -- y of above surface node
 	for y = max_y, 2, -1 do
@@ -215,15 +204,6 @@ local function generate_fire_dragon_nest(minp, maxp)
 		end
 	end
 
-	--send data back to voxelmanip
-	vm:set_data(data)
-	--calc lighting
-	vm:set_lighting({day = 0, night = 0})
-	vm:calc_lighting()
-	vm:update_liquids()
-	--write it to world
-	vm:write_to_map()
-
 	minetest.after(0.2, function()
 		minetest.add_node({x = center_x, y = center_y, z = center_z}, {name = "creatura:spawn_node"})
 		local meta = minetest.get_meta({x = center_x, y = center_y, z = center_z})
@@ -240,7 +220,7 @@ local function generate_fire_dragon_nest(minp, maxp)
 	end)
 end
 
-local function generate_ice_dragon_nest(minp, maxp)
+local function generate_ice_dragon_nest(minp, maxp, vm, area, data)
 	local gender = "male"
 
 	if random(2) < 2 then
@@ -263,10 +243,6 @@ local function generate_ice_dragon_nest(minp, maxp)
 		y = center_y,
 		z = center_z
 	}
-
-	local vm, emin, emax = minetest.get_mapgen_object("voxelmanip")
-	local area = VoxelArea:new{MinEdge = emin, MaxEdge = emax}
-	local data = vm:get_data()
 
 	local surface = false -- y of above surface node
 	for y = max_y, 2, -1 do
@@ -353,12 +329,6 @@ local function generate_ice_dragon_nest(minp, maxp)
 		end
 	end
 
-	vm:set_data(data)
-	vm:set_lighting({day = 0, night = 0})
-	vm:calc_lighting()
-	vm:update_liquids()
-	vm:write_to_map()
-
 	minetest.after(0.2, function()
 		minetest.add_node({x = center_x, y = center_y, z = center_z}, {name = "creatura:spawn_node"})
 		local meta = minetest.get_meta({x = center_x, y = center_y, z = center_z})
@@ -377,7 +347,7 @@ end
 
 -- Nests --
 
-local function generate_fire_dragon_cavern(minp, maxp)
+local function generate_fire_dragon_cavern(minp, maxp, vm, area, data)
 	local gender = "male"
 
 	if random(2) < 2 then
@@ -400,10 +370,6 @@ local function generate_fire_dragon_cavern(minp, maxp)
 		y = center_y,
 		z = center_z
 	}
-
-	local vm, emin, emax = minetest.get_mapgen_object("voxelmanip")
-	local area = VoxelArea:new{MinEdge = emin, MaxEdge = emax}
-	local data = vm:get_data()
 
 	local sidelen = max_x - min_x + 1
 	local chulens = {x = sidelen, y = sidelen, z = sidelen}
@@ -457,12 +423,6 @@ local function generate_fire_dragon_cavern(minp, maxp)
 		end
 	end
 
-	vm:set_data(data)
-	vm:set_lighting({day = 0, night = 0})
-	vm:calc_lighting()
-	vm:update_liquids()
-	vm:write_to_map()
-
 	minetest.after(0.2, function()
 		minetest.add_node({x = center_x, y = center_y, z = center_z}, {name = "creatura:spawn_node"})
 		local meta = minetest.get_meta({x = center_x, y = center_y, z = center_z})
@@ -479,7 +439,7 @@ local function generate_fire_dragon_cavern(minp, maxp)
 	end)
 end
 
-local function generate_ice_dragon_cavern(minp, maxp)
+local function generate_ice_dragon_cavern(minp, maxp, vm, area, data)
 	local gender = "male"
 
 	if random(2) < 2 then
@@ -502,10 +462,6 @@ local function generate_ice_dragon_cavern(minp, maxp)
 		y = center_y,
 		z = center_z
 	}
-
-	local vm, emin, emax = minetest.get_mapgen_object("voxelmanip")
-	local area = VoxelArea:new{MinEdge = emin, MaxEdge = emax}
-	local data = vm:get_data()
 
 	local sidelen = max_x - min_x + 1
 	local chulens = {x = sidelen, y = sidelen, z = sidelen}
@@ -559,12 +515,6 @@ local function generate_ice_dragon_cavern(minp, maxp)
 		end
 	end
 
-	vm:set_data(data)
-	vm:set_lighting({day = 0, night = 0})
-	vm:calc_lighting()
-	vm:update_liquids()
-	vm:write_to_map()
-
 	minetest.after(0.2, function()
 		minetest.add_node({x = center_x, y = center_y, z = center_z}, {name = "creatura:spawn_node"})
 		local meta = minetest.get_meta({x = center_x, y = center_y, z = center_z})
@@ -599,91 +549,93 @@ end)
 -- Generation --
 ----------------
 
+local function average(tbl)
+	local sum = 0
+	for _,v in pairs(tbl) do -- Get the sum of all numbers in t
+	  sum = sum + v
+	end
+	return sum / #tbl
+end
+
 minetest.register_on_generated(function(minp, maxp)
-	local min_y = minp.y
-	local max_y = maxp.y
-	local min_x = minp.x
-	local max_x = maxp.x
-	local min_z = minp.z
-	local max_z = maxp.z
+	local min_y, max_y = minp.y, maxp.y
+	local min_x, max_x = minp.x, maxp.x
+	local min_z, max_z = minp.z, maxp.z
 
 	local center_x = math.floor((min_x + max_x) / 2)
 	local center_y = math.floor((min_y + max_y) / 2)
 	local center_z = math.floor((min_z + max_z) / 2)
 
-	local pos = {
-		x = center_x,
-		y = center_y,
-		z = center_z
-	}
+	local pos = {x = center_x, y = center_y, z = center_z}
+
+	local vm, emin, emax = minetest.get_mapgen_object("voxelmanip")
+	local area = VoxelArea:new{MinEdge = emin, MaxEdge = emax}
+	local data = vm:get_data()
 
 	if nest_spawning
-	and random(nest_spawn_rate) < 2
-	and pos.y < 200
-	and pos.y > 0
-	and get_terrain_flatness(pos) > 49 then
-		if is_cold_biome(pos) then
-			generate_ice_dragon_nest(minp, maxp)
-		elseif is_warm_biome(pos) then
-			generate_fire_dragon_nest(minp, maxp)
+	and random(nest_spawn_rate) < 2 then
+
+		local heights = {}
+
+		for z = min_z + 8, max_z - 7, 8 do
+			for x = min_x + 8, max_x - 7, 8 do
+				for y = min_y, max_y do
+					local vi = area:index(x, y, z)
+					local vi_name = minetest.get_name_from_content_id(data[vi])
+					if not creatura.get_node_def(vi_name).walkable then
+						table.insert(heights, y)
+						break
+					end
+				end
+			end
+		end
+
+		local avg_height = average(heights)
+
+		if avg_height > 4 then
+
+			pos.y = avg_height
+
+			local heightmap = minetest.get_mapgen_object("heightmap")
+
+			if heightmap
+			and #heightmap > 0 then
+				pos.y = heightmap[math.floor(#heightmap / 2)]
+			end
+
+			if is_cold_biome(pos) then
+				generate_ice_dragon_nest(minp, maxp, vm, area, data)
+				vm:set_data(data)
+				vm:set_lighting({day = 0, night = 0})
+				vm:calc_lighting()
+				vm:update_liquids()
+				vm:write_to_map()
+			elseif is_warm_biome(pos) then
+				generate_fire_dragon_nest(minp, maxp, vm, area, data)
+				vm:set_data(data)
+				vm:set_lighting({day = 0, night = 0})
+				vm:calc_lighting()
+				vm:update_liquids()
+				vm:write_to_map()
+			end
 		end
 	elseif cavern_spawning
 	and random(cavern_spawn_rate) < 2
-	and pos.y < 0
-	and pos.y > -200 then
+	and max_y < 0 then
 		if is_cold_biome(pos) then
-			generate_ice_dragon_cavern(minp, maxp)
+			generate_ice_dragon_cavern(minp, maxp, vm, area, data)
+			vm:set_data(data)
+			vm:set_lighting({day = 0, night = 0})
+			vm:calc_lighting()
+			vm:update_liquids()
+			vm:write_to_map()
 		elseif is_warm_biome(pos) then
-			generate_fire_dragon_cavern(minp, maxp)
-		end
-	end
-end)
-
-minetest.register_on_generated(function(minp, maxp)
-	local min_y = minp.y
-	local max_y = maxp.y
-	local min_x = minp.x
-	local max_x = maxp.x
-	local min_z = minp.z
-	local max_z = maxp.z
-
-	local center_x = math.floor((min_x + max_x) / 2)
-	local center_y = math.floor((min_y + max_y) / 2)
-	local center_z = math.floor((min_z + max_z) / 2)
-
-	local pos = {
-		x = center_x,
-		y = center_y,
-		z = center_z
-	}
-
-	if pos.y < 8 then return end
-
-	local heightmap = minetest.get_mapgen_object("heightmap")
-
-	if heightmap
-	and #heightmap > 0 then
-		pos.y = heightmap[math.floor(#heightmap / 2)]
-	end
-
-	if nest_spawning
-	and random(nest_spawn_rate) < 2
-	and pos.y < 200
-	and pos.y > 0
-	and get_terrain_flatness(pos) > 49 then
-		if is_cold_biome(pos) then
-			generate_ice_dragon_nest(minp, maxp)
-		elseif is_warm_biome(pos) then
-			generate_fire_dragon_nest(minp, maxp)
-		end
-	elseif cavern_spawning
-	and random(cavern_spawn_rate) < 2
-	and pos.y < 0
-	and pos.y > -200 then
-		if is_cold_biome(pos) then
-			generate_ice_dragon_cavern(minp, maxp)
-		elseif is_warm_biome(pos) then
-			generate_fire_dragon_cavern(minp, maxp)
+			generate_fire_dragon_cavern(minp, maxp, vm, area, data)
+			vm:set_data(data)
+			vm:set_lighting({day = 0, night = 0})
+			vm:calc_lighting()
+			vm:update_liquids()
+			vm:write_to_map()
 		end
 	end
 end)

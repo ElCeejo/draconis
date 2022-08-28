@@ -17,6 +17,7 @@ draconis.dragons = storage.dragons
 draconis.bonded_dragons = storage.bonded_dragons
 draconis.aux_key_setting = storage.aux_key_setting
 draconis.attack_blacklist = storage.attack_blacklist
+draconis.libri_font_size = storage.libri_font_size
 
 draconis.sounds = {
     wood = {},

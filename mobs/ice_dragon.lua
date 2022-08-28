@@ -19,6 +19,7 @@ creatura.register_mob("draconis:ice_dragon", {
 	-- Stats
 	max_health = 1000,
 	max_hunger = 500,
+	max_breath = 0,
 	armor_groups = {fleshy = 50},
 	damage = 20,
 	speed = 24,

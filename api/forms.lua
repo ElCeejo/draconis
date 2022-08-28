@@ -61,7 +61,7 @@ local function get_dragon_formspec(self)
 	-- Visuals
 	local frame_range = self.animations["stand"].range
 	local frame_loop = frame_range.x .. "," ..  frame_range.y
-	local texture = self.properties.textures[1]
+	local texture = self:get_props().textures[1]
 	local health_ind = "draconis_forms_health_bg.png^[lowpart:" .. health .. ":draconis_forms_health_fg.png"
 	local hunger_ind = "draconis_forms_hunger_bg.png^[lowpart:" .. hunger .. ":draconis_forms_hunger_fg.png"
 	local stamina_ind = "draconis_forms_stamina_bg.png^[lowpart:" .. stamina .. ":draconis_forms_stamina_fg.png"
@@ -149,7 +149,7 @@ local function get_wyvern_formspec(self)
 	-- Visuals
 	local frame_range = self.animations["stand"].range
 	local frame_loop = frame_range.x .. "," ..  frame_range.y
-	local texture = self.properties.textures[1]
+	local texture = self:get_props().textures[1]
 	local health_ind = "draconis_forms_health_bg.png^[lowpart:" .. health .. ":draconis_forms_health_fg.png"
 	local hunger_ind = "draconis_forms_hunger_bg.png^[lowpart:" .. hunger .. ":draconis_forms_hunger_fg.png"
 	local stamina_ind = "draconis_forms_stamina_bg.png^[lowpart:" .. stamina .. ":draconis_forms_stamina_fg.png"

@@ -19,6 +19,7 @@ creatura.register_mob("draconis:fire_dragon", {
 	-- Stats
 	max_health = 1000,
 	max_hunger = 500,
+	max_breath = 600,
 	fire_resistance = 1,
 	armor_groups = {fleshy = 50},
 	damage = 20,
@@ -270,7 +271,7 @@ local spawn_egg_def = minetest.registered_items["draconis:spawn_fire_dragon"]
 
 spawn_egg_def.on_place = function(itemstack, _, pointed_thing)
 	local pos = minetest.get_pointed_thing_position(pointed_thing, true)
-	draconis.spawn_dragon(pos, "draconis:fire_dragon", false, math.random(75, 100))
+	draconis.spawn_dragon(pos, "draconis:fire_dragon", false, 75)
 	if not creative then
 		itemstack:take_item()
 		return itemstack

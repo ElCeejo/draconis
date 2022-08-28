@@ -4,7 +4,8 @@ local data = {
     dragons = minetest.deserialize(mod_storage:get_string("dragons")) or {},
     bonded_dragons = minetest.deserialize(mod_storage:get_string("bonded_dragons")) or {},
     aux_key_setting = minetest.deserialize(mod_storage:get_string("aux_key_setting")) or {},
-    attack_blacklist = minetest.deserialize(mod_storage:get_string("attack_blacklist")) or {}
+    attack_blacklist = minetest.deserialize(mod_storage:get_string("attack_blacklist")) or {},
+	libri_font_size = minetest.deserialize(mod_storage:get_string("libri_font_size")) or {}
 }
 
 local function save()
@@ -12,6 +13,7 @@ local function save()
     mod_storage:set_string("bonded_dragons", minetest.serialize(data.bonded_dragons))
     mod_storage:set_string("aux_key_setting", minetest.serialize(data.aux_key_setting))
     mod_storage:set_string("attack_blacklist", minetest.serialize(data.attack_blacklist))
+	mod_storage:set_string("libri_font_size", minetest.serialize(data.libri_font_size))
 end
 
 minetest.register_on_shutdown(save)

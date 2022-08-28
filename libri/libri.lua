@@ -12,12 +12,18 @@ local libri_bg = {
 	"background[-0.7,-0.5;17.5,11.5;draconis_libri_bg.png]",
 }
 
+local libri_btn_next = "image_button[15,9;1,1;draconis_libri_icon_next.png;btn_next;;true;false]"
+
+local libri_btn_last = "image_button[1,9;1,1;draconis_libri_icon_last.png;btn_last;;true;false]"
+
+local libri_drp_font_scale = "dropdown[17,0;0.75,0.5;drp_font_scale;0.25,0.5,0.75,1;1]"
+
 local pages = {
 	{ -- Home
 		{ -- Main Page
 			element_type = "label",
 			font_size = 24,
-			offset = {x = 1.5, y = 1.5},
+			offset = {x = 0.5, y = 1.5},
 			file = "draconis_libri_home.txt"
 		},
 		{ -- Next Page
@@ -58,7 +64,7 @@ local pages = {
 		{ -- Main Page
 			element_type = "label",
 			font_size = 24,
-			offset = {x = 1.5, y = 1.5},
+			offset = {x = 0.5, y = 1.5},
 			file = "draconis_libri_dragon1.txt"
 		},
 		{ -- Next Page
@@ -73,7 +79,7 @@ local pages = {
 			font_size = 24,
 			offset = {x = 1, y = 9},
 			size = {x = 1, y = 1},
-			text = "draconis_libri_icon_prev.png;btn_last;;true;false"
+			text = "draconis_libri_icon_last.png;btn_last;;true;false"
 		},
 		{ -- Fire Dragon
 			element_type = "image",
@@ -102,7 +108,7 @@ local pages = {
 			font_size = 24,
 			offset = {x = 1, y = 9},
 			size = {x = 1, y = 1},
-			text = "draconis_libri_icon_prev.png;btn_last;;true;false"
+			text = "draconis_libri_icon_last.png;btn_last;;true;false"
 		},
 		{ -- Ice Dragon
 			element_type = "image",
@@ -114,13 +120,13 @@ local pages = {
 		{ -- Ice Dragon Text
 			element_type = "label",
 			font_size = 24,
-			offset = {x = 1.5, y = 5},
+			offset = {x = 0.5, y = 5},
 			file = "draconis_libri_dragon3.txt"
 		},
 		{ -- Combat Text
 			element_type = "label",
 			font_size = 24,
-			offset = {x = 10, y = 1.5},
+			offset = {x = 9, y = 1.5},
 			file = "draconis_libri_dragon4.txt"
 		}
 	},
@@ -138,18 +144,18 @@ local pages = {
 			font_size = 24,
 			offset = {x = 1, y = 9},
 			size = {x = 1, y = 1},
-			text = "draconis_libri_icon_prev.png;btn_last;;true;false"
+			text = "draconis_libri_icon_last.png;btn_last;;true;false"
 		},
 		{ -- Hatching Text
 			element_type = "label",
 			font_size = 24,
-			offset = {x = 1.5, y = 1.5},
+			offset = {x = 0.5, y = 1.5},
 			file = "draconis_libri_dragon5.txt"
 		},
 		{ -- Raising Text
 			element_type = "label",
 			font_size = 24,
-			offset = {x = 10, y = 1.5},
+			offset = {x = 9, y = 1.5},
 			file = "draconis_libri_dragon6.txt"
 		}
 	},
@@ -169,7 +175,7 @@ local pages = {
 			font_size = 24,
 			offset = {x = 1, y = 9},
 			size = {x = 1, y = 1},
-			text = "draconis_libri_icon_prev.png;btn_last;;true;false"
+			text = "draconis_libri_icon_last.png;btn_last;;true;false"
 		},
 		{ -- Jungle Wyvern
 			element_type = "image",
@@ -181,13 +187,13 @@ local pages = {
 		{ -- Wyvern Text 1
 			element_type = "label",
 			font_size = 24,
-			offset = {x = 3.5, y = 1.5},
+			offset = {x = 2.5, y = 1.5},
 			file = "draconis_libri_wyvern1.txt"
 		},
 		{ -- Wyvern Text 2
 			element_type = "label",
 			font_size = 24,
-			offset = {x = 10, y = 5},
+			offset = {x = 9, y = 5},
 			file = "draconis_libri_wyvern2.txt"
 		}
 	},
@@ -196,13 +202,13 @@ local pages = {
 		{ -- Main Page
 			element_type = "label",
 			font_size = 24,
-			offset = {x = 1.5, y = 1.5},
+			offset = {x = 0.5, y = 1.5},
 			file = "draconis_libri_steel1.txt"
 		},
 		{ -- Page 2
 			element_type = "label",
 			font_size = 24,
-			offset = {x = 10, y = 1.5},
+			offset = {x = 9, y = 1.5},
 			file = "draconis_libri_steel2.txt"
 		},
 		{ -- Next Page
@@ -216,7 +222,7 @@ local pages = {
 			element_type = "image_button",
 			offset = {x = 1, y = 9},
 			size = {x = 1, y = 1},
-			text = "draconis_libri_icon_prev.png;btn_last;;true;false"
+			text = "draconis_libri_icon_last.png;btn_last;;true;false"
 		}
 	},
 	{ -- Steel Page 2
@@ -235,7 +241,7 @@ local pages = {
 		{ -- Page 2
 			element_type = "label",
 			font_size = 24,
-			offset = {x = 10, y = 0.5},
+			offset = {x = 9, y = 0.5},
 			file = "draconis_libri_steel3.txt"
 		},
 		{ -- Crucible Instructions
@@ -254,14 +260,14 @@ local pages = {
 			element_type = "image_button",
 			offset = {x = 1, y = 9},
 			size = {x = 1, y = 1},
-			text = "draconis_libri_icon_prev.png;btn_last;;true;false"
+			text = "draconis_libri_icon_last.png;btn_last;;true;false"
 		}
 	},
 	{ -- Steel Page 1
 		{ -- Main Page
 			element_type = "label",
 			font_size = 24,
-			offset = {x = 1.5, y = 1},
+			offset = {x = 0.5, y = 1},
 			file = "draconis_libri_steel4.txt"
 		},
 		{ -- Forge Label
@@ -288,17 +294,11 @@ local pages = {
 			size = {x = 4.5, y = 2.5},
 			text = "draconis_libri_img_ice_forge_demo.png"
 		},
-		{ -- Next Page
-			element_type = "image_button",
-			offset = {x = 15, y = 9},
-			size = {x = 1, y = 1},
-			text = "draconis_libri_icon_next.png;btn_next;;true;false"
-		},
 		{ -- Last Page
 			element_type = "image_button",
 			offset = {x = 1, y = 9},
 			size = {x = 1, y = 1},
-			text = "draconis_libri_icon_prev.png;btn_last;;true;false"
+			text = "draconis_libri_icon_last.png;btn_last;;true;false"
 		}
 	}
 }
@@ -342,64 +342,95 @@ function draconis.add_page(inv, chapter)
 	return true
 end
 
-local function get_page(key, meta)
+local function render_element(def, meta, playername)
+	local chapters = (meta and minetest.deserialize(meta:get_string("chapters"))) or {}
+	local chap_no = 0
+	for _ in pairs(chapters) do
+		chap_no = chap_no + 1
+	end
+	local offset_x = def.offset.x
+	local offset_y = def.offset.y
+	local form = ""
+	-- Add text
+	if def.element_type == "label" then
+		local font_size_x = (draconis.libri_font_size[playername] or 1)
+		local font_size = (def.font_size or 16) * font_size_x
+		form = form .. "style_type[label;font_size=" .. font_size .. "]"
+		if def.file then
+			local filename = minetest.get_modpath("draconis") .. "/libri/" .. def.file
+			local file = io.open(filename)
+			if file then
+				local i = 0
+				for line in file:lines() do
+					i = i + 1
+					local center_offset = 0
+					local max_length = (def.max_line or 48)
+					local line_length = line:len()
+					local total_line_area = font_size * line_length
+					local total_max_area = font_size * max_length
+					if line_length < max_length then
+						center_offset = ((total_max_area - total_line_area) / 100) * 0.25
+					end
+					local line_unit = (max_length * 0.075)
+					local align_x = (offset_x + line_unit - (line_unit * font_size_x)) + center_offset
+					local align_y = offset_y + (spacing * font_size_x) * i
+					form = form .. "label[" .. align_x .. "," .. align_y .. ";" .. color("#000000", line .. "\n") .. "]"
+				end
+				file:close()
+			end
+		else
+			local line = def.text
+			form = form .. "label[" .. offset_x .. "," .. offset_y .. ";" .. color("#000000", line .. "\n") .. "]"
+		end
+	elseif def.element_type == "mobs" then
+		form = form .. libri.generate_list(meta, def.offset, def.start_iter)
+		if chap_no > def.start_iter + 4 then form = form .. libri_btn_next end
+		if def.start_iter > 3 then form = form .. libri_btn_last end
+	else
+		-- Add Images/Interaction
+		local render_element = false
+		if def.unlock_key
+		and #chapters > 0 then
+			for _, chapter in ipairs(chapters) do
+				if chapter
+				and chapter == def.unlock_key then
+					render_element = true
+					break
+				end
+			end
+		elseif not def.unlock_key then
+			render_element = true
+		end
+		if render_element then
+			local offset = def.offset.x .. "," .. def.offset.y
+			local size = def.size.x .. "," .. def.size.y
+			form = form .. def.element_type .. "[" .. offset .. ";" .. size .. ";" .. def.text .. "]"
+		end
+	end
+	return form
+end
+
+local function get_page(key, meta, playername)
 	local form = table.copy(libri_bg)
 	local chapters = minetest.deserialize(meta:get_string("chapters")) or {}
 	local page = pages[key]
 	for _, element in ipairs(page) do
-		local offset_x = element.offset.x
-		local offset_y = element.offset.y
-		-- Add text
-		if element.element_type == "label" then
-			if element.font_size then
-				table.insert(form, "style_type[label;font_size=" .. element.font_size .. "]")
-			end
-			if element.file then
-				local filename = minetest.get_modpath("draconis") .. "/libri/" .. element.file
-				local file = io.open(filename)
-				if file then
-					local i = 0
-					for line in file:lines() do
-						i = i + 1
-						local center_offset = 0
-						local max_line = (element.max_line or 30)
-						if string.len(line) < max_line then
-							center_offset = (max_line - string.len(line)) * (element.font_size or 16) / 3 * 0.011
-						end
-						local align_x = offset_x + center_offset
-						local align_y = offset_y + spacing * i
-						table.insert(form, "label[" .. align_x .. "," .. align_y .. ";" .. color("#000000", line .. "\n") .. "]")
-					end
-					file:close()
-				end
-			else
-				local line = element.text
-				table.insert(form, "label[" .. offset_x .. "," .. offset_y .. ";" .. color("#000000", line .. "\n") .. "]")
-			end
+		if type(element) == "table" then
+			local element_rendered = render_element(element, meta, playername)
+			table.insert(form, element_rendered)
 		else
-			-- Add Images/Interaction
-			local render_element = false
-			if element.unlock_key
-			and #chapters > 0 then
-				for _, chapter in ipairs(chapters) do
-					if chapter
-					and chapter == element.unlock_key then
-						render_element = true
-						break
-					end
-				end
-			elseif not element.unlock_key then
-				render_element = true
-			end
-			if render_element then
-				local offset = element.offset.x .. "," .. element.offset.y
-				local size = element.size.x .. "," .. element.size.y
-				table.insert(form, element.element_type .. "[" .. offset .. ";" .. size .. ";" .. element.text .. "]")
-			end
+			table.insert(form, element)
 		end
 	end
+	table.insert(form, "style[drp_font_scale;noclip=true]")
+	table.insert(form, libri_drp_font_scale)
+	table.insert(form, "style[drp_font_scale;noclip=true]")
 	return table.concat(form, "")
 end
+
+---------------
+-- Craftitem --
+---------------
 
 minetest.register_craftitem("draconis:libri_draconis", {
 	description = "Libri Draconis",
@@ -412,7 +443,8 @@ minetest.register_craftitem("draconis:libri_draconis", {
 			meta:set_string("description", "Libri Draconis")
 			meta:set_string("pages", nil)
 		end
-		minetest.show_formspec(player:get_player_name(), "draconis:libri_page_1", get_page(1, meta))
+		local name = player:get_player_name()
+		minetest.show_formspec(name, "draconis:libri_page_1", get_page(1, meta, name))
 	end,
 	on_secondary_use = function(itemstack, player)
 		local meta = itemstack:get_meta()
@@ -421,7 +453,8 @@ minetest.register_craftitem("draconis:libri_draconis", {
 			meta:set_string("description", "Libri Draconis")
 			meta:set_string("pages", nil)
 		end
-		minetest.show_formspec(player:get_player_name(), "draconis:libri_page_1", get_page(1, meta))
+		local name = player:get_player_name()
+		minetest.show_formspec(name, "draconis:libri_page_1", get_page(1, meta, name))
 	end
 })
 
@@ -430,28 +463,42 @@ minetest.register_craftitem("draconis:libri_draconis", {
 --------------------
 
 minetest.register_on_player_receive_fields(function(player, formname, fields)
-	local playername = player:get_player_name()
+	local plyr_name = player:get_player_name()
+	local meta = player:get_wielded_item():get_meta()
+	local page_no
 	for i = 1, #pages do
 		if formname == "draconis:libri_page_" .. i then
+			page_no = i
 			if fields.btn_next
 			and pages[i + 1] then
-				minetest.show_formspec(playername,
-					"draconis:libri_page_" .. i + 1, get_page(i + 1, player:get_wielded_item():get_meta()))
+				minetest.show_formspec(plyr_name,
+					"draconis:libri_page_" .. i + 1, get_page(i + 1, meta, plyr_name))
+				return true
 			elseif fields.btn_last
 			and pages[i - 1] then
-				minetest.show_formspec(playername,
-					"draconis:libri_page_" .. i - 1, get_page(i - 1, player:get_wielded_item():get_meta()))
+				minetest.show_formspec(plyr_name,
+					"draconis:libri_page_" .. i - 1, get_page(i - 1, meta, plyr_name))
+				return true
 			end
 		end
 	end
 	if fields.btn_dragons then
-		minetest.show_formspec(playername, "draconis:libri_page_" .. 2, get_page(2, player:get_wielded_item():get_meta()))
+		minetest.show_formspec(plyr_name, "draconis:libri_page_" .. 2, get_page(2, meta, plyr_name))
+		return true
 	end
 	if fields.btn_wyverns then
-		minetest.show_formspec(playername, "draconis:libri_page_" .. 5, get_page(5, player:get_wielded_item():get_meta()))
+		minetest.show_formspec(plyr_name, "draconis:libri_page_" .. 5, get_page(5, meta, plyr_name))
+		return true
 	end
 	if fields.btn_draconic_steel then
-		minetest.show_formspec(playername, "draconis:libri_page_" .. 6, get_page(6, player:get_wielded_item():get_meta()))
+		minetest.show_formspec(plyr_name, "draconis:libri_page_" .. 6, get_page(6, meta, plyr_name))
+		return true
+	end
+	if fields.drp_font_scale
+	and page_no then
+		draconis.libri_font_size[plyr_name] = fields.drp_font_scale
+		minetest.show_formspec(plyr_name, "draconis:libri_page_" .. page_no, get_page(page_no, meta, plyr_name))
+		return true
 	end
 end)
 

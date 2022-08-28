@@ -1248,9 +1248,10 @@ draconis.dragon_behavior = {
 		get_score = function(self)
 			local pos = self.object:get_pos()
 			if not pos then return end
-			local flight_allowed = self.owner and self.flight_allowed
+			local flight_allowed = not self.owner or self.flight_allowed
 			if not flight_allowed then return 0 end
-			if flight_allowed then
+			if flight_allowed
+			or self.in_liquid then
 				self.flight_stamina = self:memorize("flight_stamina", self.flight_stamina + 200)
 				self.is_landed = self:memorize("is_landed", false)
 				return 1, {self, 0.7}
@@ -1316,12 +1317,11 @@ draconis.dragon_behavior = {
 		utility = "draconis:sleep",
 		get_score = function(self)
 			if self.alert_timer > 0 then return 0 end
-			local dragon_type = (self.name == "draconis:fire_dragon" and "fire") or "ice"
-			if self.touching_ground
-			and not (self:get_utility() or ""):match("attack")
-			and (not self.owner
-			or (dragon_type == "fire"
-			and is_night)) then
+			if (self.touching_ground
+			and not self._target
+			and not self.owner)
+			or (self.owner
+			and is_night) then
 				return 0.7, {self}
 			end
 			return 0
@@ -1372,13 +1372,14 @@ draconis.dragon_behavior = {
 		get_score = function(self)
 			local dist2floor = creatura.sensor_floor(self, 4, true)
 			if dist2floor < 4 then return 0 end
-			local is_landed = self.is_landed or self.flight_stamina < 15
-			local is_grounded = (self.owner and not self.fly_allowed) or self.order == "stay"
 			local util = self:get_utility() or ""
-			local is_sleepy = not util:match("attack") and (not self.owner or is_night)
 			if self.in_liquid
 			or util == "draconis:hover_attack"
 			or util == "draconis:follow_player" then return 0 end
+			local is_landed = self.is_landed or self.flight_stamina < 15
+			local is_grounded = (self.owner and not self.fly_allowed) or self.order == "stay"
+			local is_sleepy = not util:match("attack") and (not self.owner or is_night)
+
 			local current_anim = self._anim
 			local is_flying = current_anim and current_anim:find("fly")
 			if is_landed

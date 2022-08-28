@@ -304,7 +304,7 @@ local function generate_texture(self, force)
 		self.wing_overlay = "(draconis_wing_fade.png^[multiply:" .. color .. ")"
 		self:memorize("wing_overlay", self.wing_overlay)
 	end
-	if self.properties.textures[1]:find("wing_fade") and not force then return end
+	if self:get_props().textures[1]:find("wing_fade") and not force then return end
 	textures[1] = textures[1] .. "^" .. self.wing_overlay
 	self:set_texture(1, textures)
 end
@@ -1177,7 +1177,7 @@ draconis.dragon_api = {
 		local pos = self.object:get_pos()
 		local level = minetest.get_node_light(pos, minetest.get_timeofday())
 		if not level then return end
-		local texture = self.properties.textures[1]
+		local texture = self:get_props().textures[1]
 		local eyes_open = string.find(texture, "eyes")
 		if self._glow_level == level
 		and ((self._anim ~= "sleep" and eyes_open)

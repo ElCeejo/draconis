@@ -914,11 +914,11 @@ minetest.register_tool("draconis:pick_"..element.."_draconic_steel", {
 		groupcaps = {
 			cracky = {
 				times={[1]=0.3, [2]=0.15, [3]=0.075},
-				uses=100,
+				uses=0,
 				maxlevel=3},
 			crumbly = {
 				times={[1]=0.5, [2]=0.25, [3]=0.2},
-				uses=100,
+				uses=0,
 				maxlevel=3
 			},
 		},
@@ -940,7 +940,7 @@ minetest.register_tool("draconis:shovel_"..element.."_draconic_steel", {
 		groupcaps = {
 			crumbly = {
 				times = {[1] = 0.4, [2] = 0.2, [3] = 0.1},
-				uses = 100,
+				uses = 0,
 				maxlevel = 3
 			}
 		},
@@ -962,7 +962,7 @@ minetest.register_tool("draconis:axe_"..element.."_draconic_steel", {
 		groupcaps = {
 			choppy = {
 				times={[1]=0.3, [2]=0.15, [3]=0.075},
-				uses = 100,
+				uses = 0,
 				maxlevel = 3
 			}
 		},
@@ -984,7 +984,7 @@ minetest.register_tool("draconis:sword_"..element.."_draconic_steel", {
 		groupcaps = {
 			snappy = {
 				times = {[1] = 0.05, [2] = 0.025, [3] = 0.01},
-				uses = 100,
+				uses = 0,
 				maxlevel = 3
 			}
 		},
