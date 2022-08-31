@@ -19,7 +19,7 @@ local pages = {
 		{ -- Main Page
 			element_type = "label",
 			font_size = 24,
-			offset = {x = 1.5, y = 1.5},
+			offset = {x = 0, y = 1.5},
 			file = "draconis_libri_home.txt"
 		},
 		{ -- Next Page
@@ -60,22 +60,8 @@ local pages = {
 		{ -- Main Page
 			element_type = "label",
 			font_size = 24,
-			offset = {x = 1.5, y = 1.5},
+			offset = {x = 0, y = 1.5},
 			file = "draconis_libri_dragon1.txt"
-		},
-		{ -- Next Page
-			element_type = "image_button",
-			font_size = 24,
-			offset = {x = 15, y = 9},
-			size = {x = 1, y = 1},
-			text = "draconis_libri_icon_next.png;btn_next;;true;false"
-		},
-		{ -- Last Page
-			element_type = "image_button",
-			font_size = 24,
-			offset = {x = 1, y = 9},
-			size = {x = 1, y = 1},
-			text = "draconis_libri_icon_last.png;btn_last;;true;false"
 		},
 		{ -- Fire Dragon
 			element_type = "image",
@@ -87,11 +73,9 @@ local pages = {
 		{ -- Fire Dragon Text
 			element_type = "label",
 			font_size = 24,
-			offset = {x = 10, y = 5},
+			offset = {x = 8, y = 5},
 			file = "draconis_libri_dragon2.txt"
-		}
-	},
-	{ -- Dragons Page 2
+		},
 		{ -- Next Page
 			element_type = "image_button",
 			font_size = 24,
@@ -105,7 +89,9 @@ local pages = {
 			offset = {x = 1, y = 9},
 			size = {x = 1, y = 1},
 			text = "draconis_libri_icon_last.png;btn_last;;true;false"
-		},
+		}
+	},
+	{ -- Dragons Page 2
 		{ -- Ice Dragon
 			element_type = "image",
 			font_size = 24,
@@ -116,17 +102,43 @@ local pages = {
 		{ -- Ice Dragon Text
 			element_type = "label",
 			font_size = 24,
-			offset = {x = 1.5, y = 5},
+			offset = {x = 0, y = 5},
 			file = "draconis_libri_dragon3.txt"
 		},
 		{ -- Combat Text
 			element_type = "label",
 			font_size = 24,
-			offset = {x = 10, y = 1.5},
+			offset = {x = 8, y = 1.5},
 			file = "draconis_libri_dragon4.txt"
+		},
+		{ -- Next Page
+			element_type = "image_button",
+			font_size = 24,
+			offset = {x = 15, y = 9},
+			size = {x = 1, y = 1},
+			text = "draconis_libri_icon_next.png;btn_next;;true;false"
+		},
+		{ -- Last Page
+			element_type = "image_button",
+			font_size = 24,
+			offset = {x = 1, y = 9},
+			size = {x = 1, y = 1},
+			text = "draconis_libri_icon_last.png;btn_last;;true;false"
 		}
 	},
 	{ -- Dragons Page 3
+		{ -- Hatching Text
+			element_type = "label",
+			font_size = 24,
+			offset = {x = 0, y = 1.5},
+			file = "draconis_libri_dragon5.txt"
+		},
+		{ -- Raising Text
+			element_type = "label",
+			font_size = 24,
+			offset = {x = 8, y = 1.5},
+			file = "draconis_libri_dragon6.txt"
+		},
 		{ -- Next Page
 			unlock_key = "wyverns",
 			element_type = "image_button",
@@ -141,38 +153,10 @@ local pages = {
 			offset = {x = 1, y = 9},
 			size = {x = 1, y = 1},
 			text = "draconis_libri_icon_last.png;btn_last;;true;false"
-		},
-		{ -- Hatching Text
-			element_type = "label",
-			font_size = 24,
-			offset = {x = 1.5, y = 1.5},
-			file = "draconis_libri_dragon5.txt"
-		},
-		{ -- Raising Text
-			element_type = "label",
-			font_size = 24,
-			offset = {x = 10, y = 1.5},
-			file = "draconis_libri_dragon6.txt"
 		}
 	},
 	-- Chapter 2
 	{ -- Wyverns Page 1
-		{ -- Next Page
-			unlock_key = "draconic_steel",
-			element_type = "image_button",
-			font_size = 24,
-			offset = {x = 15, y = 9},
-			size = {x = 1, y = 1},
-			text = "draconis_libri_icon_next.png;btn_next;;true;false"
-		},
-		{ -- Last Page
-			unlock_key = "dragons",
-			element_type = "image_button",
-			font_size = 24,
-			offset = {x = 1, y = 9},
-			size = {x = 1, y = 1},
-			text = "draconis_libri_icon_last.png;btn_last;;true;false"
-		},
 		{ -- Jungle Wyvern
 			element_type = "image",
 			font_size = 24,
@@ -183,14 +167,29 @@ local pages = {
 		{ -- Wyvern Text 1
 			element_type = "label",
 			font_size = 24,
-			offset = {x = 3.5, y = 1.5},
+			offset = {x = 0, y = 1.5},
 			file = "draconis_libri_wyvern1.txt"
 		},
 		{ -- Wyvern Text 2
 			element_type = "label",
 			font_size = 24,
-			offset = {x = 10, y = 5},
+			offset = {x = 8, y = 5},
 			file = "draconis_libri_wyvern2.txt"
+		},
+		{ -- Next Page
+			unlock_key = "draconic_steel",
+			element_type = "image_button",
+			font_size = 24,
+			offset = {x = 15, y = 9},
+			size = {x = 1, y = 1},
+			text = "draconis_libri_icon_next.png;btn_next;;true;false"
+		},
+		{ -- Last Page
+			element_type = "image_button",
+			font_size = 24,
+			offset = {x = 1, y = 9},
+			size = {x = 1, y = 1},
+			text = "draconis_libri_icon_last.png;btn_last;;true;false"
 		}
 	},
 	-- Chapter 3
@@ -198,13 +197,13 @@ local pages = {
 		{ -- Main Page
 			element_type = "label",
 			font_size = 24,
-			offset = {x = 1.5, y = 1.5},
+			offset = {x = 0, y = 1.5},
 			file = "draconis_libri_steel1.txt"
 		},
 		{ -- Page 2
 			element_type = "label",
 			font_size = 24,
-			offset = {x = 10, y = 1.5},
+			offset = {x = 8, y = 1.5},
 			file = "draconis_libri_steel2.txt"
 		},
 		{ -- Next Page
@@ -237,7 +236,7 @@ local pages = {
 		{ -- Page 2
 			element_type = "label",
 			font_size = 24,
-			offset = {x = 10, y = 0.5},
+			offset = {x = 8, y = 0.5},
 			file = "draconis_libri_steel3.txt"
 		},
 		{ -- Crucible Instructions
@@ -259,11 +258,11 @@ local pages = {
 			text = "draconis_libri_icon_last.png;btn_last;;true;false"
 		}
 	},
-	{ -- Steel Page 1
+	{ -- Steel Page 3
 		{ -- Main Page
 			element_type = "label",
 			font_size = 24,
-			offset = {x = 1.5, y = 1},
+			offset = {x = 0, y = 1},
 			file = "draconis_libri_steel4.txt"
 		},
 		{ -- Forge Label
@@ -289,12 +288,6 @@ local pages = {
 			offset = {x = 10.5, y = 2.5},
 			size = {x = 4.5, y = 2.5},
 			text = "draconis_libri_img_ice_forge_demo.png"
-		},
-		{ -- Next Page
-			element_type = "image_button",
-			offset = {x = 15, y = 9},
-			size = {x = 1, y = 1},
-			text = "draconis_libri_icon_next.png;btn_next;;true;false"
 		},
 		{ -- Last Page
 			element_type = "image_button",
@@ -346,10 +339,6 @@ end
 
 local function render_element(def, meta, playername)
 	local chapters = (meta and minetest.deserialize(meta:get_string("chapters"))) or {}
-	local chap_no = 0
-	for _ in pairs(chapters) do
-		chap_no = chap_no + 1
-	end
 	local offset_x = def.offset.x
 	local offset_y = def.offset.y
 	local form = ""
@@ -357,31 +346,21 @@ local function render_element(def, meta, playername)
 	if def.element_type == "label" then
 		local font_size_x = (draconis.libri_font_size[playername] or 1)
 		local font_size = (def.font_size or 16) * font_size_x
-		form = form .. "style_type[label;font_size=" .. font_size .. "]"
 		if def.file then
 			local filename = minetest.get_modpath("draconis") .. "/libri/" .. def.file
 			local file = io.open(filename)
 			if file then
 				local i = 0
+				local full_text = ""
 				for line in file:lines() do
-					i = i + 1
-					local center_offset = 0
-					local max_length = 42
-					local line_length = line:len()
-					if line_length > max_length then line_length = max_length end
-					local total_line_area = font_size * line_length
-					local total_max_area = font_size * max_length
-					if def.center_text then
-						center_offset = ((total_max_area - total_line_area) / 100) * 0.3
-					end
-					local line_unit = (max_length * 0.075)
-					local align_x = (offset_x + line_unit - (line_unit * font_size_x)) + center_offset
-					local align_y = offset_y + (spacing * font_size_x) * i
-					form = form .. "label[" .. align_x .. "," .. align_y .. ";" .. color("#000000", line .. "\n") .. "]"
+					full_text = full_text .. line .. "\n"
 				end
+				local total_offset = (offset_x + (0.35 - 0.35 * font_size_x)) .. "," .. offset_y
+				form = form .. "hypertext[" .. total_offset .. ";8,9;text;<global color=#000000 size=".. font_size .. " halign=center>" .. full_text .. "]"
 				file:close()
 			end
 		else
+			form = form .. "style_type[label;font_size=" .. font_size .. "]"
 			local line = def.text
 			form = form .. "label[" .. offset_x .. "," .. offset_y .. ";" .. color("#000000", line .. "\n") .. "]"
 		end

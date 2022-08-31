@@ -2180,26 +2180,7 @@ function draconis.dragon_rightclick(self, clicker)
 	local name = clicker:get_player_name()
 	local inv = minetest.get_inventory({type = "player", name = name})
 	if draconis.contains_libri(inv) then
-		local libri, list_i = draconis.get_libri(inv)
-		local pages = minetest.deserialize(libri:get_meta():get_string("pages")) or {}
-		if #pages > 0 then
-			local add_page = true
-			for i = 1, #pages do
-				if pages[i].name == "dragons" then
-					add_page = false
-					break
-				end
-			end
-			if add_page then
-				table.insert(pages, {name = "dragons", form = "pg_dragons;Dragons"})
-				libri:get_meta():set_string("pages", minetest.serialize(pages))
-				inv:set_stack("main", list_i, libri)
-			end
-		else
-			table.insert(pages, {name = "dragons", form = "pg_dragons;Dragons"})
-			libri:get_meta():set_string("pages", minetest.serialize(pages))
-			inv:set_stack("main", list_i, libri)
-		end
+		draconis.add_page(inv, "dragons")
 	end
 	if self.hp <= 0 then
 		if draconis.drop_items(self) then
@@ -2239,6 +2220,10 @@ end
 function draconis.wyvern_rightclick(self, clicker)
 	if self.hp <= 0 then return end
 	local name = clicker:get_player_name()
+	local inv = minetest.get_inventory({type = "player", name = name})
+	if draconis.contains_libri(inv) then
+		draconis.add_page(inv, "wyverns")
+	end
 	if self:feed(clicker) then
 		return
 	end

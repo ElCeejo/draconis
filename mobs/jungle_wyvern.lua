@@ -195,10 +195,22 @@ creatura.register_spawn_item("draconis:jungle_wyvern", {
 	inventory_image = "draconis_creative_egg_jungle.png"
 })
 
+local biomes = {}
+
+minetest.register_on_mods_loaded(function()
+	for name, def in ipairs(minetest.registered_biomes) do
+		if name:find("jungle")
+		or name:find("rainforest")
+		and (def.y_max or 1) > 0 then
+			table.insert(biomes, name)
+		end
+	end
+end)
+
 creatura.register_mob_spawn("draconis:jungle_wyvern", {
 	chance = 2,
 	min_group = 1,
 	max_group = 2,
-	biomes = {"rainforest", "rainforest_swamp"},
+	biomes = biomes,
 	nodes = {"group:leaves"}
 })

@@ -1141,6 +1141,9 @@ creatura.register_utility("draconis:wyvern_attack", function(self, target)
 	local hidden_timer = 10
 	local attack_init = false
 	local function func(_self)
+		local yaw = _self.object:get_yaw()
+		local pos = _self.object:get_pos()
+		if not pos then return end
 		local target_alive, line_of_sight, tgt_pos = _self:get_target(target)
 		if not target_alive then
 			_self._target = nil
@@ -1166,12 +1169,15 @@ creatura.register_utility("draconis:wyvern_attack", function(self, target)
 		end
 		if not _self:get_action() then
 			if attack_init then return true end
-			local pos = _self.object:get_pos()
 			local dist = vec_dist(pos, tgt_pos)
 			if dist < 4 then
-				draconis.action_punch(_self, target)
-				attack_init = true
-				_self.attack_cooldown[target] = 5
+				local yaw2tgt = dir2yaw(vec_dir(pos, tgt_pos))
+				self:turn_to(yaw2tgt)
+				if abs(diff(yaw, yaw2tgt)) < 0.2 then
+					draconis.action_punch(_self, target)
+					attack_init = true
+					_self.attack_cooldown[target] = 5
+				end
 			else
 				draconis.action_pursue(_self, target, 3, "creatura:obstacle_avoidance", 1, "walk")
 			end
@@ -1523,9 +1529,11 @@ draconis.wyvern_behavior = {
 			local dist2floor = creatura.sensor_floor(self, 12, true)
 			local is_landed = self.is_landed or self.flight_stamina < 15
 			local is_grounded = (self.owner and not self.fly_allowed) or self.order == "stay"
-			local util = self:get_utility() or ""
+			local attacking_tgt = self._target and creatura.is_alive(self._target)
 			if is_landed
-			or is_grounded then
+			or is_grounded
+			or attacking_tgt then
+				local util = self:get_utility() or ""
 				if ((util == "draconis:wander_flight"
 				or util == "draconis:wyvern_mount")
 				or (dist2floor > 2
@@ -1537,7 +1545,6 @@ draconis.wyvern_behavior = {
 					and not self.rider
 					and not self.fly_allowed)
 					or self._target then
-						self._target = nil
 						score = 1
 					end
 					return score, {self}
