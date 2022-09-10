@@ -258,16 +258,6 @@ local function get_collision_ranged(self, range)
 	return false
 end
 
-local function debugpart(pos, time, tex)
-	minetest.add_particle({
-		pos = pos,
-		texture = tex or "creatura_particle_red.png",
-		expirationtime = time or 0.55,
-		glow = 6,
-		size = 8
-	})
-end
-
 local function get_avoidance_dir(self)
 	local pos = self.object:get_pos()
 	if not pos then return end
@@ -327,8 +317,8 @@ end)
 
 creatura.register_movement_method("draconis:fly_obstacle_avoidance", function(self)
 	self:set_gravity(0)
-	local avd_step = 15
 	local steer_to
+	local steer_timer = 0.25
 	local function func(_self, goal, speed_x)
 		local pos = _self.object:get_pos()
 		if not pos then return end
@@ -339,9 +329,9 @@ creatura.register_movement_method("draconis:fly_obstacle_avoidance", function(se
 			_self:halt()
 			return true
 		end
+		steer_timer = (steer_timer > 0 and steer_timer - _self.dtime) or 0.25
 		-- Get movement direction
-		avd_step = (avd_step <= 0 and 15) or avd_step - 1
-		steer_to = (avd_step > 1 and steer_to) or (avd_step <= 0 and get_avoidance_dir(self, goal))
+		steer_to = (steer_timer > 0 and steer_to) or (steer_timer <= 0 and get_avoidance_dir(_self))
 		local goal_dir = steer_to or vec_dir(pos, goal)
 		local goal_yaw = dir2yaw(goal_dir)
 		_self:tilt_to(goal_yaw, _self.turn_rate or 6)
@@ -871,9 +861,11 @@ end)
 -- Wyvern Breaking
 
 creatura.register_utility("draconis:wyvern_breaking", function(self, player)
-	local center
+	local center = self.object:get_pos()
+	if not center then return end
 	local taming = 0
 	local feed_timer = 10
+	local height_tick = 0
 	local function func(_self)
 		if not player
 		or not player:get_pos() then
@@ -881,6 +873,14 @@ creatura.register_utility("draconis:wyvern_breaking", function(self, player)
 		end
 		local pos = _self.object:get_pos()
 		if not pos then return end
+		-- Update Center
+		height_tick = height_tick - 1
+		if height_tick <= 0 then
+			local dist2floor = creatura.sensor_floor(_self, 10, true)
+			center.y = center.y + (10 - dist2floor)
+			height_tick = 30
+		end
+		-- Player Interaction
 		if player:get_player_control().sneak then
 			draconis.detach_player(_self, player)
 			return true
@@ -939,19 +939,8 @@ creatura.register_utility("draconis:wyvern_breaking", function(self, player)
 				end
 				draconis.action_takeoff(_self)
 			else
-				local pos2 = _self:get_wander_pos_3d(4, 8)
-				local dist2floor, floor_node = creatura.sensor_floor(_self, 10, true)
-				if creatura.get_node_def(floor_node).drawtype == "liquid" then
-					pos2.y = pos2.y + 6
-				end
-				if not center
-				and dist2floor > 9 then
-					center = pos2
-				end
-				if center
-				and vec_dist(pos2, center) > 28 then
-					pos2 = center
-				end
+				local move_dir = (vec_dist(pos, center) > 16 and vec_dir(pos, center)) or nil
+				local pos2 = _self:get_wander_pos_3d(6, 9, move_dir)
 				draconis.action_fly(_self, pos2, 3, "draconis:fly_obstacle_avoidance", 0.6)
 				if pos.y - pos2.y > 1 then
 					_self:animate("dive")
@@ -1228,8 +1217,9 @@ creatura.register_utility("draconis:follow_player", function(self, player)
 				end
 			else
 				local height_diff = tgt_pos.y - pos.y
-				if height_diff > 8
-				or dist_to_ground > 2 then
+				if (height_diff > 8
+				or dist_to_ground > 2)
+				or not self.flight_allowed then
 					creatura.action_move(_self, tgt_pos, 2, "draconis:fly_obstacle_avoidance", 1, "fly")
 				else
 					creatura.action_move(_self, tgt_pos, 3, "creatura:pathfind", 0.5, "walk")
@@ -1429,7 +1419,7 @@ draconis.wyvern_behavior = {
 			or self.flight_allowed) then
 				self.flight_stamina = self:memorize("flight_stamina", self.flight_stamina + 200)
 				self.is_landed = self:memorize("is_landed", false)
-				return 0.9, {self, 0.5}
+				return 0.8, {self, 0.5}
 			end
 			if not self.is_landed
 			and (not self.owner
