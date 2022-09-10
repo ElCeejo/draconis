@@ -44,10 +44,6 @@ minetest.register_entity("draconis:mounted_player_visual", {
 		self.object:set_yaw(player:get_look_horizontal())
 	end,
 	get_staticdata = function() return "" end,
-	on_punch = function(self)
-		minetest.after(0, function() draconis.detach(self.player) end)
-		self.object:remove()
-	end,
 	on_step = function(self) self.object:set_velocity(vector.new()) end
 })
 
