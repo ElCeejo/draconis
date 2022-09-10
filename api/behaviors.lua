@@ -1467,7 +1467,7 @@ draconis.wyvern_behavior = {
 		get_score = function(self)
 			if self.rider
 			and not self.owner then
-				return 0.8, {self, self.rider}
+				return 0.9, {self, self.rider}
 			end
 			return 0
 		end
