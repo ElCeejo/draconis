@@ -4,6 +4,9 @@ simple_spawning (Simple Spawning) bool false
 #    Dragon Spawn Rate. 1 in x chance per spawn tick for a Dragon to spawn. This setting only applies when Simple Spawning is enabled.
 simple_spawn_rate (Simple Spawn Rate) int 512
 
+#    Jungle Wyvern Spawn Rate. 1 in x chance per spawn tick for a Wyvern to spawn.
+wyvern_jungle_spawn_rate (Jungle Wyvern Spawn Rate) int 16
+
 #    If true, Dragons will spawn in mountains with nests
 nest_spawning (Nest Spawning) bool true
 
