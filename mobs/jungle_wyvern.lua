@@ -39,7 +39,8 @@ creatura.register_mob("draconis:jungle_wyvern", {
 		hover = {range = {x = 151, y = 179}, speed = 30, frame_blend = 0.3, loop = true},
 		fly = {range = {x = 181, y = 209}, speed = 30, frame_blend = 0.3, loop = true},
 		dive = {range = {x = 211, y = 239}, speed = 30, frame_blend = 0.3, loop = true},
-		land = {range = {x = 241, y = 269}, speed = 30, frame_blend = 1, loop = false}
+		fly_punch = {range = {x = 241, y = 279}, speed = 30, frame_blend = 0.3, loop = false},
+		land = {range = {x = 281, y = 299}, speed = 30, frame_blend = 1, loop = false}
 	},
 	-- Misc
 	sounds = {
