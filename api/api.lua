@@ -2087,7 +2087,7 @@ function draconis.dragon_step(self, dtime)
 		draconis.dragons[self.dragon_id] = nil
 		return
 	end
-	local global_data = draconis.dragons[self.dragon_id]
+	local global_data = draconis.dragons[self.dragon_id] or {}
 	draconis.dragons[self.dragon_id] = {
 		last_pos = self.object:get_pos(),
 		owner = self.owner or nil,
