@@ -828,7 +828,7 @@ creatura.register_utility("draconis:fly_and_roost", function(self, speed_x)
 			end
 			-- Wander
 			if is_landed then
-				if move then
+				if random(5) < 2 then
 					local pos2 = _self:get_wander_pos(3, 6)
 					if vec_dist(pos2, center) > 16 then
 						creatura.action_idle(_self, random(2, 5))
