@@ -687,10 +687,13 @@ local function damage_objects(self, pos, radius)
 			local is_mob = ent.logic ~= nil or ent._creatura_mob or ent._cmi_is_mob
 			damage = is_mob and (ent.hp or ent.health or 0) > 0
 		end
-		if damage
-		and self.rider
-		and self.rider:get_look_horizontal() then
-			object:punch(self.rider, 1.0, {damage_groups = {fleshy = math.ceil(self.damage * 0.33)}})
+		if damage then
+			local puncher = self.object
+			if self.rider
+			and self.rider:get_look_horizontal() then
+				puncher = self.rider
+			end
+			object:punch(puncher, 1.0, {damage_groups = {fleshy = math.ceil(self.damage * 0.33)}})
 			--self:punch_target(object, math.ceil(self.damage * 0.2))
 			if self.name == "draconis:ice_dragon" then
 				freeze_object(object)
