@@ -1161,7 +1161,8 @@ draconis.dragon_api = {
 				if n_pos.y - pos.y >= 1 then
 					local node = minetest.get_node(n_pos)
 					if minetest.get_item_group(node.name, "cracky") ~= 1
-					and minetest.get_item_group(node.name, "unbreakable") < 1 then
+					and minetest.get_item_group(node.name, "unbreakable") < 1
+					and node.name ~= "bones:bones" then
 						if random(6) < 2 then
 							minetest.dig_node(n_pos)
 						else
