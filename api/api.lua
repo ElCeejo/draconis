@@ -55,7 +55,7 @@ local yaw2dir = minetest.yaw_to_dir
 
 local creative = minetest.settings:get_bool("creative_mode")
 
-local terrain_destruction = minetest.settings:get_bool("dragon_terrain_destruction", true)
+local terrain_destruction = minetest.settings:get_bool("dragon_terrain_destruction", false)
 
 ---------------------
 -- Local Utilities --
@@ -1164,13 +1164,15 @@ draconis.dragon_api = {
 			if collision.type == "node" then
 				local n_pos = collision.node_pos
 				if n_pos.y - pos.y >= 1 then
-					local node = minetest.get_node(n_pos)
-					if minetest.get_item_group(node.name, "cracky") ~= 1
-					and minetest.get_item_group(node.name, "unbreakable") < 1 then
-						if random(6) < 2 then
-							minetest.dig_node(n_pos)
-						else
-							minetest.remove_node(n_pos)
+					if not minetest.is_protected(n_pos, "") then
+						local node = minetest.get_node(n_pos)
+						if minetest.get_item_group(node.name, "cracky") ~= 1
+						and minetest.get_item_group(node.name, "unbreakable") < 1 then
+							if random(6) < 2 then
+								minetest.dig_node(n_pos)
+							else
+								minetest.remove_node(n_pos)
+							end
 						end
 					end
 				end

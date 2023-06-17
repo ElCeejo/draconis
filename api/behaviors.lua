@@ -164,13 +164,15 @@ local function destroy_terrain(self, dir)
 			local n_pos = collision.node_pos
 			if n_pos.y - pos.y >= 1
 			or dir.y < 0 then
-				local node = minetest.get_node(n_pos)
-				if minetest.get_item_group(node.name, "cracky") ~= 1
-				and minetest.get_item_group(node.name, "unbreakable") < 1 then
-					if random(6) < 2 then
-						minetest.dig_node(n_pos)
-					else
-						minetest.remove_node(n_pos)
+				if not minetest.is_protected(n_pos, "") then
+					local node = minetest.get_node(n_pos)
+					if minetest.get_item_group(node.name, "cracky") ~= 1
+					and minetest.get_item_group(node.name, "unbreakable") < 1 then
+						if random(6) < 2 then
+							minetest.dig_node(n_pos)
+						else
+							minetest.remove_node(n_pos)
+						end
 					end
 				end
 			end
@@ -309,7 +311,7 @@ function draconis.action_flight_attack(self, target, timeout)
 		and _self:move_to(goal, "draconis:fly_simple", 0.25) then
 			goal = nil
 		end
-		
+
 		if not goal
 		and _self:move_to(tgt_pos, "draconis:fly_simple", 0.5) then
 			if dist < _self.width + 4 then
