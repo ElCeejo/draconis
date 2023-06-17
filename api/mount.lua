@@ -229,7 +229,7 @@ function draconis.attach_passenger(self, player)
 	-- Set Dragon Data
 	self.passenger = player
 	-- Set HUD
-	local data = draconis.mounted_player_data[player:get_player_name()]
+	local data = draconis.mounted_player_data[player:get_player_name()] or {}
 	if not data.huds then
 		local health = self.hp / math.ceil(self.max_health * scale) * 100
 		local hunger = self.hunger / math.ceil(self.max_hunger * scale) * 100

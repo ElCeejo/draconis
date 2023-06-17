@@ -1617,8 +1617,7 @@ minetest.register_chatcommand("tamedragon", {
 		pos.y = pos.y + player:get_properties().eye_height or 1.625
 		local dest = vec_add(pos, vec_multi(dir, 40))
 		local object, ent = get_pointed_mob(pos, dest)
-		if object
-		and ent.name:match("^draconis:")
+		if object and ent
 		and ent.memorize then
 			local ent_pos = object:get_pos()
 			local particle = "creatura_particle_green.png"
@@ -1671,7 +1670,7 @@ minetest.register_chatcommand("set_dragon_owner", {
 		pos.y = pos.y + player:get_properties().eye_height or 1.625
 		local dest = vec_add(pos, vec_multi(dir, 40))
 		local object, ent = get_pointed_mob(pos, dest)
-		if object then
+		if object and ent then
 			local ent_pos = ent:get_center_pos()
 			local particle = "creatura_particle_green.png"
 			ent.owner = param_name
@@ -1716,7 +1715,7 @@ minetest.register_chatcommand("revive_dragon", {
 		pos.y = pos.y + player:get_properties().eye_height or 1.625
 		local dest = vec_add(pos, vec_multi(dir, 40))
 		local object, ent = get_pointed_mob(pos, dest)
-		if object
+		if object and ent
 		and ent.hp <= 0 then
 			local ent_pos = ent:get_center_pos()
 			local particle = "creatura_particle_green.png"
