@@ -1626,7 +1626,7 @@ minetest.register_chatcommand("tamedragon", {
 		local object, ent = get_pointed_mob(pos, dest)
 		if object and ent
 		and ent.memorize then
-			local ent_pos = object:get_pos()
+			local ent_pos = ent:get_center_pos()
 			local particle = "creatura_particle_green.png"
 			if not ent.owner then
 				ent.owner = name
