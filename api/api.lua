@@ -109,7 +109,7 @@ local function get_pointed_mob(a, b)
 			if object
 			and object:get_luaentity() then
 				local ent = object:get_luaentity()
-				if ent.name:match("^draconis:") then
+				if ent.name:match("^draconis:dragon_") then
 					return object, ent
 				end
 			end
