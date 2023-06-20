@@ -304,7 +304,8 @@ local function generate_texture(self, force)
 		self.wing_overlay = "(draconis_wing_fade.png^[multiply:" .. color .. ")"
 		self:memorize("wing_overlay", self.wing_overlay)
 	end
-	if self:get_props().textures[1]:find("wing_fade") and not force then return end
+	local props = self:get_props()
+	if props and props.textures and props.textures[1]:find("wing_fade") and not force then return end
 	textures[1] = textures[1] .. "^" .. self.wing_overlay
 	self:set_texture(1, textures)
 end
