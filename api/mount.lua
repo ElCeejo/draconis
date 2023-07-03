@@ -264,7 +264,7 @@ function draconis.detach_player(self, player)
 		return
 	end
 	local player_name = player:get_player_name()
-	local data = draconis.mounted_player_data[player_name]
+	local data = draconis.mounted_player_data[player_name] or {}
 	-- Attach Player
 	player:set_detach()
 	-- Set HUD
@@ -403,7 +403,7 @@ local function update_hud(self, player)
 	local hunger = self.hunger / ceil(self.max_hunger * scale) * 100
 	local stamina = self.flight_stamina / 900 * 100
 	local breath = self.attack_stamina / 100 * 100
-	local hud_data = draconis.mounted_player_data[name].huds
+	local hud_data = draconis.mounted_player_data[name].huds or {}
 	-- Update Elements
 	player:hud_remove(hud_data["health"])
 	player:hud_remove(hud_data["hunger"])
