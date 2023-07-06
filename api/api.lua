@@ -1183,6 +1183,7 @@ draconis.dragon_api = {
 	-- Textures
 	update_emission = function(self, force)
 		local pos = self.object:get_pos()
+		if not pos then return end
 		local level = minetest.get_node_light(pos, minetest.get_timeofday())
 		if not level then return end
 		local texture = self:get_props().textures[1]
