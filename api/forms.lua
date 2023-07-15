@@ -107,7 +107,8 @@ draconis.dragon_api.show_formspec = function(self, player)
 end
 
 local function get_customize_formspec(self)
-	local texture = self.object:get_properties().textures[1]
+	local props = self.object:get_properties()
+	local texture = (props and props.textures and props.textures[1]) or "blank.png"
 	local frame_range = self.animations["stand"].range
 	local frame_loop = frame_range.x .. "," ..  frame_range.y
 	local form
