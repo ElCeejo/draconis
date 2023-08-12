@@ -676,7 +676,7 @@ minetest.register_node("draconis:draconic_forge_fire", {
 	on_dig = function(pos, node, player)
 		local structure = get_forge_structure(pos)
 		if minetest.node_dig(pos, node, player) then
-			if player:get_player_control().sneak
+			if player and player:get_player_control().sneak
 			and structure then
 				local inv = player:get_inventory()
 				local bricks = ItemStack(forge_shell[node.name] .. " " .. #shell_v)
@@ -898,7 +898,7 @@ minetest.register_node("draconis:draconic_forge_ice", {
 	on_dig = function(pos, node, player)
 		local structure = get_forge_structure(pos)
 		if minetest.node_dig(pos, node, player) then
-			if player:get_player_control().sneak
+			if player and player:get_player_control().sneak
 			and structure then
 				local inv = player:get_inventory()
 				local bricks = ItemStack(forge_shell[node.name] .. " " .. #shell_v)
