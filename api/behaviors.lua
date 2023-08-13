@@ -35,7 +35,6 @@ local abs = math.abs
 local atan2 = math.atan2
 local ceil = math.ceil
 local cos = math.cos
-local pi = math.pi
 local rad = math.rad
 local random = math.random
 local sin = math.sin
@@ -58,7 +57,6 @@ local function vec_raise(v, n)
 end
 
 local vec_normal = vector.normalize
-local vec_len = vector.length
 local vec_dir = vector.direction
 local vec_dist = vector.distance
 local vec_multi = vector.multiply
@@ -150,40 +148,15 @@ local function find_target(self, list)
 	return targets[random(#targets)]
 end
 
-local function destroy_terrain(self, dir)
-	local moveresult = self.moveresult
-	if not terrain_destruction
-	or not moveresult
-	or not moveresult.collisions then
-		return
-	end
-	local pos = self.object:get_pos()
-	if not pos then return end
-	for _, collision in ipairs(moveresult.collisions) do
-		if collision.type == "node" then
-			local n_pos = collision.node_pos
-			if n_pos.y - pos.y >= 1
-			or dir.y < 0 then
-				local node = minetest.get_node(n_pos)
-				if minetest.get_item_group(node.name, "cracky") ~= 1
-				and minetest.get_item_group(node.name, "unbreakable") < 1 then
-					if random(6) < 2 then
-						minetest.dig_node(n_pos)
-					else
-						minetest.remove_node(n_pos)
-					end
-				end
-			end
-		end
-	end
-end
-
 -- Movement Methods --
 
 creatura.register_movement_method("draconis:fly_pathfind", function(self)
 	local path = {}
 	local steer_to
 	local steer_timer = 0.01
+	local width = self.width
+	local wayp_threshold = width + (width / self.turn_rate)
+
 	self:set_gravity(0)
 	local function func(_self, goal, speed_x)
 		local pos = _self.object:get_pos()
@@ -192,7 +165,7 @@ creatura.register_movement_method("draconis:fly_pathfind", function(self)
 		if #path > 0 then steer_timer = 1 end
 		steer_to = (steer_timer <= 0 and creatura.get_context_steering(self, goal, 8)) or steer_to
 		-- Return true when goal is reached
-		if vec_dist(pos, goal) < box then
+		if vec_dist(pos, goal) < wayp_threshold then
 			_self:halt()
 			return true
 		end
@@ -220,15 +193,17 @@ creatura.register_movement_method("draconis:fly_pathfind", function(self)
 end)
 
 creatura.register_movement_method("draconis:fly_simple", function(self)
-	local arrive_thresh = clamp(self.width, 0.5, 1)
 	local steer_to
 	local steer_timer = 0.25
+	local width = self.width
+	local wayp_threshold = width + (width / self.turn_rate)
+
 	self:set_gravity(0)
 	local function func(_self, goal, speed_factor)
 		local pos = _self.object:get_pos()
 		if not pos then return end
 		local dist = vec_dist(pos, goal)
-		if dist < self.width then
+		if dist < wayp_threshold then
 			_self:halt()
 			return true
 		end
@@ -284,7 +259,7 @@ function draconis.action_flight_attack(self, target, timeout)
 	local function func(_self)
 		local pos = _self.stand_pos
 		if timer <= 0 then return true end
-		local target_alive, los, tgt_pos = _self:get_target(target)
+		local target_alive, _, tgt_pos = _self:get_target(target)
 		if not target_alive then return true end
 		local dist = vec_dist(pos, tgt_pos)
 
@@ -309,7 +284,7 @@ function draconis.action_flight_attack(self, target, timeout)
 		and _self:move_to(goal, "draconis:fly_simple", 0.25) then
 			goal = nil
 		end
-		
+
 		if not goal
 		and _self:move_to(tgt_pos, "draconis:fly_simple", 0.5) then
 			if dist < _self.width + 4 then
@@ -404,7 +379,7 @@ function draconis.action_idle_fire(self, target, time)
 		end
 		local aim_dir = yaw2dir(yaw_to_tgt)
 		aim_dir.y = dir.y
-		tgt_pos = vec_add(pos, vector.multiply(aim_dir, dist + 10))
+		tgt_pos = vec_add(pos, vec_multi(aim_dir, dist + 10))
 		_self:move_head(yaw_to_tgt, aim_dir.y)
 		_self:set_gravity(-9.8)
 		_self:halt()
@@ -443,7 +418,7 @@ function draconis.action_hover_fire(self, target, time)
 		end
 		local aim_dir = yaw2dir(yaw_to_tgt)
 		aim_dir.y = dir.y
-		tgt_pos = vec_add(pos, vector.multiply(aim_dir, dist + 10))
+		tgt_pos = vec_add(pos, vec_multi(aim_dir, dist + 10))
 		_self:move_head(yaw_to_tgt, aim_dir.y)
 		_self:set_gravity(0)
 		_self:set_forward_velocity(-2)
@@ -569,7 +544,7 @@ function draconis.action_slam(self)
 				end
 			end
 			if terrain_dir then
-				destroy_terrain(self, terrain_dir)
+				self:destroy_terrain(terrain_dir)
 			end
 			minetest.sound_play("draconis_slam", {
 				object = _self.object,
@@ -905,8 +880,8 @@ creatura.register_utility("draconis:wyvern_breaking", function(self, player)
 				stack:take_item(1)
 				inv:set_stack("main", 1, stack)
 				taming = taming + 10
-				local move_dir = vector.normalize(_self.object:get_velocity())
-				local part_pos = vector.add(pos, vector.multiply(move_dir, 12))
+				local move_dir = vec_normal(_self.object:get_velocity())
+				local part_pos = vec_add(pos, vec_multi(move_dir, 12))
 				local def = minetest.registered_items[item_name]
 				local texture = def.inventory_image
 				if not texture or texture == "" then
@@ -968,13 +943,13 @@ end)
 
 creatura.register_utility("draconis:attack", function(self, target)
 	local is_landed = true
+	local init = false
 	local takeoff_init = false
 	local land_init = false
-	local hidden_timer = 0
 	local fov_timer = 0
 	local switch_timer = 20
 	local function func(_self)
-		local target_alive, los, tgt_pos = _self:get_target(target)
+		local target_alive, _, tgt_pos = _self:get_target(target)
 		if not target_alive then _self._target = nil return true end
 		local pos = _self.object:get_pos()
 		local yaw = _self.object:get_yaw()
@@ -985,13 +960,15 @@ creatura.register_utility("draconis:attack", function(self, target)
 		end
 		switch_timer = switch_timer - _self.dtime
 		if not self:get_action() then
+
 			-- Decide to attack from ground or air
-			if init then
+			if not init then
 				local dist2floor = creatura.sensor_floor(_self, 7, true)
 				if dist2floor > 6
 				or is_target_flying(target) then -- Fly if too far from ground
 					is_landed = false
 				end
+				init = true
 			elseif switch_timer <= 0 then
 				local switch_chance = (is_landed and 6) or 3
 				is_landed = random(switch_chance) > 1
@@ -999,11 +976,11 @@ creatura.register_utility("draconis:attack", function(self, target)
 				land_init = is_landed
 				switch_timer = 20
 			end
-			local current_anim = self._anim or ""
+
 			-- Land if flying while in landed state
 			if land_init then
 				if not self.touching_ground then
-					pos2 = tgt_pos
+					local pos2 = tgt_pos
 					if is_target_flying(target) then
 						pos2 = {x = pos.x, y = pos.y - 7, z = pos.z}
 					end
@@ -1014,6 +991,7 @@ creatura.register_utility("draconis:attack", function(self, target)
 				end
 				return
 			end
+
 			-- Takeoff if walking while in flying state
 			if takeoff_init
 			and self.touching_ground then
@@ -1021,6 +999,7 @@ creatura.register_utility("draconis:attack", function(self, target)
 				takeoff_init = false
 				return
 			end
+
 			-- Choose Attack
 			local dist = vec_dist(pos, tgt_pos)
 			local attack_range = (is_landed and 8) or 16
@@ -1043,7 +1022,7 @@ creatura.register_utility("draconis:attack", function(self, target)
 				end
 			else
 				if is_landed then
-					draconis.action_pursue(_self, target, 2, "creatura:obstacle_avoidance", 0.5, "walk_slow")
+					draconis.action_pursue(_self, target, 2, "creatura:obstacle_avoidance", 0.75, "walk_slow")
 				else
 					tgt_pos.y = tgt_pos.y + 14
 					creatura.action_move(_self, tgt_pos, 5, "draconis:fly_simple", 1, "fly")
@@ -1058,7 +1037,7 @@ creatura.register_utility("draconis:wyvern_attack", function(self, target)
 	local hidden_timer = 1
 	local attack_init = false
 	local function func(_self)
-		local pos, yaw = _self.object:get_pos(), _self.object:get_yaw()
+		local pos = _self.object:get_pos()
 		if not pos then return end
 		local target_alive, los, tgt_pos = _self:get_target(target)
 		if not target_alive then

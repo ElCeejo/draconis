@@ -208,7 +208,7 @@ minetest.register_on_mods_loaded(function()
 	end
 end)
 
-local spawn_rate = tonumber(minetest.settings:get("wyvern_jungle_spawn_rate")) or 16
+local spawn_rate = tonumber(minetest.settings:get("wyvern_jungle_spawn_rate")) or 30000
 
 creatura.register_mob_spawn("draconis:jungle_wyvern", {
 	chance = spawn_rate,

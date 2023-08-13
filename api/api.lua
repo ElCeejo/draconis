@@ -53,8 +53,6 @@ local yaw2dir = minetest.yaw_to_dir
 -- Settings --
 --------------
 
-local creative = minetest.settings:get_bool("creative_mode")
-
 local terrain_destruction = minetest.settings:get_bool("dragon_terrain_destruction", true)
 
 ---------------------
