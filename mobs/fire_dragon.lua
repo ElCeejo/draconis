@@ -59,7 +59,7 @@ creatura.register_mob("draconis:fire_dragon", {
 		slam = {range = {x = 121, y = 159}, speed = 30, frame_blend = 0.3, loop = false},
 		repel = {range = {x = 161, y = 209}, speed = 30, frame_blend = 0.3, loop = false},
 		walk = {range = {x = 211, y = 249}, speed = 40, frame_blend = 0.3, loop = true},
-		walk_slow = {range = {x = 211, y = 249}, speed = 20, frame_blend = 0.3, loop = true},
+		walk_slow = {range = {x = 211, y = 249}, speed = 15, frame_blend = 0.3, loop = true},
 		walk_fire = {range = {x = 251, y = 289}, speed = 30, frame_blend = 0.3, loop = true},
 		takeoff = {range = {x = 291, y = 319}, speed = 30, frame_blend = 0.3, loop = false},
 		hover = {range = {x = 321, y = 359}, speed = 30, frame_blend = 0.3, loop = true},

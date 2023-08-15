@@ -137,7 +137,7 @@ dofile(path.."/mapgen.lua")
 
 local simple_spawning = minetest.settings:get_bool("simple_spawning") or false
 
-local spawn_rate = tonumber(minetest.settings:get("simple_spawn_rate")) or 512
+local spawn_rate = tonumber(minetest.settings:get("simple_spawn_rate")) or 80000
 
 if simple_spawning then
     creatura.register_mob_spawn("draconis:ice_dragon", {

@@ -4,8 +4,6 @@
 
 local color = minetest.colorize
 
-local spacing = 0.5
-
 local libri_bg = {
 	"formspec_version[3]",
 	"size[16,10]",
@@ -350,13 +348,14 @@ local function render_element(def, meta, playername)
 			local filename = minetest.get_modpath("draconis") .. "/libri/" .. def.file
 			local file = io.open(filename)
 			if file then
-				local i = 0
 				local full_text = ""
 				for line in file:lines() do
 					full_text = full_text .. line .. "\n"
 				end
 				local total_offset = (offset_x + (0.35 - 0.35 * font_size_x)) .. "," .. offset_y
-				form = form .. "hypertext[" .. total_offset .. ";8,9;text;<global color=#000000 size=".. font_size .. " halign=center>" .. full_text .. "]"
+				form = form ..
+					"hypertext[" .. total_offset .. ";8,9;text;<global color=#000000 size="
+						.. font_size .. " halign=center>" .. full_text .. "]"
 				file:close()
 			end
 		else
@@ -366,20 +365,20 @@ local function render_element(def, meta, playername)
 		end
 	else
 		-- Add Images/Interaction
-		local render_element = false
+		local render = false
 		if def.unlock_key
 		and #chapters > 0 then
 			for _, chapter in ipairs(chapters) do
 				if chapter
 				and chapter == def.unlock_key then
-					render_element = true
+					render = true
 					break
 				end
 			end
 		elseif not def.unlock_key then
-			render_element = true
+			render = true
 		end
-		if render_element then
+		if render then
 			local offset = def.offset.x .. "," .. def.offset.y
 			local size = def.size.x .. "," .. def.size.y
 			form = form .. def.element_type .. "[" .. offset .. ";" .. size .. ";" .. def.text .. "]"
@@ -390,7 +389,6 @@ end
 
 local function get_page(key, meta, playername)
 	local form = table.copy(libri_bg)
-	local chapters = minetest.deserialize(meta:get_string("chapters")) or {}
 	local page = pages[key]
 	for _, element in ipairs(page) do
 		if type(element) == "table" then
