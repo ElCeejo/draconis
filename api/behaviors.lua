@@ -155,7 +155,7 @@ creatura.register_movement_method("draconis:fly_pathfind", function(self)
 	local steer_to
 	local steer_timer = 0.01
 	local width = self.width
-	local wayp_threshold = width + (width / self.turn_rate)
+	local wayp_threshold = width + (width / (self.turn_rate or 5))
 
 	self:set_gravity(0)
 	local function func(_self, goal, speed_x)
@@ -184,7 +184,7 @@ creatura.register_movement_method("draconis:fly_pathfind", function(self)
 		end
 		local goal_yaw = dir2yaw(goal_dir)
 		local speed = (_self.speed or 24) * speed_x
-		_self:tilt_to(goal_yaw, _self.turn_rate or 6)
+		_self:tilt_to(goal_yaw, _self.turn_rate or 5)
 		-- Set Velocity
 		_self:set_forward_velocity(speed)
 		_self:set_vertical_velocity(speed * goal_dir.y)
@@ -196,7 +196,7 @@ creatura.register_movement_method("draconis:fly_simple", function(self)
 	local steer_to
 	local steer_timer = 0.25
 	local width = self.width
-	local wayp_threshold = width + (width / self.turn_rate)
+	local wayp_threshold = width + (width / (self.turn_rate or 5))
 
 	self:set_gravity(0)
 	local function func(_self, goal, speed_factor)
