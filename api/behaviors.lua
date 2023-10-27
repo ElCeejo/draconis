@@ -139,7 +139,7 @@ local function find_target(self, list)
 	local targets = creatura.get_nearby_players(self)
 	if #targets > 0 then -- If there are players nearby
 		local target = targets[random(#targets)]
-		local is_creative = target:is_player() and minetest.is_creative_enabled(target)
+		local is_creative = target:is_player() and minetest.is_creative_enabled(target:get_player_name())
 		local is_owner = owner and target == owner
 		if is_creative or is_owner then targets = {} end
 	end
