@@ -63,9 +63,9 @@ draconis.colors_ice = {
 
 draconis.global_nodes = {}
 
-draconis.global_nodes["flame"] = "fire:basic_flame"
-draconis.global_nodes["ice"] = "default:ice"
-draconis.global_nodes["steel_blockj"] = "default:steelblock"
+draconis.global_nodes["flame"] = draconis.has_mcl and "mcl_fire:fire" or "fire:basic_flame"
+draconis.global_nodes["ice"] = draconis.has_mcl and "mcl_core:ice" or "default:ice"
+draconis.global_nodes["steel_blockj"] = draconis.has_mcl and "mcl_core:ironblock" or "default:steelblock"
 
 minetest.register_on_mods_loaded(function()
     for name, def in pairs(minetest.registered_nodes) do
