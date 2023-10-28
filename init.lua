@@ -25,15 +25,23 @@ draconis.sounds = {
     dirt = {}
 }
 
+draconis.has_mcl = minetest.get_modpath("mcl_core")
+
 if minetest.get_modpath("default") then
     if default.node_sound_wood_defaults then
         draconis.sounds.wood = default.node_sound_wood_defaults()
+    elseif draconis.has_mcl then
+        draconis.sounds.wood = mcl_sounds.node_sound_wood_defaults()
     end
     if default.node_sound_stone_defaults then
         draconis.sounds.stone = default.node_sound_stone_defaults()
+    elseif draconis.has_mcl then
+        draconis.sounds.stone = mcl_sounds.node_sound_stone_defaults()
     end
     if default.node_sound_dirt_defaults then
         draconis.sounds.dirt = default.node_sound_dirt_defaults()
+    elseif draconis.has_mcl then
+        draconis.sounds.dirt = mcl_sounds.node_sound_dirt_defaults()
     end
 end
 
