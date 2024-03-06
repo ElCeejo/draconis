@@ -9,12 +9,13 @@ local random = math.random
 -- Get Craft Items --
 
 local steel_ingot = "default:steel_ingot"
-
+local stack_size = 99
 minetest.register_on_mods_loaded(function()
-	for name in pairs(minetest.registered_items) do
+	for name, def in pairs(minetest.registered_items) do
 		if name:match(":steel_ingot") or name:match(":ingot_steel")
 		or name:match(":iron_ingot") or name:match(":ingot_iron") then
 			steel_ingot = name
+			stack_size = def.stack_max or stack_size
 			break
 		end
 	end
@@ -250,8 +251,6 @@ register_node("draconis:bone_pile_frozen", {
 --------------------------
 -- Draconic Steel Forge --
 --------------------------
-
-local stack_size = minetest.registered_items[steel_ingot].stack_max or 99
 
 local forge_core = {
 	["draconis:draconic_forge_fire"] = "draconis:dragonstone_block_fire",

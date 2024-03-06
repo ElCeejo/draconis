@@ -139,7 +139,7 @@ local function find_target(self, list)
 	local targets = creatura.get_nearby_players(self)
 	if #targets > 0 then -- If there are players nearby
 		local target = targets[random(#targets)]
-		local is_creative = target:is_player() and minetest.is_creative_enabled(target)
+		local is_creative = target:is_player() and minetest.is_creative_enabled(target:get_player_name())
 		local is_owner = owner and target == owner
 		if is_creative or is_owner then targets = {} end
 	end
@@ -155,7 +155,7 @@ creatura.register_movement_method("draconis:fly_pathfind", function(self)
 	local steer_to
 	local steer_timer = 0.01
 	local width = self.width
-	local wayp_threshold = width + (width / self.turn_rate)
+	local wayp_threshold = width + (width / self.turn_rate or 6)
 
 	self:set_gravity(0)
 	local function func(_self, goal, speed_x)
@@ -196,7 +196,7 @@ creatura.register_movement_method("draconis:fly_simple", function(self)
 	local steer_to
 	local steer_timer = 0.25
 	local width = self.width
-	local wayp_threshold = width + (width / self.turn_rate)
+	local wayp_threshold = width + (width / (self.turn_rate or 6))
 
 	self:set_gravity(0)
 	local function func(_self, goal, speed_factor)
@@ -216,7 +216,7 @@ creatura.register_movement_method("draconis:fly_simple", function(self)
 		local dir = (steer_to or vec_dir(pos, goal))
 		_self:set_forward_velocity(speed)
 		_self:set_vertical_velocity(speed * dir.y)
-		_self:tilt_to(dir2yaw(dir), turn_rate)
+		_self:tilt_to(dir2yaw(dir), turn_rate or 6)
 	end
 	return func
 end)
