@@ -135,7 +135,7 @@ end)
 
 dofile(path.."/mapgen.lua")
 
-local simple_spawning = minetest.settings:get_bool("simple_spawning") or false
+local simple_spawning = minetest.settings:get_bool("simple_spawning", false)
 
 local spawn_rate = tonumber(minetest.settings:get("simple_spawn_rate")) or 80000
 
