@@ -475,7 +475,7 @@ creatura.register_utility("draconis:mount", function(self)
 		if not _self:get_action() then
 			if control.aux1 then
 				if draconis.aux_key_setting[player_name] == "pov" then
-					if not view_held then
+					if not view_held and player_data.fake_player then
 						if view_point == 3 then
 							view_point = 1
 							player_data.fake_player:set_properties({
@@ -658,7 +658,7 @@ creatura.register_utility("draconis:wyvern_mount", function(self)
 		end
 
 		if control.aux1 then
-			if not view_held then
+			if not view_held and player_data.fake_player then
 				if view_point == 2 then
 					view_point = 1
 					player_data.fake_player:set_properties({
