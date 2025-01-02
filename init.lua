@@ -158,13 +158,13 @@ end
 
 -- Aliases --
 
-minetest.register_alias("draconis:dracolily_fire", "air")
-minetest.register_alias("draconis:dracolily_ice", "air")
+--minetest.register_alias("draconis:dracolily_fire", "air")
+--minetest.register_alias("draconis:dracolily_ice", "air")
 
-minetest.register_alias("draconis:blood_fire_dragon", "")
-minetest.register_alias("draconis:blood_ice_dragon", "")
+--minetest.register_alias("draconis:blood_fire_dragon", "")
+--minetest.register_alias("draconis:blood_ice_dragon", "")
 
-minetest.register_alias("draconis:manuscript", "")
+--minetest.register_alias("draconis:manuscript", "")
 
 for color in pairs(draconis.colors_ice) do
     minetest.register_alias("draconis:egg_ice_dragon_" .. color, "draconis:egg_ice_" .. color)
