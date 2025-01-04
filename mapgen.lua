@@ -141,7 +141,7 @@ local function generate_fire_dragon_nest(minp, maxp, area, data)
 	local chulens = {x = sidelen, y = sidelen, z = sidelen}
 	local minposxyz = {x = min_x, y = min_y, z = min_z}
 
-	local nvals_nest = minetest.get_perlin_map(np_nest, chulens):get3dMap_flat(minposxyz)
+	local nvals_nest = minetest.get_perlin_map(np_nest, chulens):get_3d_map_flat(minposxyz)
 
 	local nixyz = 1
 	for z = min_z, max_z do
@@ -266,7 +266,7 @@ local function generate_ice_dragon_nest(minp, maxp, area, data)
 	local chulens = {x = sidelen, y = sidelen, z = sidelen}
 	local minposxyz = {x = min_x, y = min_y, z = min_z}
 
-	local nvals_nest = minetest.get_perlin_map(np_nest, chulens):get3dMap_flat(minposxyz)
+	local nvals_nest = minetest.get_perlin_map(np_nest, chulens):get_3d_map_flat(minposxyz)
 
 	local nixyz = 1
 	for z = min_z, max_z do
@@ -375,7 +375,7 @@ local function generate_fire_dragon_cavern(minp, maxp, area, data)
 	local chulens = {x = sidelen, y = sidelen, z = sidelen}
 	local minposxyz = {x = min_x, y = min_y, z = min_z}
 
-	local nvals_nest = minetest.get_perlin_map(np_nest, chulens):get3dMap_flat(minposxyz)
+	local nvals_nest = minetest.get_perlin_map(np_nest, chulens):get_3d_map_flat(minposxyz)
 
 	local nixyz = 1
 	for z = min_z, max_z do
@@ -467,7 +467,7 @@ local function generate_ice_dragon_cavern(minp, maxp, area, data)
 	local chulens = {x = sidelen, y = sidelen, z = sidelen}
 	local minposxyz = {x = min_x, y = min_y, z = min_z}
 
-	local nvals_nest = minetest.get_perlin_map(np_nest, chulens):get3dMap_flat(minposxyz)
+	local nvals_nest = minetest.get_perlin_map(np_nest, chulens):get_3d_map_flat(minposxyz)
 
 	local nixyz = 1
 	for z = min_z, max_z do
