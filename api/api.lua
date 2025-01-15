@@ -107,7 +107,7 @@ local function get_pointed_mob(a, b)
 			if object
 			and object:get_luaentity() then
 				local ent = object:get_luaentity()
-				if ent.name:match("^draconis:") then
+				if ent.name:match("^draconis:") and ent.get_center_pos then
 					return object, ent
 				end
 			end
@@ -492,15 +492,17 @@ end
 local effect_cooldown = {}
 
 minetest.register_entity("draconis:dragon_ice", {
-	max_hp = 40,
-	physical = true,
-	collisionbox = {-0.1, -0.1, -0.1, 0.1, 0.1, 0.1},
-	visual = "mesh",
-	mesh = "draconis_dragon_ice.obj",
-	textures = {
-		"draconis_dragon_ice.png^[opacity:170"
+	initial_properties = {
+		hp_max = 40,
+		physical = true,
+		collisionbox = {-0.1, -0.1, -0.1, 0.1, 0.1, 0.1},
+		visual = "mesh",
+		mesh = "draconis_dragon_ice.obj",
+		textures = {
+			"draconis_dragon_ice.png^[opacity:170"
+		},
+		use_texture_alpha = true
 	},
-	use_texture_alpha = true,
 	active_time = 0,
 	on_activate = function(self)
 		self.object:set_armor_groups({immortal = 1, fleshy = 0})
@@ -526,15 +528,17 @@ minetest.register_entity("draconis:dragon_ice", {
 })
 
 minetest.register_entity("draconis:dragon_fire", {
-	max_hp = 40,
-	physical = false,
-	collisionbox = {-0.1, -0.1, -0.1, 0.1, 0.1, 0.1},
-	visual = "mesh",
-	mesh = "draconis_dragon_fire.obj",
-	textures = {
-		"draconis_fire_animated.png^[verticalframe:8:1"
+	initial_properties = {
+		hp_max = 40,
+		physical = false,
+		collisionbox = {-0.1, -0.1, -0.1, 0.1, 0.1, 0.1},
+		visual = "mesh",
+		mesh = "draconis_dragon_fire.obj",
+		textures = {
+			"draconis_fire_animated.png^[verticalframe:8:1"
+		},
+		glow = 12
 	},
-	glow = 12,
 	active_time = 0,
 	fire_time = 0.07,
 	fire_frame = 1,

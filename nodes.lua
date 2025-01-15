@@ -1038,7 +1038,7 @@ minetest.register_node("draconis:draconic_forge_ice", {
 -- Stairs --
 ------------
 
-local register_stairs = minetest.settings:get_bool("register_stairs")
+local register_stairs = minetest.settings:get_bool("register_stairs", true)
 
 if minetest.get_modpath("stairs")
 and register_stairs then
