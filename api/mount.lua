@@ -409,12 +409,14 @@ local function update_hud(self, player)
 	local hunger = self.hunger / ceil(self.max_hunger * scale) * 100
 	local stamina = self.flight_stamina / 900 * 100
 	local breath = self.attack_stamina / 100 * 100
-	local hud_data = draconis.mounted_player_data[name].huds or {}
+	local hud_data = draconis.mounted_player_data[name].huds
 	-- Update Elements
-	player:hud_remove(hud_data["health"])
-	player:hud_remove(hud_data["hunger"])
-	player:hud_remove(hud_data["stamina"])
-	player:hud_remove(hud_data["breath"])
+	if hud_data then
+		player:hud_remove(hud_data["health"])
+		player:hud_remove(hud_data["hunger"])
+		player:hud_remove(hud_data["stamina"])
+		player:hud_remove(hud_data["breath"])
+	end
 	draconis.mounted_player_data[name].huds = {
 		["health"] = set_hud(player, {
 			text = "draconis_forms_health_bg.png^[lowpart:" .. health .. ":draconis_forms_health_fg.png",
