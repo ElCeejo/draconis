@@ -25,15 +25,23 @@ draconis.sounds = {
     dirt = {}
 }
 
+draconis.has_mcl = minetest.get_modpath("mcl_core")
+
 if minetest.get_modpath("default") then
     if default.node_sound_wood_defaults then
         draconis.sounds.wood = default.node_sound_wood_defaults()
+    elseif draconis.has_mcl then
+        draconis.sounds.wood = mcl_sounds.node_sound_wood_defaults()
     end
     if default.node_sound_stone_defaults then
         draconis.sounds.stone = default.node_sound_stone_defaults()
+    elseif draconis.has_mcl then
+        draconis.sounds.stone = mcl_sounds.node_sound_stone_defaults()
     end
     if default.node_sound_dirt_defaults then
         draconis.sounds.dirt = default.node_sound_dirt_defaults()
+    elseif draconis.has_mcl then
+        draconis.sounds.dirt = mcl_sounds.node_sound_dirt_defaults()
     end
 end
 
@@ -55,9 +63,9 @@ draconis.colors_ice = {
 
 draconis.global_nodes = {}
 
-draconis.global_nodes["flame"] = "fire:basic_flame"
-draconis.global_nodes["ice"] = "default:ice"
-draconis.global_nodes["steel_blockj"] = "default:steelblock"
+draconis.global_nodes["flame"] = draconis.has_mcl and "mcl_fire:fire" or "fire:basic_flame"
+draconis.global_nodes["ice"] = draconis.has_mcl and "mcl_core:ice" or "default:ice"
+draconis.global_nodes["steel_blockj"] = draconis.has_mcl and "mcl_core:ironblock" or "default:steelblock"
 
 minetest.register_on_mods_loaded(function()
     for name, def in pairs(minetest.registered_nodes) do

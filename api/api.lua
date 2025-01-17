@@ -1338,7 +1338,7 @@ draconis.dragon_api = {
 		end
 		local item, item_name = self:follow_wielded_item(player)
 		if item_name then
-			if not minetest.is_creative_enabled(player) then
+			if not minetest.is_creative_enabled(player:get_player_name()) then
 				item:take_item()
 				player:set_wielded_item(item)
 			end
@@ -1518,7 +1518,7 @@ draconis.wyvern_api = {
 		end
 		local item, item_name = self:follow_wielded_item(player)
 		if item_name then
-			if not minetest.is_creative_enabled(player) then
+			if not minetest.is_creative_enabled(player:get_player_name()) then
 				item:take_item()
 				player:set_wielded_item(item)
 			end
