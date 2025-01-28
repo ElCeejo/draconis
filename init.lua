@@ -4,7 +4,8 @@
 
 draconis = {
 	wyverns = {},
-	force_storage_save = false
+	force_storage_save = false,
+	S = minetest.get_translator(minetest.get_current_modname())
 }
 
 local path = minetest.get_modpath("draconis")
