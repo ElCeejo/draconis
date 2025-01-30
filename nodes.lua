@@ -2,6 +2,8 @@
 -- Nodes --
 -----------
 
+local S = draconis.S
+
 local random = math.random
 
 -- Sounds --
@@ -39,6 +41,8 @@ end
 local stair_queue = {}
 
 local function register_node(name, def, register_stair)
+	def.description = S(def.description)
+
 	minetest.register_node(name, def)
 	if register_stair then
 		table.insert(stair_queue, name)
@@ -645,7 +649,7 @@ local function cool_crucible(pos, ingot)
 end
 
 minetest.register_node("draconis:draconic_forge_fire", {
-	description = "Fire Draconic Steel Forge",
+	description = S("Fire Draconic Steel Forge"),
 	tiles = {
 		"draconis_dragonstone_block_fire.png",
 		"draconis_dragonstone_block_fire.png",
@@ -868,7 +872,7 @@ minetest.register_node("draconis:draconic_forge_fire", {
 })
 
 minetest.register_node("draconis:draconic_forge_ice", {
-	description = "Ice Draconic Steel Forge",
+	description = S("Ice Draconic Steel Forge"),
 	tiles = {
 		"draconis_dragonstone_block_ice.png",
 		"draconis_dragonstone_block_ice.png",

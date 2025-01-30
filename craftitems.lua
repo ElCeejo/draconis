@@ -2,6 +2,8 @@
 -- Craftitems --
 ----------------
 
+local S = draconis.S
+
 -- Local Math --
 
 local function round(n, dec)
@@ -35,6 +37,8 @@ local function correct_name(str)
 end
 
 local function infotext(str, format)
+	str = S(str)
+
 	if format then
 		return minetest.colorize("#a9a9a9", correct_name(str))
 	end
@@ -42,7 +46,9 @@ local function infotext(str, format)
 end
 
 local function get_binder_desc(self)
-	local info = "Dragonbinder\n"..minetest.colorize("#a9a9a9", correct_name(self.name))
+	local item_name = S("Dragonbinder")
+
+	local info = item_name .. "\n" .. minetest.colorize("#a9a9a9", correct_name(self.name))
 	if self.nametag == "" then
 		info = info.."\n" .. infotext("Nameless Dragon")
 	else
@@ -62,7 +68,7 @@ end
 -----------
 
 minetest.register_craftitem("draconis:dragon_bone", {
-	description = "Dragon Bone",
+	description = S("Dragon Bone"),
 	inventory_image = "draconis_dragon_bone.png",
 	groups = {bone = 1}
 })
@@ -71,7 +77,7 @@ table.insert(dragon_drops, "draconis:dragon_bone")
 
 for color, hex in pairs(draconis.colors_fire) do
 	minetest.register_craftitem("draconis:scales_fire_dragon_" .. color, {
-		description = "Fire Dragon Scales \n" .. infotext(color, true),
+		description = S("Fire Dragon Scales") .. "\n" .. infotext(color, true),
 		inventory_image = "draconis_dragon_scales.png^[multiply:#" .. hex,
 		groups = {dragon_scales = 1}
 	})
@@ -80,7 +86,7 @@ end
 
 for color, hex in pairs(draconis.colors_ice) do
 	minetest.register_craftitem("draconis:scales_ice_dragon_" .. color, {
-		description = "Ice Dragon Scales \n" .. infotext(color, true),
+		description = S("Ice Dragon Scales") .. "\n" .. infotext(color, true),
 		inventory_image = "draconis_dragon_scales.png^[multiply:#" .. hex,
 		groups = {dragon_scales = 1}
 	})
@@ -92,13 +98,13 @@ end
 ---------------
 
 minetest.register_craftitem("draconis:draconic_steel_ingot_fire", {
-	description = "Fire-Forged Draconic Steel Ingot",
+	description = S("Fire-Forged Draconic Steel Ingot"),
 	inventory_image = "draconis_draconic_steel_ingot_fire.png",
 	stack_max = 1
 })
 
 minetest.register_craftitem("draconis:draconic_steel_ingot_ice", {
-	description = "Ice-Forged Draconic Steel Ingot",
+	description = S("Ice-Forged Draconic Steel Ingot"),
 	inventory_image = "draconis_draconic_steel_ingot_ice.png",
 	stack_max = 1
 })
@@ -126,7 +132,7 @@ local dragon_eggs = {}
 
 for color in pairs(draconis.colors_fire) do
 	minetest.register_node("draconis:egg_fire_" .. color, {
-		description = "Fire Dragon Egg \n" .. infotext(color, true),
+		description = S("Fire Dragon Egg") .. "\n" .. infotext(color, true),
 		drawtype = "mesh",
 		paramtype = "light",
 		sunlight_propagates = true,
@@ -272,7 +278,7 @@ end
 
 for color in pairs(draconis.colors_ice) do
 	minetest.register_node("draconis:egg_ice_" .. color, {
-		description = "Ice Dragon Egg \n" .. infotext(color, true),
+		description = S("Ice Dragon Egg") .. "\n" .. infotext(color, true),
 		drawtype = "mesh",
 		paramtype = "light",
 		sunlight_propagates = true,
@@ -579,7 +585,7 @@ local function dragonbinder_place(itemstack, player, pointed_thing)
 end
 
 minetest.register_craftitem("draconis:dragonbinder", {
-	description = "Dragonbinder",
+	description = S("Dragonbinder"),
 	inventory_image = "draconis_dragonbinder.png",
 	stack_max = 1,
 	on_place = dragonbinder_place,
@@ -594,13 +600,13 @@ minetest.register_alias("draconis:dragon_flute", "draconis:dragonbinder")
 --------------
 
 minetest.register_craftitem("draconis:dragonstone_crucible", {
-	description = "Dragonstone Crucible",
+	description = S("Dragonstone Crucible"),
 	inventory_image = "draconis_dragonstone_crucible.png",
 	stack_max = 1
 })
 
 minetest.register_craftitem("draconis:dragonstone_crucible_full", {
-	description = "Dragonstone Crucible (Full)",
+	description = S("Dragonstone Crucible (Full)"),
 	inventory_image = "draconis_dragonstone_crucible_full.png",
 	stack_max = 1,
 	groups = {not_in_creative_inventory = 1}
@@ -615,7 +621,7 @@ minetest.register_craftitem("draconis:dragonstone_crucible_full", {
 for color in pairs(draconis.colors_fire) do
 	-- Pick
 	minetest.register_tool("draconis:pick_dragonhide_fire_" .. color, {
-		description = "Dragonhide Pickaxe",
+		description = S("Dragonhide Pickaxe"),
 		inventory_image = "draconis_dragonhide_pick_" .. color .. ".png",
 		wield_scale = {x = 1.5, y = 1.5, z = 1},
 		tool_capabilities = {
@@ -639,7 +645,7 @@ for color in pairs(draconis.colors_fire) do
 	end
 	-- Shovel
 	minetest.register_tool("draconis:shovel_dragonhide_fire_" .. color, {
-		description = "Dragonhide Shovel",
+		description = S("Dragonhide Shovel"),
 		inventory_image = "draconis_dragonhide_shovel_" .. color .. ".png",
 		wield_scale = {x = 1.5, y = 1.5, z = 1},
 		tool_capabilities = {
@@ -663,7 +669,7 @@ for color in pairs(draconis.colors_fire) do
 	end
 	-- Axe
 	minetest.register_tool("draconis:axe_dragonhide_fire_" .. color, {
-		description = "Dragonhide Axe",
+		description = S("Dragonhide Axe"),
 		inventory_image = "draconis_dragonhide_axe_" .. color .. ".png",
 		wield_scale = {x = 1.5, y = 1.5, z = 1},
 		tool_capabilities = {
@@ -687,7 +693,7 @@ for color in pairs(draconis.colors_fire) do
 	end
 	-- Sword
 	minetest.register_tool("draconis:sword_dragonhide_fire_" .. color, {
-		description = "Dragonhide Sword",
+		description = S("Dragonhide Sword"),
 		inventory_image = "draconis_dragonhide_sword_" .. color .. ".png",
 		wield_scale = {x = 1.5, y = 1.5, z = 1},
 		tool_capabilities = {
@@ -715,7 +721,7 @@ end
 for color in pairs(draconis.colors_ice) do
 	-- Pickaxe
 	minetest.register_tool("draconis:pick_dragonhide_ice_" .. color, {
-		description = "Dragonhide Pickaxe",
+		description = S("Dragonhide Pickaxe"),
 		inventory_image = "draconis_dragonhide_pick_" .. color .. ".png",
 		wield_scale = {x = 1.5, y = 1.5, z = 1},
 		tool_capabilities = {
@@ -739,7 +745,7 @@ for color in pairs(draconis.colors_ice) do
 	end
 	-- Shovel
 	minetest.register_tool("draconis:shovel_dragonhide_ice_" .. color, {
-		description = "Dragonhide Shovel",
+		description = S("Dragonhide Shovel"),
 		inventory_image = "draconis_dragonhide_shovel_" .. color .. ".png",
 		wield_scale = {x = 1.5, y = 1.5, z = 1},
 		tool_capabilities = {
@@ -763,7 +769,7 @@ for color in pairs(draconis.colors_ice) do
 	end
 	-- Axe
 	minetest.register_tool("draconis:axe_dragonhide_ice_" .. color, {
-		description = "Dragonhide Axe",
+		description = S("Dragonhide Axe"),
 		inventory_image = "draconis_dragonhide_axe_" .. color .. ".png",
 		wield_scale = {x = 1.5, y = 1.5, z = 1},
 		tool_capabilities = {
@@ -787,7 +793,7 @@ for color in pairs(draconis.colors_ice) do
 	end
 	-- Sword
 	minetest.register_tool("draconis:sword_dragonhide_ice_" .. color, {
-		description = "Dragonhide Sword",
+		description = S("Dragonhide Sword"),
 		inventory_image = "draconis_dragonhide_sword_" .. color .. ".png",
 		wield_scale = {x = 1.5, y = 1.5, z = 1},
 		tool_capabilities = {
@@ -904,9 +910,11 @@ local elements = {"ice", "fire"}
 
 for _, element in pairs(elements) do
 
-minetest.register_tool("draconis:pick_"..element.."_draconic_steel", {
-	description = correct_name(element).."-Forged Draconic Steel Pickaxe",
-	inventory_image = "draconis_"..element.."_draconic_steel_pick.png",
+local element_desc = (element == "ice" and "Ice") or "Fire"
+
+minetest.register_tool("draconis:pick_" .. element .. "_draconic_steel", {
+	description = S(element_desc .. "-Forged Draconic Steel Pickaxe"),
+	inventory_image = "draconis_" .. element .. "_draconic_steel_pick.png",
 	wield_scale = {x = 2, y = 2, z = 1},
 	tool_capabilities = {
 		full_punch_interval = 4,
@@ -930,9 +938,9 @@ minetest.register_tool("draconis:pick_"..element.."_draconic_steel", {
 	after_use = draconic_step
 })
 
-minetest.register_tool("draconis:shovel_"..element.."_draconic_steel", {
-	description = correct_name(element).."-Forged Draconic Steel Shovel",
-	inventory_image = "draconis_"..element.."_draconic_steel_shovel.png",
+minetest.register_tool("draconis:shovel_" .. element .. "_draconic_steel", {
+	description = S(element_desc .. "-Forged Draconic Steel Shovel"),
+	inventory_image = "draconis_" .. element .. "_draconic_steel_shovel.png",
 	wield_scale = {x = 2, y = 2, z = 1},
 	tool_capabilities = {
 		full_punch_interval = 5.5,
@@ -952,9 +960,9 @@ minetest.register_tool("draconis:shovel_"..element.."_draconic_steel", {
 	after_use = draconic_step
 })
 
-minetest.register_tool("draconis:axe_"..element.."_draconic_steel", {
-	description = correct_name(element).."-Forged Draconic Steel Axe",
-	inventory_image = "draconis_"..element.."_draconic_steel_axe.png",
+minetest.register_tool("draconis:axe_" .. element .. "_draconic_steel", {
+	description = S(element_desc .. "-Forged Draconic Steel Axe"),
+	inventory_image = "draconis_" .. element .. "_draconic_steel_axe.png",
 	wield_scale = {x = 2, y = 2, z = 1},
 	tool_capabilities = {
 		full_punch_interval = 3,
@@ -974,9 +982,9 @@ minetest.register_tool("draconis:axe_"..element.."_draconic_steel", {
 	after_use = draconic_step
 })
 
-minetest.register_tool("draconis:sword_"..element.."_draconic_steel", {
-	description = correct_name(element).."-Forged Draconic Steel Sword",
-	inventory_image = "draconis_"..element.."_draconic_steel_sword.png",
+minetest.register_tool("draconis:sword_" .. element .. "_draconic_steel", {
+	description = S(element_desc .. "-Forged Draconic Steel Sword"),
+	inventory_image = "draconis_" .. element .. "_draconic_steel_sword.png",
 	wield_scale = {x = 2, y = 2, z = 1},
 	tool_capabilities = {
 		full_punch_interval = 1.2,
