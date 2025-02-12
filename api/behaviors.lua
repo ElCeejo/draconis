@@ -2,6 +2,8 @@
 -- Behaviors --
 ---------------
 
+local S = draconis.S
+
 draconis.fire_dragon_targets = {}
 
 draconis.ice_dragon_targets = {}
@@ -906,7 +908,7 @@ creatura.register_utility("draconis:wyvern_breaking", function(self, player)
 					texture = texture,
 				})
 				minetest.chat_send_player(player:get_player_name(),
-					"The Jungle Wyvern ate some " .. def.description .. "! Taming is at " .. taming .. "%")
+					S("The Jungle Wyvern ate some @1! Taming is at @2%", def.description, taming))
 			else
 				draconis.detach_player(_self, player)
 				return true
@@ -914,7 +916,7 @@ creatura.register_utility("draconis:wyvern_breaking", function(self, player)
 			feed_timer = 10
 		end
 		if taming >= 100 then
-			minetest.chat_send_player(player:get_player_name(), "The Jungle Wyvern has been tamed!")
+			minetest.chat_send_player(player:get_player_name(), S("The Jungle Wyvern has been tamed!"))
 			_self.owner = _self:memorize("owner", player:get_player_name())
 			return true
 		end

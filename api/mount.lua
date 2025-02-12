@@ -2,6 +2,8 @@
 -- Mount API --
 ---------------
 
+local S = draconis.S
+
 draconis.mounted_player_data = {}
 
 local abs = math.abs
@@ -368,11 +370,11 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 	if formname == "draconis:dragon_mount_settings" then
 		if fields.btn_view_point then
 			draconis.aux_key_setting[name] = "pov"
-			minetest.chat_send_player(name, "Sprint key now changes point of view")
+			minetest.chat_send_player(name, S("Sprint key now changes point of view"))
 		end
 		if fields.btn_pitch_toggle then
 			draconis.aux_key_setting[name] = "vert_method"
-			minetest.chat_send_player(name, "Sprint key now changes vertical movement method")
+			minetest.chat_send_player(name, S("Sprint key now changes vertical movement method"))
 		end
 	end
 end)

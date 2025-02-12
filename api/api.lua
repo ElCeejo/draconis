@@ -2,6 +2,8 @@
 -- API --
 ---------
 
+local S = draconis.S
+
 -- Math --
 
 local pi = math.pi
@@ -1212,7 +1214,7 @@ draconis.dragon_api = {
 		if self.name == "draconis:fire_dragon" then
 			dragon_type = "fire"
 		end
-		local eyes =  "draconis_" .. dragon_type .. "_eyes_".. self.eye_color .. ".png"
+		local eyes = "draconis_" .. dragon_type .. "_eyes_".. self.eye_color .. ".png"
 		if self.growth_scale < 0.25 then
 			eyes = "draconis_" .. dragon_type .. "_eyes_child_".. self.eye_color .. ".png"
 		end
@@ -1635,9 +1637,9 @@ minetest.register_chatcommand("tamedragon", {
 			if not ent.owner then
 				ent.owner = name
 				ent:memorize("owner", ent.owner)
-				minetest.chat_send_player(name, correct_name(ent.name) .. " has been tamed!")
+				minetest.chat_send_player(name, S("@1 has been tamed!", correct_name(ent.name)))
 			else
-				minetest.chat_send_player(name, correct_name(ent.name) .. " is already tamed.")
+				minetest.chat_send_player(name, S("@1 is already tamed.", correct_name(ent.name)))
 				particle = "creatura_particle_red.png"
 			end
 			minetest.add_particlespawner({
@@ -1663,7 +1665,7 @@ minetest.register_chatcommand("tamedragon", {
 				glow = 16
 			})
 		else
-			minetest.chat_send_player(name, "You must be pointing at a mob.")
+			minetest.chat_send_player(name, S("You must be pointing at a mob."))
 		end
 	end
 })
@@ -1686,7 +1688,7 @@ minetest.register_chatcommand("set_dragon_owner", {
 			local particle = "creatura_particle_green.png"
 			ent.owner = param_name
 			ent:memorize("owner", ent.owner)
-			minetest.chat_send_player(name, correct_name(ent.name) .. " is now owned by " .. param_name)
+			minetest.chat_send_player(name, S("@1 is now owned by @2", correct_name(ent.name), param_name))
 			minetest.add_particlespawner({
 				amount = 16,
 				time = 0.25,
@@ -1710,7 +1712,7 @@ minetest.register_chatcommand("set_dragon_owner", {
 				glow = 16
 			})
 		else
-			minetest.chat_send_player(name, "You must be pointing at a mob.")
+			minetest.chat_send_player(name, S("You must be pointing at a mob."))
 		end
 	end
 })
@@ -1732,7 +1734,7 @@ minetest.register_chatcommand("revive_dragon", {
 			local particle = "creatura_particle_green.png"
 			ent.hp = ent.max_health
 			ent:memorize("hp", ent.hp)
-			minetest.chat_send_player(name, correct_name(ent.name) .. " has been revived!")
+			minetest.chat_send_player(name, S("@1 has been revived!"))
 			minetest.add_particlespawner({
 				amount = 16,
 				time = 0.25,
@@ -1756,7 +1758,7 @@ minetest.register_chatcommand("revive_dragon", {
 				glow = 16
 			})
 		else
-			minetest.chat_send_player(name, "You must be pointing at a mob.")
+			minetest.chat_send_player(name, S("You must be pointing at a mob."))
 		end
 	end
 })
@@ -1770,11 +1772,11 @@ minetest.register_chatcommand("dragon_attack_blacklist_add", {
 		local param_name = params:match("%S+")
 		if not player or not param_name then return false end
 		if draconis.attack_blacklist[param_name] then
-			minetest.chat_send_player(name, param_name .. " is already on the Dragon attack blacklist.")
+			minetest.chat_send_player(name, S("@1 is already on the Dragon attack blacklist.", param_name))
 			return false
 		end
 		draconis.attack_blacklist[param_name] = true
-		minetest.chat_send_player(name, param_name .. " has been added to the Dragon attack blacklist.")
+		minetest.chat_send_player(name, S("@1 has been added to the Dragon attack blacklist.", param_name))
 	end
 })
 
@@ -1787,11 +1789,11 @@ minetest.register_chatcommand("dragon_attack_blacklist_remove", {
 		local param_name = params:match("%S+")
 		if not player or not param_name then return false end
 		if not draconis.attack_blacklist[param_name] then
-			minetest.chat_send_player(name, param_name .. " isn't on the Dragon attack blacklist.")
+			minetest.chat_send_player(name, S("@1 isn't on the Dragon attack blacklist.", param_name))
 			return false
 		end
 		draconis.attack_blacklist[param_name] = nil
-		minetest.chat_send_player(name, param_name .. " has been removed from the Dragon attack blacklist.")
+		minetest.chat_send_player(name, S("@1 has been removed from the Dragon attack blacklist.", param_name))
 	end
 })
 

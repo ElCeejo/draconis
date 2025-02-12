@@ -37,8 +37,6 @@ local function correct_name(str)
 end
 
 local function infotext(str, format)
-	str = S(str)
-
 	if format then
 		return minetest.colorize("#a9a9a9", correct_name(str))
 	end
@@ -48,17 +46,17 @@ end
 local function get_binder_desc(self)
 	local item_name = S("Dragonbinder")
 
-	local info = item_name .. "\n" .. minetest.colorize("#a9a9a9", correct_name(self.name))
-	if self.nametag == "" then
-		info = info.."\n" .. infotext("Nameless Dragon")
+	local info = item_name .. "\n" .. correct_name(self.name)
+	if self.nametag ~= "" then
+		info = info.."\n" .. infotext(self.nametag)
 	else
-		info = info.."\n" .. infotext(self.nametag or "Nameless Dragon")
+		info = info.."\n" .. infotext(S("Nameless Dragon"))
 	end
 	if self.age then
 		info = info.."\n" .. infotext(self.age)
 	end
 	if self.color then
-		info = info.."\n" .. infotext(self.color, true)
+		info = info.."\n" .. infotext(S(self.color), true)
 	end
 	return info
 end
@@ -77,7 +75,7 @@ table.insert(dragon_drops, "draconis:dragon_bone")
 
 for color, hex in pairs(draconis.colors_fire) do
 	minetest.register_craftitem("draconis:scales_fire_dragon_" .. color, {
-		description = S("Fire Dragon Scales") .. "\n" .. infotext(color, true),
+		description = S("Fire Dragon Scales") .. "\n" .. infotext(S(color), true),
 		inventory_image = "draconis_dragon_scales.png^[multiply:#" .. hex,
 		groups = {dragon_scales = 1}
 	})
@@ -86,7 +84,7 @@ end
 
 for color, hex in pairs(draconis.colors_ice) do
 	minetest.register_craftitem("draconis:scales_ice_dragon_" .. color, {
-		description = S("Ice Dragon Scales") .. "\n" .. infotext(color, true),
+		description = S("Ice Dragon Scales") .. "\n" .. infotext(S(color), true),
 		inventory_image = "draconis_dragon_scales.png^[multiply:#" .. hex,
 		groups = {dragon_scales = 1}
 	})
@@ -132,7 +130,7 @@ local dragon_eggs = {}
 
 for color in pairs(draconis.colors_fire) do
 	minetest.register_node("draconis:egg_fire_" .. color, {
-		description = S("Fire Dragon Egg") .. "\n" .. infotext(color, true),
+		description = S("Fire Dragon Egg") .. "\n" .. infotext(S(color), true),
 		drawtype = "mesh",
 		paramtype = "light",
 		sunlight_propagates = true,
@@ -278,7 +276,7 @@ end
 
 for color in pairs(draconis.colors_ice) do
 	minetest.register_node("draconis:egg_ice_" .. color, {
-		description = S("Ice Dragon Egg") .. "\n" .. infotext(color, true),
+		description = S("Ice Dragon Egg") .. "\n" .. infotext(S(color), true),
 		drawtype = "mesh",
 		paramtype = "light",
 		sunlight_propagates = true,
@@ -444,7 +442,7 @@ local function capture(player, ent)
 		meta:set_string("mob", ent.name)
 		meta:set_string("dragon_id", ent.dragon_id)
 		meta:set_string("staticdata", ent:get_staticdata())
-		meta:set_string("nametag", ent.nametag or "Nameless Dragon")
+		meta:set_string("nametag", ent.nametag or S("Nameless Dragon"))
 		meta:set_string("description", get_binder_desc(ent))
 		if stored_aging > 0 then
 			meta:set_int("timestamp", os.time())
@@ -455,7 +453,7 @@ local function capture(player, ent)
 		draconis.force_storage_save = true
 		return stack
 	else
-		minetest.chat_send_player(player:get_player_name(), "This Dragonbinder already contains a Dragon")
+		minetest.chat_send_player(player:get_player_name(), S("This Dragonbinder already contains a Dragon"))
 		return false
 	end
 end
@@ -481,10 +479,10 @@ local function dragonbinder_use(itemstack, player, pointed_thing)
 	if player:get_player_control().sneak then
 		if stored_aging < 1 then
 			meta:set_int("stored_aging", 1)
-			minetest.chat_send_player(player:get_player_name(), "Your Dragon will age while stored.")
+			minetest.chat_send_player(player:get_player_name(), S("Your Dragon will age while stored."))
 		else
 			meta:set_int("stored_aging", 0)
-			minetest.chat_send_player(player:get_player_name(), "Your Dragon will not age while stored.")
+			minetest.chat_send_player(player:get_player_name(), S("Your Dragon will not age while stored."))
 		end
 		player:set_wielded_item(itemstack)
 		return itemstack
@@ -494,7 +492,7 @@ local function dragonbinder_use(itemstack, player, pointed_thing)
 			meta:set_string("mob", nil)
 			meta:set_string("dragon_id", nil)
 			meta:set_string("staticdata", nil)
-			meta:set_string("description", "Dragonbinder")
+			meta:set_string("description", S("Dragonbinder"))
 			player:set_wielded_item(itemstack)
 			return itemstack
 		end
@@ -516,7 +514,7 @@ local function dragonbinder_use(itemstack, player, pointed_thing)
 		else
 			ent.object:set_pos(player:get_pos())
 		end
-		minetest.chat_send_player(player:get_player_name(), "Teleporting Dragon")
+		minetest.chat_send_player(player:get_player_name(), S("Teleporting Dragon"))
 	else -- Link Dragon to Horn
 		local ent = pointed_thing.ref and pointed_thing.ref:get_luaentity()
 		if ent
@@ -544,7 +542,7 @@ local function dragonbinder_place(itemstack, player, pointed_thing)
 		pos.y = pos.y + 3
 		local mob = meta:get_string("mob")
 		local staticdata = meta:get_string("staticdata")
-		local nametag = meta:get_string("nametag") or "Nameless Dragon"
+		local nametag = meta:get_string("nametag") or S("Nameless Dragon")
 		local id = meta:get_string("dragon_id")
 		if not draconis.dragons[id] then -- Clear data if linked Dragon is dead
 			meta:set_string("mob", nil)
@@ -567,9 +565,9 @@ local function dragonbinder_place(itemstack, player, pointed_thing)
 				draconis.dragons[id].stored_in_item = false
 			end
 			draconis.force_storage_save = true
-			local desc = "Dragonbinder\n" .. minetest.colorize("#a9a9a9", correct_name(mob))
+			local desc = S("Dragonbinder") .. "\n" .. correct_name(mob)
 			if nametag ~= "" then
-				desc = desc .. "\n"..infotext(nametag)
+				desc = desc .. "\n" .. infotext(nametag)
 			end
 			meta:set_string("staticdata", nil)
 			meta:set_string("description", desc)
@@ -1449,12 +1447,12 @@ minetest.register_on_craft(function(itemstack, player, old_craft_grid)
 			local name = itemstack:get_name()
 			local desc = minetest.registered_items[name].description
 			meta:set_string("dragon_id", last_id)
-			local dragon_name = "Unnamed Dragon"
+			local dragon_name = S("Unnamed Dragon")
 			if draconis.dragons[last_id]
 			and draconis.dragons[last_id].name then
 				dragon_name = draconis.dragons[last_id].name
 			end
-			meta:set_string("description", desc .. "\n(Forged by " .. dragon_name .. ")")
+			meta:set_string("description", desc .. "\n" .. S("(Forged by @1)", dragon_name))
 		end
 		return itemstack
 	end
