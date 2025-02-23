@@ -26,7 +26,7 @@ draconis.sounds = {
     dirt = {}
 }
 
-if minetest.get_modpath("default") then
+if minetest.get_modpath("default") and default then
     if default.node_sound_wood_defaults then
         draconis.sounds.wood = default.node_sound_wood_defaults()
     end
@@ -113,7 +113,7 @@ dofile(path.."/nodes.lua")
 dofile(path.."/craftitems.lua")
 dofile(path.."/api/libri.lua")
 
-if minetest.get_modpath("3d_armor") then
+if minetest.get_modpath("3d_armor") and armor then
     dofile(path.."/armor.lua")
 end
 

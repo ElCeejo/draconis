@@ -1043,6 +1043,7 @@ minetest.register_node("draconis:draconic_forge_ice", {
 local register_stairs = minetest.settings:get_bool("register_stairs", true)
 
 if minetest.get_modpath("stairs")
+and stairs
 and stairs.register_stair_and_slab
 and register_stairs then
 	for i = 1, #stair_queue do
