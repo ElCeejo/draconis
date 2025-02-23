@@ -25,10 +25,18 @@ Dragonstone Crucible=Драконитовый Тигель
 Dragonstone Crucible (Full)=Драконитовый Тигель (Полный)
 Dragonhide Pickaxe=Драконья Кирка
 Dragonhide Shovel=Драконья Лопата
-Dragonhide Axe=Драконья Секира
+Dragonhide Axe=Драконий Топор
 Dragonhide Sword=Драконий Меч
 Dragonhide Pickaxe=Драконья Кирка
 Dragonhide Shovel=Драконья Лопата
+Ice-Forged Draconic Steel Pickaxe=Ледокованая Дракония Стальная Кирка
+Fire-Forged Draconic Steel Pickaxe=Огнекованая Дракония Стальная Кирка
+Ice-Forged Draconic Steel Shovel=Ледокованая Дракония Стальная Лопата
+Fire-Forged Draconic Steel Shovel=Огнекованая Дракония Стальная Лопата
+Ice-Forged Draconic Steel Axe=Ледокованый Драконий Стальной Топор
+Fire-Forged Draconic Steel Axe=Огнекованый Драконий Стальной Топор
+Ice-Forged Draconic Steel Sword=Ледокованый Драконий Стальной Меч
+Fire-Forged Draconic Steel Sword=Огнекованый Драконий Стальной Меч
 Unnamed Dragon=Безымянный Дракон
 (Forged by @1)=(Выковано @1)
 
@@ -76,3 +84,5 @@ Sprint key now changes vertical movement method=Клавиша спринта т
 Creative Fire Dragon Egg=Креативное Яйцо Огненного Дракона
 Creative Ice Dragon Egg=Креативное Яйцо Ледяного Дракона
 Creative Jungle Wyvern Egg=Креативное Яйцо Джунглевой Виверны
+
+Libri Draconis=Книга Дракона
