@@ -1718,7 +1718,7 @@ minetest.register_chatcommand("set_dragon_owner", {
 })
 
 minetest.register_chatcommand("revive_dragon", {
-	description = "Revives pointed Dragon",
+	description = S("Revives pointed Dragon"),
 	privs = {draconis_admin = true},
 	func = function(name)
 		local player = minetest.get_player_by_name(name)
@@ -1764,7 +1764,7 @@ minetest.register_chatcommand("revive_dragon", {
 })
 
 minetest.register_chatcommand("dragon_attack_blacklist_add", {
-	description = "Adds player to attack blacklist",
+	description = S("Adds player to attack blacklist"),
 	params = "<name>",
 	privs = {draconis_admin = true},
 	func = function(name, params)
@@ -1781,7 +1781,7 @@ minetest.register_chatcommand("dragon_attack_blacklist_add", {
 })
 
 minetest.register_chatcommand("dragon_attack_blacklist_remove", {
-	description = "Removes player to attack blacklist",
+	description = S("Removes player to attack blacklist"),
 	params = "<name>",
 	privs = {draconis_admin = true},
 	func = function(name, params)

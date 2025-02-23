@@ -2,6 +2,8 @@
 -- Ice Dragon --
 ----------------
 
+local S = draconis.S
+
 local creative = minetest.settings:get_bool("creative_mode")
 
 local function is_value_in_table(tbl, val)
@@ -267,7 +269,7 @@ creatura.register_mob("draconis:ice_dragon", {
 })
 
 creatura.register_spawn_item("draconis:ice_dragon", {
-	description = "Creative Ice Dragon Egg",
+	description = S("Creative Ice Dragon Egg"),
 	inventory_image = "draconis_creative_egg_ice.png"
 })
 

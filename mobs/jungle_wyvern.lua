@@ -2,6 +2,8 @@
 -- Fire Dragon --
 -----------------
 
+local S = draconis.S
+
 local colors = {"amber", "aquamarine", "jade", "ruby"}
 
 creatura.register_mob("draconis:jungle_wyvern", {
@@ -193,7 +195,7 @@ creatura.register_mob("draconis:jungle_wyvern", {
 })
 
 creatura.register_spawn_item("draconis:jungle_wyvern", {
-	description = "Creative Jungle Wyvern Egg",
+	description = S("Creative Jungle Wyvern Egg"),
 	inventory_image = "draconis_creative_egg_jungle.png"
 })
 
