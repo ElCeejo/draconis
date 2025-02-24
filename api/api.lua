@@ -1734,7 +1734,7 @@ minetest.register_chatcommand("revive_dragon", {
 			local particle = "creatura_particle_green.png"
 			ent.hp = ent.max_health
 			ent:memorize("hp", ent.hp)
-			minetest.chat_send_player(name, S("@1 has been revived!"))
+			minetest.chat_send_player(name, S("@1 has been revived!", correct_name(ent.name)))
 			minetest.add_particlespawner({
 				amount = 16,
 				time = 0.25,
