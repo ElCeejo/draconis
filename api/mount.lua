@@ -388,9 +388,9 @@ end)
 
 minetest.register_on_dieplayer(function(player)
 	local name = player:get_player_name()
-	if name
-	and draconis.mounted_player_data[name] then
-		draconis.detach_player(draconis.mounted_player_data[name].dragon, player)
+	local data = draconis.mounted_player_data[name]
+	if data and data.dragon then
+		draconis.detach_player(data.dragon, player)
 	end
 end)
 
