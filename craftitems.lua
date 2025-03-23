@@ -448,7 +448,9 @@ local function capture(player, ent)
 			meta:set_int("timestamp", os.time())
 		end
 		player:set_wielded_item(stack)
-		draconis.dragons[ent.dragon_id].stored_in_item = true
+		if draconis.dragons[ent.dragon_id] then
+			draconis.dragons[ent.dragon_id].stored_in_item = true
+		end
 		ent.object:remove()
 		draconis.force_storage_save = true
 		return stack
@@ -571,7 +573,7 @@ local function dragonbinder_place(itemstack, player, pointed_thing)
 			end
 			meta:set_string("staticdata", nil)
 			meta:set_string("description", desc)
-			if meta:get_int("timestamp") > 0 then
+			if ent and meta:get_int("timestamp") > 0 then
 				local time = meta:get_int("timestamp")
 				local diff = os.time() - time
 				ent:get_luaentity().time_in_horn = diff
@@ -877,7 +879,8 @@ local function draconic_step(itemstack, player, pointed_thing)
 	for k, v in pairs(toolcaps.groupcaps) do
 		for i = 1, 3 do
 			local def_time = v.times[i]
-			local current_time = round(current_caps.groupcaps[k].times[i], 0.1)
+			local groupcap = current_caps.groupcaps and current_caps.groupcaps[k]
+			local current_time = round(groupcap.times[i] or 1, 0.1)
 			local time_diff = math.abs((def_time + speed_offset) - current_time)
 			if time_diff > 0.1 then
 				update = true
