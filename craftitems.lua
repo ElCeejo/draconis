@@ -137,6 +137,7 @@ for color in pairs(draconis.colors_fire) do
 		mesh = "draconis_egg.obj",
 		inventory_image = "draconis_fire_dragon_egg_" .. color .. ".png",
 		tiles = {"draconis_fire_dragon_egg_mesh_" .. color .. ".png"},
+		use_texture_alpha = "clip",
 		collision_box = {
 			type = "fixed",
 			fixed = {
@@ -283,6 +284,7 @@ for color in pairs(draconis.colors_ice) do
 		mesh = "draconis_egg.obj",
 		inventory_image = "draconis_ice_dragon_egg_" .. color .. ".png",
 		tiles = {"draconis_ice_dragon_egg_mesh_" .. color .. ".png"},
+		use_texture_alpha = "clip",
 		collision_box = {
 			type = "fixed",
 			fixed = {
