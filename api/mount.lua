@@ -2,6 +2,8 @@
 -- Mount API --
 ---------------
 
+local S = draconis.S
+
 draconis.mounted_player_data = {}
 
 local abs = math.abs
@@ -270,7 +272,7 @@ function draconis.detach_player(self, player)
 		return
 	end
 	local player_name = player:get_player_name()
-	local data = draconis.mounted_player_data[player_name]
+	local data = draconis.mounted_player_data[player_name] or {}
 	-- Attach Player
 	player:set_detach()
 	-- Set HUD
@@ -368,11 +370,11 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 	if formname == "draconis:dragon_mount_settings" then
 		if fields.btn_view_point then
 			draconis.aux_key_setting[name] = "pov"
-			minetest.chat_send_player(name, "Sprint key now changes point of view")
+			minetest.chat_send_player(name, S("Sprint key now changes point of view"))
 		end
 		if fields.btn_pitch_toggle then
 			draconis.aux_key_setting[name] = "vert_method"
-			minetest.chat_send_player(name, "Sprint key now changes vertical movement method")
+			minetest.chat_send_player(name, S("Sprint key now changes vertical movement method"))
 		end
 	end
 end)
@@ -386,9 +388,9 @@ end)
 
 minetest.register_on_dieplayer(function(player)
 	local name = player:get_player_name()
-	if name
-	and draconis.mounted_player_data[name] then
-		draconis.detach_player(draconis.mounted_player_data[name].dragon, player)
+	local data = draconis.mounted_player_data[name]
+	if data and data.dragon then
+		draconis.detach_player(data.dragon, player)
 	end
 end)
 
@@ -411,10 +413,12 @@ local function update_hud(self, player)
 	local breath = self.attack_stamina / 100 * 100
 	local hud_data = draconis.mounted_player_data[name].huds
 	-- Update Elements
-	player:hud_remove(hud_data["health"])
-	player:hud_remove(hud_data["hunger"])
-	player:hud_remove(hud_data["stamina"])
-	player:hud_remove(hud_data["breath"])
+	if hud_data then
+		player:hud_remove(hud_data["health"])
+		player:hud_remove(hud_data["hunger"])
+		player:hud_remove(hud_data["stamina"])
+		player:hud_remove(hud_data["breath"])
+	end
 	draconis.mounted_player_data[name].huds = {
 		["health"] = set_hud(player, {
 			text = "draconis_forms_health_bg.png^[lowpart:" .. health .. ":draconis_forms_health_fg.png",

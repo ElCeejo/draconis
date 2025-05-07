@@ -20,7 +20,7 @@ cavern_spawning (Ice and Fire Cavern Spawning) bool false
 cavern_spawn_rate (I/F Cavern Spawn Rate) int 32
 
 #    If true, Dragon breath will scorch/freeze nodes and Dragons will attempt to break blocks when stuck.
-dragon_terrain_destruction (Terrain Destruction) bool true
+dragon_terrain_destruction (Terrain Destruction) bool false
 
 #    Disable if stairs mod gives a crash (Exile and other games are known to cause this)
 register_stairs (Register Stairs) bool true

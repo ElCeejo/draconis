@@ -60,8 +60,9 @@ local function get_dragon_formspec(self)
 	local breath = get_perc(self.attack_stamina, 100)
 	-- Visuals
 	local frame_range = self.animations["stand"].range
-	local frame_loop = frame_range.x .. "," ..  frame_range.y
-	local texture = self:get_props().textures[1]
+	local frame_loop = frame_range.x .. "," .. frame_range.y
+	local props = self:get_props()
+	local texture = (props and props.textures and props.textures[1]) or "blank.png"
 	local health_ind = "draconis_forms_health_bg.png^[lowpart:" .. health .. ":draconis_forms_health_fg.png"
 	local hunger_ind = "draconis_forms_hunger_bg.png^[lowpart:" .. hunger .. ":draconis_forms_hunger_fg.png"
 	local stamina_ind = "draconis_forms_stamina_bg.png^[lowpart:" .. stamina .. ":draconis_forms_stamina_fg.png"
@@ -106,9 +107,10 @@ draconis.dragon_api.show_formspec = function(self, player)
 end
 
 local function get_customize_formspec(self)
-	local texture = self.object:get_properties().textures[1]
+	local props = self.object:get_properties()
+	local texture = (props and props.textures and props.textures[1]) or "blank.png"
 	local frame_range = self.animations["stand"].range
-	local frame_loop = frame_range.x .. "," ..  frame_range.y
+	local frame_loop = frame_range.x .. "," .. frame_range.y
 	local form
 	if self.name == "draconis:fire_dragon" then
 		form = {
@@ -148,7 +150,7 @@ local function get_wyvern_formspec(self)
 	local stamina = get_perc(self.flight_stamina, 900)
 	-- Visuals
 	local frame_range = self.animations["stand"].range
-	local frame_loop = frame_range.x .. "," ..  frame_range.y
+	local frame_loop = frame_range.x .. "," .. frame_range.y
 	local props = self:get_props()
 	local texture = (props and props.textures and props.textures[1]) or "blank.png"
 	local health_ind = "draconis_forms_health_bg.png^[lowpart:" .. health .. ":draconis_forms_health_fg.png"

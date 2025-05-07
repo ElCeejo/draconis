@@ -26,7 +26,7 @@ draconis.sounds = {
     dirt = {}
 }
 
-if minetest.get_modpath("default") then
+if minetest.get_modpath("default") and default then
     if default.node_sound_wood_defaults then
         draconis.sounds.wood = default.node_sound_wood_defaults()
     end
@@ -113,7 +113,7 @@ dofile(path.."/nodes.lua")
 dofile(path.."/craftitems.lua")
 dofile(path.."/api/libri.lua")
 
-if minetest.get_modpath("3d_armor") then
+if minetest.get_modpath("3d_armor") and armor then
     dofile(path.."/armor.lua")
 end
 
@@ -159,13 +159,13 @@ end
 
 -- Aliases --
 
-minetest.register_alias("draconis:dracolily_fire", "air")
-minetest.register_alias("draconis:dracolily_ice", "air")
+--minetest.register_alias("draconis:dracolily_fire", "air")
+--minetest.register_alias("draconis:dracolily_ice", "air")
 
-minetest.register_alias("draconis:blood_fire_dragon", "")
-minetest.register_alias("draconis:blood_ice_dragon", "")
+--minetest.register_alias("draconis:blood_fire_dragon", "")
+--minetest.register_alias("draconis:blood_ice_dragon", "")
 
-minetest.register_alias("draconis:manuscript", "")
+--minetest.register_alias("draconis:manuscript", "")
 
 for color in pairs(draconis.colors_ice) do
     minetest.register_alias("draconis:egg_ice_dragon_" .. color, "draconis:egg_ice_" .. color)

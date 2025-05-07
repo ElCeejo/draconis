@@ -2,6 +2,8 @@
 -- Libri --
 -----------
 
+local S = draconis.S
+
 local color = minetest.colorize
 
 local libri_bg = {
@@ -409,14 +411,14 @@ end
 ---------------
 
 minetest.register_craftitem("draconis:libri_draconis", {
-	description = "Libri Draconis",
+	description = S("Libri Draconis"),
 	inventory_image = "draconis_libri_draconis.png",
 	stack_max = 1,
 	on_place = function(itemstack, player)
 		local meta = itemstack:get_meta()
 		local desc = meta:get_string("description")
 		if desc:find("Bestiary") then
-			meta:set_string("description", "Libri Draconis")
+			meta:set_string("description", S("Libri Draconis"))
 			meta:set_string("pages", nil)
 		end
 		local name = player:get_player_name()
@@ -426,7 +428,7 @@ minetest.register_craftitem("draconis:libri_draconis", {
 		local meta = itemstack:get_meta()
 		local desc = meta:get_string("description")
 		if desc:find("Bestiary") then
-			meta:set_string("description", "Libri Draconis")
+			meta:set_string("description", S("Libri Draconis"))
 			meta:set_string("pages", nil)
 		end
 		local name = player:get_player_name()

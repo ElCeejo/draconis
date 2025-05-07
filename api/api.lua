@@ -2,6 +2,8 @@
 -- API --
 ---------
 
+local S = draconis.S
+
 -- Math --
 
 local pi = math.pi
@@ -53,7 +55,7 @@ local yaw2dir = minetest.yaw_to_dir
 -- Settings --
 --------------
 
-local terrain_destruction = minetest.settings:get_bool("dragon_terrain_destruction", true)
+local terrain_destruction = minetest.settings:get_bool("dragon_terrain_destruction", false)
 
 ---------------------
 -- Local Utilities --
@@ -302,7 +304,8 @@ local function generate_texture(self, force)
 		self.wing_overlay = "(draconis_wing_fade.png^[multiply:" .. color .. ")"
 		self:memorize("wing_overlay", self.wing_overlay)
 	end
-	if self:get_props().textures[1]:find("wing_fade") and not force then return end
+	local props = self:get_props()
+	if props and props.textures and props.textures[1]:find("wing_fade") and not force then return end
 	textures[1] = textures[1] .. "^" .. self.wing_overlay
 	self:set_texture(1, textures)
 end
@@ -690,7 +693,12 @@ local function damage_objects(self, pos, radius)
 			damage = is_mob and (ent.hp or ent.health or 0) > 0
 		end
 		if damage then
-			object:punch(self.object, 1.0, {damage_groups = {fleshy = math.ceil(self.damage * 0.33)}})
+			local puncher = self.object
+			if self.rider
+			and self.rider:get_look_horizontal() then
+				puncher = self.rider
+			end
+			object:punch(puncher, 1.0, {damage_groups = {fleshy = math.ceil(self.damage * 0.33)}})
 			--self:punch_target(object, math.ceil(self.damage * 0.2))
 			if self.name == "draconis:ice_dragon" then
 				freeze_object(object)
@@ -1161,13 +1169,15 @@ draconis.dragon_api = {
 			if collision.type == "node" then
 				local n_pos = collision.node_pos
 				if n_pos.y - pos.y >= 1 then
-					local node = minetest.get_node(n_pos)
-					if minetest.get_item_group(node.name, "cracky") ~= 1
-					and minetest.get_item_group(node.name, "unbreakable") < 1 then
-						if random(6) < 2 then
-							minetest.dig_node(n_pos)
-						else
-							minetest.remove_node(n_pos)
+					if not minetest.is_protected(n_pos, "") then
+						local node = minetest.get_node(n_pos)
+						if minetest.get_item_group(node.name, "cracky") ~= 1
+						and minetest.get_item_group(node.name, "unbreakable") < 1 then
+							if random(6) < 2 then
+								minetest.dig_node(n_pos)
+							else
+								minetest.remove_node(n_pos)
+							end
 						end
 					end
 				end
@@ -1177,6 +1187,7 @@ draconis.dragon_api = {
 	-- Textures
 	update_emission = function(self, force)
 		local pos = self.object:get_pos()
+		if not pos then return end
 		local level = minetest.get_node_light(pos, minetest.get_timeofday())
 		if not level then return end
 		local texture = self:get_props().textures[1]
@@ -1203,7 +1214,7 @@ draconis.dragon_api = {
 		if self.name == "draconis:fire_dragon" then
 			dragon_type = "fire"
 		end
-		local eyes =  "draconis_" .. dragon_type .. "_eyes_".. self.eye_color .. ".png"
+		local eyes = "draconis_" .. dragon_type .. "_eyes_".. self.eye_color .. ".png"
 		if self.growth_scale < 0.25 then
 			eyes = "draconis_" .. dragon_type .. "_eyes_child_".. self.eye_color .. ".png"
 		end
@@ -1619,17 +1630,16 @@ minetest.register_chatcommand("tamedragon", {
 		pos.y = pos.y + player:get_properties().eye_height or 1.625
 		local dest = vec_add(pos, vec_multi(dir, 40))
 		local object, ent = get_pointed_mob(pos, dest)
-		if object
-		and ent.name:match("^draconis:")
+		if object and ent
 		and ent.memorize then
-			local ent_pos = object:get_pos()
+			local ent_pos = ent:get_center_pos()
 			local particle = "creatura_particle_green.png"
 			if not ent.owner then
 				ent.owner = name
 				ent:memorize("owner", ent.owner)
-				minetest.chat_send_player(name, correct_name(ent.name) .. " has been tamed!")
+				minetest.chat_send_player(name, S("@1 has been tamed!", correct_name(ent.name)))
 			else
-				minetest.chat_send_player(name, correct_name(ent.name) .. " is already tamed.")
+				minetest.chat_send_player(name, S("@1 is already tamed.", correct_name(ent.name)))
 				particle = "creatura_particle_red.png"
 			end
 			minetest.add_particlespawner({
@@ -1655,7 +1665,7 @@ minetest.register_chatcommand("tamedragon", {
 				glow = 16
 			})
 		else
-			minetest.chat_send_player(name, "You must be pointing at a mob.")
+			minetest.chat_send_player(name, S("You must be pointing at a mob."))
 		end
 	end
 })
@@ -1673,12 +1683,12 @@ minetest.register_chatcommand("set_dragon_owner", {
 		pos.y = pos.y + player:get_properties().eye_height or 1.625
 		local dest = vec_add(pos, vec_multi(dir, 40))
 		local object, ent = get_pointed_mob(pos, dest)
-		if object then
+		if object and ent then
 			local ent_pos = ent:get_center_pos()
 			local particle = "creatura_particle_green.png"
 			ent.owner = param_name
 			ent:memorize("owner", ent.owner)
-			minetest.chat_send_player(name, correct_name(ent.name) .. " is now owned by " .. param_name)
+			minetest.chat_send_player(name, S("@1 is now owned by @2", correct_name(ent.name), param_name))
 			minetest.add_particlespawner({
 				amount = 16,
 				time = 0.25,
@@ -1702,13 +1712,13 @@ minetest.register_chatcommand("set_dragon_owner", {
 				glow = 16
 			})
 		else
-			minetest.chat_send_player(name, "You must be pointing at a mob.")
+			minetest.chat_send_player(name, S("You must be pointing at a mob."))
 		end
 	end
 })
 
 minetest.register_chatcommand("revive_dragon", {
-	description = "Revives pointed Dragon",
+	description = S("Revives pointed Dragon"),
 	privs = {draconis_admin = true},
 	func = function(name)
 		local player = minetest.get_player_by_name(name)
@@ -1718,13 +1728,13 @@ minetest.register_chatcommand("revive_dragon", {
 		pos.y = pos.y + player:get_properties().eye_height or 1.625
 		local dest = vec_add(pos, vec_multi(dir, 40))
 		local object, ent = get_pointed_mob(pos, dest)
-		if object
+		if object and ent
 		and ent.hp <= 0 then
 			local ent_pos = ent:get_center_pos()
 			local particle = "creatura_particle_green.png"
 			ent.hp = ent.max_health
 			ent:memorize("hp", ent.hp)
-			minetest.chat_send_player(name, correct_name(ent.name) .. " has been revived!")
+			minetest.chat_send_player(name, S("@1 has been revived!", correct_name(ent.name)))
 			minetest.add_particlespawner({
 				amount = 16,
 				time = 0.25,
@@ -1748,13 +1758,13 @@ minetest.register_chatcommand("revive_dragon", {
 				glow = 16
 			})
 		else
-			minetest.chat_send_player(name, "You must be pointing at a mob.")
+			minetest.chat_send_player(name, S("You must be pointing at a mob."))
 		end
 	end
 })
 
 minetest.register_chatcommand("dragon_attack_blacklist_add", {
-	description = "Adds player to attack blacklist",
+	description = S("Adds player to attack blacklist"),
 	params = "<name>",
 	privs = {draconis_admin = true},
 	func = function(name, params)
@@ -1762,16 +1772,16 @@ minetest.register_chatcommand("dragon_attack_blacklist_add", {
 		local param_name = params:match("%S+")
 		if not player or not param_name then return false end
 		if draconis.attack_blacklist[param_name] then
-			minetest.chat_send_player(name, param_name .. " is already on the Dragon attack blacklist.")
+			minetest.chat_send_player(name, S("@1 is already on the Dragon attack blacklist.", param_name))
 			return false
 		end
 		draconis.attack_blacklist[param_name] = true
-		minetest.chat_send_player(name, param_name .. " has been added to the Dragon attack blacklist.")
+		minetest.chat_send_player(name, S("@1 has been added to the Dragon attack blacklist.", param_name))
 	end
 })
 
 minetest.register_chatcommand("dragon_attack_blacklist_remove", {
-	description = "Removes player to attack blacklist",
+	description = S("Removes player to attack blacklist"),
 	params = "<name>",
 	privs = {draconis_admin = true},
 	func = function(name, params)
@@ -1779,11 +1789,11 @@ minetest.register_chatcommand("dragon_attack_blacklist_remove", {
 		local param_name = params:match("%S+")
 		if not player or not param_name then return false end
 		if not draconis.attack_blacklist[param_name] then
-			minetest.chat_send_player(name, param_name .. " isn't on the Dragon attack blacklist.")
+			minetest.chat_send_player(name, S("@1 isn't on the Dragon attack blacklist.", param_name))
 			return false
 		end
 		draconis.attack_blacklist[param_name] = nil
-		minetest.chat_send_player(name, param_name .. " has been removed from the Dragon attack blacklist.")
+		minetest.chat_send_player(name, S("@1 has been removed from the Dragon attack blacklist.", param_name))
 	end
 })
 
