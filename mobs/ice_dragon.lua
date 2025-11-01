@@ -24,6 +24,7 @@ creatura.register_mob("draconis:ice_dragon", {
 	max_breath = 0,
 	armor_groups = {fleshy = 50},
 	damage = 20,
+	turn_rate = 2,
 	speed = 24,
 	tracking_range = 64,
 	despawn_after = false,
