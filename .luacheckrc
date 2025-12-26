@@ -2,6 +2,7 @@ max_line_length = 120
 
 globals = {
 	"minetest",
+	"core", -- todo: change to core namespace completely
 	"VoxelArea",
 	"creatura",
 	"draconis",
